@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { RecordForm } from "@/components/RecordForm";
@@ -13,7 +13,7 @@ import { Rating } from "@/types/api";
 import { useRecords } from "./useRecords";
 import { FOOTER_ITEMS } from "@/constants/navigation";
 
-export default function HistoryPage() {
+function HistoryContent() {
   const searchParams = useSearchParams();
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
@@ -106,6 +106,29 @@ export default function HistoryPage() {
         <MenuEditor initialItems={menuItems} onSubmit={handleSubmitMenu} />
       </Modal>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-bg-collection-wall">
+        <Header />
+        <main className="pb-32 pt-14">
+          <div className="px-6 py-6">
+            <h2 className="mb-6 text-title text-text-light">
+              飲酒記録コレクション
+            </h2>
+            <div className="py-12 text-center text-gray-400">
+              <p className="text-body-lg">読み込んでいます...</p>
+            </div>
+          </div>
+        </main>
+        <Footer items={FOOTER_ITEMS} />
+      </div>
+    }>
+      <HistoryContent />
+    </Suspense>
   );
 }
 
