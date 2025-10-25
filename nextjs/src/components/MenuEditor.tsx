@@ -49,17 +49,17 @@ export function MenuEditor({ initialItems = [], onSubmit }: MenuEditorProps) {
       {/* 銘柄リスト */}
       <div className="flex-1 space-y-3">
         {menuItems.map((item, index) => (
-          <div key={index} className="flex items-center gap-4">
+          <div key={index} className="flex items-center gap-2">
             <input
               type="text"
               value={item}
               onChange={(e) => handleUpdateItem(index, e.target.value)}
-              className="flex-1 border-2 border-secondary bg-white px-6 py-4 text-body-lg text-gray-800 focus:border-primary focus:outline-none"
+              className="flex-1 w-full border-2 border-secondary bg-white px-4 py-2 text-body-lg text-gray-800 focus:border-primary focus:outline-none"
               placeholder="銘柄名を入力"
             />
             <button
               onClick={() => handleRemoveItem(index)}
-              className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-text-light transition-all hover:bg-primary"
+              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-text-light transition-all hover:bg-primary"
               aria-label="削除"
             >
               <span className="text-2xl font-light">−</span>
