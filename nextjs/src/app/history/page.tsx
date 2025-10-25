@@ -7,10 +7,8 @@ import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
-import { HintCaption } from "@/components/HintCaption";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
-import EditIcon from "@mui/icons-material/Edit";
 
 interface DrinkingRecord {
   id: string;
@@ -164,7 +162,6 @@ export default function HistoryPage() {
       </main>
 
       <Footer items={footerItems} />
-      <HintCaption message="🎯 記録が増えるほど、AIがあなたの好みを学習します" />
       <AddRecordButton 
         variant="motivational"
         onClick={() => setIsRecordModalOpen(true)}
