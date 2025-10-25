@@ -14,6 +14,10 @@
   --primary-light: #6B4423; /* さらに明るい茶色 */
   --primary-dark: #1a0f08; /* より深い茶色 */
   
+  /* ========== アクションカラー（記録ボタン用） ========== */
+  --action-record: #9C2A1D; /* 記録ボタンの赤茶色 */
+  --action-record-hover: #B33228; /* ホバー時の明るい赤茶色 */
+  
   /* ========== セカンダリカラー ========== */
   --secondary: #8B7355; /* 中間の茶色 */
   --secondary-hover: #A68968; /* 明るめの茶色 */
@@ -121,6 +125,9 @@
   --color-primary-dark: var(--primary-dark);
   --color-secondary: var(--secondary);
   --color-secondary-hover: var(--secondary-hover);
+  
+  --color-action-record: var(--action-record);
+  --color-action-record-hover: var(--action-record-hover);
   
   --color-bg-page: var(--bg-secondary);
   --color-bg-card: var(--bg-primary);

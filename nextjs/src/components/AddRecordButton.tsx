@@ -12,11 +12,14 @@ export function AddRecordButton({ variant = "default", onClick }: AddRecordButto
     return (
       <button
         onClick={onClick}
-        className="fixed right-6 z-30 flex h-14 items-center gap-3 rounded-full bg-gradient-to-r from-primary to-primary-hover px-6 text-text-light shadow-2xl transition-all hover:scale-110 hover:shadow-3xl animate-pulse-slow"
-        style={bottomStyle}
+        className="fixed right-6 z-30 flex h-14 items-center gap-3 rounded-full bg-gradient-to-r from-action-record to-action-record-hover px-6 text-white shadow-2xl transition-all hover:scale-110 hover:shadow-3xl animate-pulse-slow"
+        style={{
+          ...bottomStyle,
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+        }}
       >
         <AddIcon className="text-2xl" />
-        <span className="text-body font-medium">記録する</span>
+        <span className="font-bold">記録する</span>
       </button>
     );
   }
@@ -24,8 +27,11 @@ export function AddRecordButton({ variant = "default", onClick }: AddRecordButto
   return (
     <button
       onClick={onClick}
-      className="fixed right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-text-light shadow-2xl transition-all hover:scale-110 hover:bg-primary-hover"
-      style={bottomStyle}
+      className="fixed right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-action-record text-white shadow-2xl transition-all hover:scale-110 hover:bg-action-record-hover"
+      style={{
+        ...bottomStyle,
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+      }}
       aria-label="記録を追加"
     >
       <AddIcon className="text-2xl" />

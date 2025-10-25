@@ -38,7 +38,7 @@ export default function Home() {
           
           <Link
             href="/history?openRecordModal=true"
-            className="flex items-center justify-center gap-3 w-full rounded-xl border-2 border-text-light/30 bg-text-light/10 backdrop-blur-sm py-4 text-body-lg font-medium text-text-light transition-all hover:bg-text-light/20 hover:border-text-light/50 active:scale-[0.98]"
+            className="flex items-center justify-center gap-3 w-full rounded-xl bg-action-record py-4 text-body-lg font-bold text-white shadow-lg transition-all hover:bg-action-record-hover hover:shadow-xl active:scale-[0.98]"
           >
             <CreateIcon className="text-xl" />
             <span>記録する</span>
