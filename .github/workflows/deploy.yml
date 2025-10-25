@@ -1,0 +1,686 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: sake-recommendation-prod-nextjs
+  ECS_CLUSTER: sake-recommendation-prod-cluster
+  ECS_SERVICE: sake-recommendation-prod-nextjs-service
+  WORKING_DIRECTORY: nextjs
+
+jobs:
+  deploy:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+    
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        run_install: false
+    
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    - name: Setup pnpm cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+    
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+    
+    - name: Build Next.js application
+      run: pnpm run build
+      working-directory: ${{ env.WORKING_DIRECTORY }}
+      env:
+        NODE_ENV: production
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+        mask-aws-account-id: true
+        # セキュリティ強化: 認証情報のログ出力を防止
+        output-credentials: false
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+    
+    - name: Build and push Docker image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        GIT_SHA: ${{ github.sha }}
+        TIMESTAMP: ${{ github.run_number }}-$(date +%Y%m%d-%H%M%S)
+      run: |
+        # セキュリティ設定: 機密情報のログ出力を防止
+        set +x  # デバッグ出力を無効化
+        
+        # 環境変数の検証（機密情報は表示しない）
+        if [ -z "$ECR_REGISTRY" ]; then
+          echo "❌ ECR_REGISTRY is not set"
+          exit 1
+        fi
+        
+        if [ -z "$ECR_REPOSITORY" ]; then
+          echo "❌ ECR_REPOSITORY is not set"
+          exit 1
+        fi
+        
+        echo "🔒 Security check passed - all required environment variables are set"
+        # ワークフロー全体の開始時刻を記録
+        echo "WORKFLOW_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        
+        # ビルド開始時刻を記録
+        echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        
+        # 詳細ログ出力の開始
+        echo "🚀 Starting Docker build and push process..."
+        echo "📊 Build environment information:"
+        echo "   - Node.js version: $(node --version)"
+        echo "   - Docker version: $(docker --version)"
+        echo "   - Available disk space: $(df -h . | tail -1 | awk '{print $4}')"
+        echo "   - Available memory: $(free -h | grep '^Mem:' | awk '{print $7}' || echo 'N/A')"
+        
+        # イメージタグ戦略の実装
+        TIMESTAMP_TAG="v$(date +%Y%m%d-%H%M%S)"
+        GIT_SHA_SHORT="${GIT_SHA:0:8}"
+        
+        echo "🏷️  Image tagging strategy:"
+        echo "   - latest: 最新のmainブランチビルド"
+        echo "   - ${GIT_SHA_SHORT}: Gitコミットハッシュベース"
+        echo "   - ${TIMESTAMP_TAG}: タイムスタンプベース"
+        
+        # Dockerイメージをビルド（詳細なエラーハンドリング付き）
+        echo "🔨 Building Docker image..."
+        echo "📁 Build context: $WORKING_DIRECTORY"
+        echo "🏷️  Target image: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+        
+        # Dockerfileの存在確認
+        if [ ! -f "$WORKING_DIRECTORY/Dockerfile" ]; then
+          echo "❌ Dockerfile not found in $WORKING_DIRECTORY"
+          echo "📋 Available files in build context:"
+          ls -la $WORKING_DIRECTORY
+          exit 1
+        fi
+        
+        # Docker buildの実行（詳細ログ付き）
+        echo "⏳ Starting Docker build process..."
+        if ! docker build --no-cache --progress=plain -t $ECR_REGISTRY/$ECR_REPOSITORY:latest $WORKING_DIRECTORY 2>&1 | tee docker_build.log; then
+          echo "❌ Docker build failed"
+          echo "🔍 Build failure analysis:"
+          echo "   - Check Dockerfile syntax and instructions"
+          echo "   - Verify all required files are present in build context"
+          echo "   - Check for dependency installation issues"
+          
+          # ビルドログの最後の部分を表示（エラー詳細）
+          echo "📋 Last 20 lines of build log:"
+          tail -20 docker_build.log || echo "Could not read build log"
+          
+          # ディスク容量チェック
+          AVAILABLE_SPACE=$(df . | tail -1 | awk '{print $4}')
+          if [ "$AVAILABLE_SPACE" -lt 1000000 ]; then  # 1GB未満の場合
+            echo "⚠️  Warning: Low disk space detected (${AVAILABLE_SPACE}KB available)"
+          fi
+          
+          exit 1
+        fi
+        
+        echo "✅ Docker image built successfully"
+        
+        # 複数タグでタグ付け
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT
+        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG
+        
+        # ECRにプッシュ（詳細なエラーハンドリング付き）
+        echo "📤 Pushing images to ECR..."
+        echo "🎯 Target registry: $ECR_REGISTRY"
+        echo "📦 Repository: $ECR_REPOSITORY"
+        
+        # イメージサイズの確認
+        IMAGE_SIZE=$(docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "table {{.Size}}" | tail -1)
+        echo "📏 Image size: $IMAGE_SIZE"
+        
+        # 各タグのプッシュ（詳細ログ付き）
+        echo "⏳ Pushing latest tag..."
+        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest 2>&1 | tee push_latest.log; then
+          echo "❌ Failed to push latest tag"
+          echo "🔍 Push failure analysis:"
+          echo "   - Check ECR repository permissions"
+          echo "   - Verify AWS credentials are valid"
+          echo "   - Check network connectivity to ECR"
+          tail -10 push_latest.log || echo "Could not read push log"
+          exit 1
+        fi
+        echo "✅ Latest tag pushed successfully"
+        
+        echo "⏳ Pushing git SHA tag ($GIT_SHA_SHORT)..."
+        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT 2>&1 | tee push_sha.log; then
+          echo "❌ Failed to push git SHA tag"
+          tail -10 push_sha.log || echo "Could not read push log"
+          exit 1
+        fi
+        echo "✅ Git SHA tag pushed successfully"
+        
+        echo "⏳ Pushing timestamp tag ($TIMESTAMP_TAG)..."
+        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG 2>&1 | tee push_timestamp.log; then
+          echo "❌ Failed to push timestamp tag"
+          tail -10 push_timestamp.log || echo "Could not read push log"
+          exit 1
+        fi
+        echo "✅ Timestamp tag pushed successfully"
+        
+        # 出力変数を設定
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
+        echo "image-tag=$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
+        echo "timestamp-tag=$TIMESTAMP_TAG" >> $GITHUB_OUTPUT
+        echo "image-uri=$ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
+        
+        # ビルド時間を計算
+        BUILD_END_TIME=$(date +%s)
+        BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+        echo "BUILD_DURATION=${BUILD_DURATION}" >> $GITHUB_ENV
+        
+        echo "✅ Docker image built and pushed successfully"
+        echo "📦 Primary Image: $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT"
+        echo "🏷️  Available tags: latest, $GIT_SHA_SHORT, $TIMESTAMP_TAG"
+        echo "⏱️  Build time: ${BUILD_DURATION} seconds"
+    
+    - name: Update ECS service
+      id: deploy-ecs
+      env:
+        IMAGE_URI: ${{ steps.build-image.outputs.image-uri }}
+      run: |
+        # セキュリティ設定: 機密情報のログ出力を防止
+        set +x  # デバッグ出力を無効化
+        
+        # 必要な権限の確認（最小権限の原則）
+        echo "🔒 Verifying required AWS permissions..."
+        
+        # ECS権限の確認
+        if ! aws ecs describe-clusters --clusters $ECS_CLUSTER --region $AWS_REGION >/dev/null 2>&1; then
+          echo "❌ Insufficient permissions to access ECS cluster: $ECS_CLUSTER"
+          echo "Required permissions: ecs:DescribeClusters"
+          exit 1
+        fi
+        
+        # ECR権限の確認（イメージURIから推測）
+        ECR_REPO_NAME=$(echo $IMAGE_URI | cut -d'/' -f2 | cut -d':' -f1)
+        if ! aws ecr describe-repositories --repository-names $ECR_REPO_NAME --region $AWS_REGION >/dev/null 2>&1; then
+          echo "❌ Insufficient permissions to access ECR repository: $ECR_REPO_NAME"
+          echo "Required permissions: ecr:DescribeRepositories"
+          exit 1
+        fi
+        
+        echo "✅ AWS permissions verified successfully"
+        # デプロイ開始時刻を記録
+        echo "DEPLOY_START_TIME=$(date +%s)" >> $GITHUB_ENV
+        
+        echo "🚀 Starting ECS service deployment..."
+        echo "📦 Deploying image: $IMAGE_URI"
+        echo "🎯 Target cluster: $ECS_CLUSTER"
+        echo "🔧 Target service: $ECS_SERVICE"
+        
+        # 現在のタスク定義を取得（詳細なエラーハンドリング付き）
+        echo "📋 Retrieving current task definition..."
+        echo "🎯 Task definition name: $ECS_SERVICE"
+        echo "🌏 AWS region: $AWS_REGION"
+        
+        if ! TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE --region $AWS_REGION 2>task_def_error.log); then
+          echo "❌ Failed to retrieve task definition for $ECS_SERVICE"
+          echo "🔍 Task definition retrieval failure analysis:"
+          echo "   - Verify task definition exists: $ECS_SERVICE"
+          echo "   - Check ECS permissions: ecs:DescribeTaskDefinition"
+          echo "   - Verify AWS region is correct: $AWS_REGION"
+          
+          if [ -f task_def_error.log ]; then
+            echo "📋 AWS CLI error details:"
+            cat task_def_error.log
+          fi
+          
+          # 利用可能なタスク定義を一覧表示（権限がある場合）
+          echo "🔍 Attempting to list available task definitions..."
+          aws ecs list-task-definitions --region $AWS_REGION --max-items 10 2>/dev/null || echo "Could not list task definitions (insufficient permissions)"
+          
+          exit 1
+        fi
+        
+        CURRENT_REVISION=$(echo $TASK_DEFINITION | jq -r '.taskDefinition.revision')
+        echo "📄 Current task definition revision: $CURRENT_REVISION"
+        
+        # 新しいタスク定義を作成（イメージURIを更新）
+        echo "🔄 Creating new task definition with updated image..."
+        NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$IMAGE_URI" '
+          .taskDefinition | 
+          .containerDefinitions[0].image = $IMAGE | 
+          del(.taskDefinitionArn) | 
+          del(.revision) | 
+          del(.status) | 
+          del(.requiresAttributes) | 
+          del(.placementConstraints) | 
+          del(.compatibilities) | 
+          del(.registeredAt) | 
+          del(.registeredBy)
+        ')
+        
+        # 新しいタスク定義を登録（エラーハンドリング付き）
+        echo "📝 Registering new task definition..."
+        if ! NEW_TASK_INFO=$(aws ecs register-task-definition --region $AWS_REGION --cli-input-json "$NEW_TASK_DEFINITION"); then
+          echo "❌ Failed to register new task definition"
+          exit 1
+        fi
+        
+        NEW_REVISION=$(echo $NEW_TASK_INFO | jq -r '.taskDefinition.revision')
+        echo "📋 New task definition revision: $NEW_REVISION"
+        
+        # ECSサービスを更新（詳細なエラーハンドリング付き）
+        echo "🔄 Updating ECS service..."
+        echo "🎯 Cluster: $ECS_CLUSTER"
+        echo "🔧 Service: $ECS_SERVICE"
+        echo "📋 New task definition: $ECS_SERVICE:$NEW_REVISION"
+        
+        # サービスの現在の状態を確認
+        echo "🔍 Checking current service status..."
+        if ! CURRENT_SERVICE=$(aws ecs describe-services --region $AWS_REGION --cluster $ECS_CLUSTER --services $ECS_SERVICE 2>service_error.log); then
+          echo "❌ Failed to describe ECS service"
+          echo "🔍 Service description failure analysis:"
+          echo "   - Verify service exists: $ECS_SERVICE"
+          echo "   - Verify cluster exists: $ECS_CLUSTER"
+          echo "   - Check ECS permissions: ecs:DescribeServices"
+          
+          if [ -f service_error.log ]; then
+            echo "📋 AWS CLI error details:"
+            cat service_error.log
+          fi
+          exit 1
+        fi
+        
+        CURRENT_TASK_DEF=$(echo $CURRENT_SERVICE | jq -r '.services[0].taskDefinition')
+        CURRENT_STATUS=$(echo $CURRENT_SERVICE | jq -r '.services[0].status')
+        CURRENT_RUNNING=$(echo $CURRENT_SERVICE | jq -r '.services[0].runningCount')
+        CURRENT_DESIRED=$(echo $CURRENT_SERVICE | jq -r '.services[0].desiredCount')
+        
+        echo "📊 Current service state:"
+        echo "   - Status: $CURRENT_STATUS"
+        echo "   - Task definition: $CURRENT_TASK_DEF"
+        echo "   - Running tasks: $CURRENT_RUNNING"
+        echo "   - Desired tasks: $CURRENT_DESIRED"
+        
+        # サービス更新の実行
+        if ! UPDATE_RESULT=$(aws ecs update-service --region $AWS_REGION --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $ECS_SERVICE:$NEW_REVISION 2>update_error.log); then
+          echo "❌ Failed to update ECS service"
+          echo "🔍 Service update failure analysis:"
+          echo "   - Check ECS permissions: ecs:UpdateService"
+          echo "   - Verify task definition is valid"
+          echo "   - Check service configuration"
+          
+          if [ -f update_error.log ]; then
+            echo "📋 AWS CLI error details:"
+            cat update_error.log
+          fi
+          exit 1
+        fi
+        
+        echo "✅ ECS service update initiated successfully"
+        echo "📋 Updated to task definition revision: $NEW_REVISION"
+        
+        # デプロイメント完了を待機（詳細なログ付き）
+        echo "⏳ Waiting for deployment to complete (timeout: 10 minutes)..."
+        echo "📊 Monitoring deployment progress..."
+        
+        # デプロイメント進行状況の監視
+        WAIT_START_TIME=$(date +%s)
+        TIMEOUT_SECONDS=600
+        
+        while true; do
+          CURRENT_TIME=$(date +%s)
+          ELAPSED_TIME=$((CURRENT_TIME - WAIT_START_TIME))
+          
+          if [ $ELAPSED_TIME -ge $TIMEOUT_SECONDS ]; then
+            echo "❌ Deployment timed out after ${TIMEOUT_SECONDS} seconds"
+            break
+          fi
+          
+          # サービスの状態を確認
+          SERVICE_STATUS=$(aws ecs describe-services --region $AWS_REGION --cluster $ECS_CLUSTER --services $ECS_SERVICE 2>/dev/null)
+          if [ $? -eq 0 ]; then
+            RUNNING_COUNT=$(echo $SERVICE_STATUS | jq -r '.services[0].runningCount')
+            DESIRED_COUNT=$(echo $SERVICE_STATUS | jq -r '.services[0].desiredCount')
+            PENDING_COUNT=$(echo $SERVICE_STATUS | jq -r '.services[0].pendingCount')
+            
+            echo "📊 Deployment progress (${ELAPSED_TIME}s elapsed):"
+            echo "   - Running: $RUNNING_COUNT"
+            echo "   - Desired: $DESIRED_COUNT"
+            echo "   - Pending: $PENDING_COUNT"
+            
+            # 安定状態の確認
+            if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ] && [ "$PENDING_COUNT" -eq "0" ]; then
+              echo "✅ Service reached stable state"
+              break
+            fi
+          fi
+          
+          sleep 30
+        done
+        
+        # 最終的なAWS CLIの安定性チェック
+        if ! timeout $((TIMEOUT_SECONDS - ELAPSED_TIME)) aws ecs wait services-stable --region $AWS_REGION --cluster $ECS_CLUSTER --services $ECS_SERVICE 2>wait_error.log; then
+          echo "❌ Deployment failed or timed out"
+          
+          # 失敗時の詳細情報を取得
+          echo "🔍 Gathering failure details..."
+          
+          # サービスイベントの表示
+          echo "📋 Recent service events:"
+          aws ecs describe-services --region $AWS_REGION --cluster $ECS_CLUSTER --services $ECS_SERVICE --query 'services[0].events[0:10]' --output table 2>/dev/null || echo "Could not retrieve service events"
+          
+          # タスクの詳細情報
+          echo "📋 Current tasks status:"
+          TASK_ARNS=$(aws ecs list-tasks --region $AWS_REGION --cluster $ECS_CLUSTER --service-name $ECS_SERVICE --query 'taskArns' --output text 2>/dev/null)
+          if [ -n "$TASK_ARNS" ] && [ "$TASK_ARNS" != "None" ]; then
+            aws ecs describe-tasks --region $AWS_REGION --cluster $ECS_CLUSTER --tasks $TASK_ARNS --query 'tasks[*].[taskArn,lastStatus,healthStatus,stopCode,stoppedReason]' --output table 2>/dev/null || echo "Could not retrieve task details"
+          else
+            echo "No tasks found for service"
+          fi
+          
+          # エラーログの表示
+          if [ -f wait_error.log ]; then
+            echo "📋 Wait command error details:"
+            cat wait_error.log
+          fi
+          
+          exit 1
+        fi
+        
+        # デプロイメント成功後のヘルスチェック
+        echo "🏥 Performing post-deployment health check..."
+        
+        # サービスの詳細情報を取得
+        SERVICE_INFO=$(aws ecs describe-services --region $AWS_REGION --cluster $ECS_CLUSTER --services $ECS_SERVICE)
+        RUNNING_COUNT=$(echo $SERVICE_INFO | jq -r '.services[0].runningCount')
+        DESIRED_COUNT=$(echo $SERVICE_INFO | jq -r '.services[0].desiredCount')
+        
+        echo "📊 Service status:"
+        echo "   - Desired tasks: $DESIRED_COUNT"
+        echo "   - Running tasks: $RUNNING_COUNT"
+        
+        if [ "$RUNNING_COUNT" -eq "$DESIRED_COUNT" ]; then
+          echo "✅ All tasks are running successfully"
+        else
+          echo "⚠️  Warning: Running count ($RUNNING_COUNT) does not match desired count ($DESIRED_COUNT)"
+        fi
+        
+        # デプロイ時間を計算
+        DEPLOY_END_TIME=$(date +%s)
+        DEPLOY_DURATION=$((DEPLOY_END_TIME - DEPLOY_START_TIME))
+        echo "DEPLOY_DURATION=${DEPLOY_DURATION}" >> $GITHUB_ENV
+        
+        # ワークフロー全体の実行時間を計算
+        WORKFLOW_END_TIME=$(date +%s)
+        WORKFLOW_TOTAL_DURATION=$((WORKFLOW_END_TIME - WORKFLOW_START_TIME))
+        echo "WORKFLOW_TOTAL_DURATION=${WORKFLOW_TOTAL_DURATION}" >> $GITHUB_ENV
+        
+        # 出力変数を設定
+        echo "deployment-status=success" >> $GITHUB_OUTPUT
+        echo "new-revision=$NEW_REVISION" >> $GITHUB_OUTPUT
+        echo "previous-revision=$CURRENT_REVISION" >> $GITHUB_OUTPUT
+        
+        echo "🎉 Deployment completed successfully!"
+        echo "⏱️  Deploy time: ${DEPLOY_DURATION} seconds"
+        echo "📋 Deployed revision: $CURRENT_REVISION → $NEW_REVISION"
+    
+    - name: Deployment Summary
+      run: |
+        echo "## 🎉 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Image Information" >> $GITHUB_STEP_SUMMARY
+        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Primary Tag | \`${{ steps.build-image.outputs.image-tag }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Timestamp Tag | \`${{ steps.build-image.outputs.timestamp-tag }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Image URI | \`${{ steps.build-image.outputs.image-uri }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Deployment Information" >> $GITHUB_STEP_SUMMARY
+        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Previous Revision | \`${{ steps.deploy-ecs.outputs.previous-revision }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| New Revision | \`${{ steps.deploy-ecs.outputs.new-revision }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Cluster | \`${{ env.ECS_CLUSTER }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Service | \`${{ env.ECS_SERVICE }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ⏱️ Performance Metrics" >> $GITHUB_STEP_SUMMARY
+        echo "| Item | Value | Target |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Build Time | ${BUILD_DURATION}s | < 360s (6min) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Deploy Time | ${DEPLOY_DURATION}s | < 420s (7min) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Total Time | ${WORKFLOW_TOTAL_DURATION}s | < 780s (13min) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Workflow Efficiency | $((BUILD_DURATION + DEPLOY_DURATION))s / ${WORKFLOW_TOTAL_DURATION}s | - |" >> $GITHUB_STEP_SUMMARY
+        echo "| Status | ✅ Success | ✅ |" >> $GITHUB_STEP_SUMMARY
+    
+    # - name: Notify deployment success to Slack
+    #   if: success()
+    #   uses: 8398a7/action-slack@v3
+    #   with:
+    #     status: success
+    #     channel: '#deployments'
+    #     username: 'GitHub Actions'
+    #     icon_emoji: ':rocket:'
+    #     title: '🎉 Production Deployment Successful'
+    #     text: |
+    #       *Repository:* ${{ github.repository }}
+    #       *Branch:* ${{ github.ref_name }}
+    #       *Commit:* `${{ github.sha }}`
+    #       *Author:* ${{ github.actor }}
+    #       *Image Tag:* `${{ steps.build-image.outputs.image-tag }}`
+    #       *Build Time:* ${BUILD_DURATION}s
+    #       *Deploy Time:* ${DEPLOY_DURATION}s
+    #       *Total Workflow Time:* ${WORKFLOW_TOTAL_DURATION}s
+          
+    #       *ECS Service:* ${{ env.ECS_SERVICE }}
+    #       *Task Revision:* ${{ steps.deploy-ecs.outputs.previous-revision }} → ${{ steps.deploy-ecs.outputs.new-revision }}
+          
+    #       🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+    #     fields: |
+    #       [
+    #         {
+    #           "title": "Performance",
+    #           "value": "Build: ${BUILD_DURATION}s | Deploy: ${DEPLOY_DURATION}s | Total: ${WORKFLOW_TOTAL_DURATION}s",
+    #           "short": true
+    #         },
+    #         {
+    #           "title": "Image",
+    #           "value": "${{ steps.build-image.outputs.image-tag }}",
+    #           "short": true
+    #         }
+    #       ]
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #   continue-on-error: true
+    
+    # - name: Send deployment success email
+    #   if: success()
+    #   uses: dawidd6/action-send-mail@v3
+    #   with:
+    #     server_address: smtp.gmail.com
+    #     server_port: 587
+    #     username: ${{ secrets.EMAIL_USERNAME }}
+    #     password: ${{ secrets.EMAIL_PASSWORD }}
+    #     subject: '✅ Production Deployment Successful - ${{ github.repository }}'
+    #     to: ${{ secrets.DEPLOYMENT_EMAIL_RECIPIENTS }}
+    #     from: 'GitHub Actions <${{ secrets.EMAIL_USERNAME }}>'
+    #     html_body: |
+    #       <h2>🎉 Production Deployment Successful</h2>
+          
+    #       <h3>📋 Deployment Details</h3>
+    #       <ul>
+    #         <li><strong>Repository:</strong> ${{ github.repository }}</li>
+    #         <li><strong>Branch:</strong> ${{ github.ref_name }}</li>
+    #         <li><strong>Commit SHA:</strong> <code>${{ github.sha }}</code></li>
+    #         <li><strong>Author:</strong> ${{ github.actor }}</li>
+    #         <li><strong>Timestamp:</strong> $(date -u '+%Y-%m-%d %H:%M:%S UTC')</li>
+    #       </ul>
+          
+    #       <h3>🚀 Deployment Information</h3>
+    #       <ul>
+    #         <li><strong>Image Tag:</strong> <code>${{ steps.build-image.outputs.image-tag }}</code></li>
+    #         <li><strong>ECS Cluster:</strong> ${{ env.ECS_CLUSTER }}</li>
+    #         <li><strong>ECS Service:</strong> ${{ env.ECS_SERVICE }}</li>
+    #         <li><strong>Task Revision:</strong> ${{ steps.deploy-ecs.outputs.previous-revision }} → ${{ steps.deploy-ecs.outputs.new-revision }}</li>
+    #       </ul>
+          
+    #       <h3>⏱️ Performance Metrics</h3>
+    #       <ul>
+    #         <li><strong>Build Time:</strong> ${BUILD_DURATION} seconds</li>
+    #         <li><strong>Deploy Time:</strong> ${DEPLOY_DURATION} seconds</li>
+    #         <li><strong>Total Workflow Time:</strong> ${WORKFLOW_TOTAL_DURATION} seconds</li>
+    #         <li><strong>Efficiency:</strong> $((BUILD_DURATION + DEPLOY_DURATION)) / ${WORKFLOW_TOTAL_DURATION} seconds (active/total)</li>
+    #       </ul>
+          
+    #       <p><a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">View Workflow Run</a></p>
+    #   continue-on-error: true
+    
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        # セキュリティ考慮: 機密情報を含まない失敗通知
+        echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔍 Failure Details" >> $GITHUB_STEP_SUMMARY
+        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Commit SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Workflow Run | [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |" >> $GITHUB_STEP_SUMMARY
+        echo "| Triggered By | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| Timestamp | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🛠️ Troubleshooting" >> $GITHUB_STEP_SUMMARY
+        echo "1. Check the workflow logs for detailed error messages" >> $GITHUB_STEP_SUMMARY
+        echo "2. Verify AWS credentials and permissions (check with DevOps team)" >> $GITHUB_STEP_SUMMARY
+        echo "3. Ensure ECR repository and ECS service exist and are accessible" >> $GITHUB_STEP_SUMMARY
+        echo "4. Check Docker build logs for compilation errors" >> $GITHUB_STEP_SUMMARY
+        echo "5. Verify network connectivity to AWS services" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔒 Security Note" >> $GITHUB_STEP_SUMMARY
+        echo "- AWS credentials and sensitive configuration details are not displayed in logs" >> $GITHUB_STEP_SUMMARY
+        echo "- Contact the DevOps team for AWS access issues" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "⚠️ **Action Required**: Please investigate and fix the deployment issue before the next push to main."
+    
+    # - name: Notify deployment failure to Slack
+    #   if: failure()
+    #   uses: 8398a7/action-slack@v3
+    #   with:
+    #     status: failure
+    #     channel: '#deployments'
+    #     username: 'GitHub Actions'
+    #     icon_emoji: ':warning:'
+    #     title: '❌ Production Deployment Failed'
+    #     text: |
+    #       *Repository:* ${{ github.repository }}
+    #       *Branch:* ${{ github.ref_name }}
+    #       *Commit:* `${{ github.sha }}`
+    #       *Author:* ${{ github.actor }}
+    #       *Timestamp:* $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
+    #       *Failed Step:* Check workflow logs for details
+    #       *ECS Cluster:* ${{ env.ECS_CLUSTER }}
+    #       *ECS Service:* ${{ env.ECS_SERVICE }}
+          
+    #       🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+    #       **Troubleshooting Steps:**
+    #       1. Check workflow logs for detailed error messages
+    #       2. Verify AWS credentials and permissions
+    #       3. Ensure ECR repository and ECS service are accessible
+    #       4. Check Docker build logs for compilation errors
+    #       5. Verify network connectivity to AWS services
+          
+    #       ⚠️ **Action Required:** Please investigate and fix the deployment issue.
+    #     fields: |
+    #       [
+    #         {
+    #           "title": "Workflow Run",
+    #           "value": "${{ github.run_id }}",
+    #           "short": true
+    #         },
+    #         {
+    #           "title": "Commit SHA",
+    #           "value": "${{ github.sha }}",
+    #           "short": true
+    #         }
+    #       ]
+    #   env:
+    #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    #   continue-on-error: true   
+ 
+    # - name: Send deployment failure email
+    #   if: failure()
+    #   uses: dawidd6/action-send-mail@v3
+    #   with:
+    #     server_address: smtp.gmail.com
+    #     server_port: 587
+    #     username: ${{ secrets.EMAIL_USERNAME }}
+    #     password: ${{ secrets.EMAIL_PASSWORD }}
+    #     subject: '❌ Production Deployment Failed - ${{ github.repository }}'
+    #     to: ${{ secrets.DEPLOYMENT_EMAIL_RECIPIENTS }}
+    #     from: 'GitHub Actions <${{ secrets.EMAIL_USERNAME }}>'
+    #     html_body: |
+    #       <h2>❌ Production Deployment Failed</h2>
+          
+    #       <h3>🔍 Failure Details</h3>
+    #       <ul>
+    #         <li><strong>Repository:</strong> ${{ github.repository }}</li>
+    #         <li><strong>Branch:</strong> ${{ github.ref_name }}</li>
+    #         <li><strong>Commit SHA:</strong> <code>${{ github.sha }}</code></li>
+    #         <li><strong>Author:</strong> ${{ github.actor }}</li>
+    #         <li><strong>Timestamp:</strong> $(date -u '+%Y-%m-%d %H:%M:%S UTC')</li>
+    #         <li><strong>Workflow Run:</strong> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">${{ github.run_id }}</a></li>
+    #       </ul>
+          
+    #       <h3>🎯 Target Environment</h3>
+    #       <ul>
+    #         <li><strong>ECS Cluster:</strong> ${{ env.ECS_CLUSTER }}</li>
+    #         <li><strong>ECS Service:</strong> ${{ env.ECS_SERVICE }}</li>
+    #         <li><strong>ECR Repository:</strong> ${{ env.ECR_REPOSITORY }}</li>
+    #       </ul>
+          
+    #       <h3>🛠️ Troubleshooting Steps</h3>
+    #       <ol>
+    #         <li>Check the <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">workflow logs</a> for detailed error messages</li>
+    #         <li>Verify AWS credentials and permissions (contact DevOps team if needed)</li>
+    #         <li>Ensure ECR repository and ECS service exist and are accessible</li>
+    #         <li>Check Docker build logs for compilation errors</li>
+    #         <li>Verify network connectivity to AWS services</li>
+    #       </ol>
+          
+    #       <h3>🔒 Security Note</h3>
+    #       <p>AWS credentials and sensitive configuration details are not displayed in logs for security reasons. Contact the DevOps team for AWS access issues.</p>
+          
+    #       <p><strong>⚠️ Action Required:</strong> Please investigate and fix the deployment issue before the next push to main.</p>
+    #   continue-on-error: true
