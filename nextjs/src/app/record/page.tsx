@@ -4,24 +4,30 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Rating, RATING_LABELS } from "@/types/api";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 
 export default function RecordPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    name: "",
+    brand: "",
     impression: "",
-    rating: "" as "" | "非常に好き" | "好き" | "合わない" | "非常に合わない",
+    rating: "" as "" | Rating,
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  const ratings = [
-    { value: "非常に好き", label: "非常に好き", emoji: "😍", color: "bg-red-500" },
-    { value: "好き", label: "好き", emoji: "😊", color: "bg-pink-500" },
-    { value: "合わない", label: "合わない", emoji: "😐", color: "bg-gray-400" },
-    { value: "非常に合わない", label: "非常に合わない", emoji: "😞", color: "bg-gray-600" },
-  ] as const;
+  const ratings: Array<{
+    value: Rating;
+    label: string;
+    emoji: string;
+    color: string;
+  }> = [
+    { value: "VERY_GOOD", label: RATING_LABELS["VERY_GOOD"], emoji: "😍", color: "bg-rating-love" },
+    { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊", color: "bg-rating-like" },
+    { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐", color: "bg-rating-dislike" },
+    { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞", color: "bg-rating-hate" },
+  ];
 
   const footerItems = [
     { 
@@ -40,7 +46,7 @@ export default function RecordPage() {
     e.preventDefault();
     
     // バリデーション
-    if (!formData.name.trim()) {
+    if (!formData.brand.trim()) {
       alert("銘柄を入力してください");
       return;
     }
@@ -55,17 +61,31 @@ export default function RecordPage() {
 
     setIsSaving(true);
     
-    // TODO: 実際のデータ保存処理
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    setIsSaving(false);
-    
-    // 成功メッセージと履歴画面への遷移
-    alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
-    router.push("/history");
+    try {
+      // TODO: 実際のAPI呼び出しに置き換え
+      // const response = await fetch('/api/records', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${token}`
+      //   },
+      //   body: JSON.stringify(formData)
+      // });
+
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      console.log("記録データ:", formData);
+      alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
+      router.push("/history");
+    } catch (error) {
+      console.error("Failed to save record:", error);
+      alert("記録の保存に失敗しました。もう一度お試しください。");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const isFormValid = formData.name.trim() && formData.impression.trim() && formData.rating;
+  const isFormValid = formData.brand.trim() && formData.impression.trim() && formData.rating;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,20 +109,20 @@ export default function RecordPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* 銘柄 */}
             <div>
-              <label htmlFor="name" className="mb-2 block text-body-lg font-medium text-gray-700">
+              <label htmlFor="brand" className="mb-2 block text-body-lg font-medium text-gray-700">
                 銘柄 <span className="text-red-500">*</span>
               </label>
               <input
-                id="name"
+                id="brand"
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={formData.brand}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                 placeholder="例：獺祭 純米大吟醸"
                 maxLength={64}
                 className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
               />
               <p className="mt-1 text-body text-gray-500">
-                {formData.name.length}/64文字
+                {formData.brand.length}/64文字
               </p>
             </div>
 

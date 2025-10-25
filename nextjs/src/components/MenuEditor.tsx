@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MenuEditorProps {
+  initialItems?: string[];
   onSubmit: (items: string[]) => void;
 }
 
-export function MenuEditor({ onSubmit }: MenuEditorProps) {
-  const [menuItems, setMenuItems] = useState<string[]>([
-    "出羽桜",
-    "獺祭",
-    "hogehoge",
-    "菊",
-  ]);
+export function MenuEditor({ initialItems = [], onSubmit }: MenuEditorProps) {
+  const [menuItems, setMenuItems] = useState<string[]>(
+    initialItems.length > 0 ? initialItems : [""]
+  );
+
+  // 初期値が変更されたら更新
+  useEffect(() => {
+    if (initialItems.length > 0) {
+      setMenuItems(initialItems);
+    }
+  }, [initialItems]);
   const [newItem, setNewItem] = useState("");
 
   const handleAddItem = () => {

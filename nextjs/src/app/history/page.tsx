@@ -1,69 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/Modal";
 import { RecordForm } from "@/components/RecordForm";
 import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
+import { DrinkingRecord, Rating, RATING_LABELS } from "@/types/api";
+import { generateMockRecords } from "@/lib/mockData";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
-
-interface DrinkingRecord {
-  id: string;
-  name: string;
-  impression: string;
-  rating: "非常に好き" | "好き" | "合わない" | "非常に合わない";
-  date: string;
-  imageUrl?: string;
-}
 
 export default function HistoryPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState<string[]>([
-    "出羽桜",
-    "獺祭",
-    "hogehoge",
-    "菊",
-  ]);
+  const [menuItems, setMenuItems] = useState<string[]>([]);
+  const [records, setRecords] = useState<DrinkingRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // モックデータ
-  const [records] = useState<DrinkingRecord[]>([
-    {
-      id: "1",
-      name: "獺祭 純米大吟醸",
-      impression: "フルーティで華やかな香り。甘みと酸味のバランスが良く、とても飲みやすい。",
-      rating: "非常に好き",
-      date: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "東洋美人",
-      impression: "すっきりとした味わいで、キレが良い。少し辛口だが飲みやすい。",
-      rating: "好き",
-      date: "2024-01-10",
-    },
-    {
-      id: "3",
-      name: "出羽桜",
-      impression: "芳醇な香りと深い味わい。米の旨味がしっかり感じられる。",
-      rating: "非常に好き",
-      date: "2024-01-05",
-    },
-  ]);
+  // 初回読み込み時にデータを取得
+  useEffect(() => {
+    fetchRecords();
+  }, []);
 
-  const getRatingColor = (rating: string) => {
+  const fetchRecords = async () => {
+    setIsLoading(true);
+    try {
+      // TODO: 実際のAPI呼び出しに置き換え
+      // const response = await fetch('/api/records', {
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`
+      //   }
+      // });
+      // const data = await response.json();
+      // setRecords(data);
+
+      // モックデータを使用
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const mockRecords = generateMockRecords();
+      setRecords(mockRecords);
+    } catch (error) {
+      console.error("Failed to fetch records:", error);
+      setRecords([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getRatingColor = (rating: Rating) => {
     switch (rating) {
-      case "非常に好き":
-        return "bg-red-100 text-red-700";
-      case "好き":
-        return "bg-pink-100 text-pink-700";
-      case "合わない":
-        return "bg-gray-100 text-gray-700";
-      case "非常に合わない":
-        return "bg-gray-200 text-gray-800";
+      case "VERY_GOOD":
+        return "bg-rating-love-bg text-rating-love-text";
+      case "GOOD":
+        return "bg-rating-like-bg text-rating-like-text";
+      case "BAD":
+        return "bg-rating-dislike-bg text-rating-dislike-text";
+      case "VERY_BAD":
+        return "bg-rating-hate-bg text-rating-hate-text";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -82,22 +76,46 @@ export default function HistoryPage() {
     },
   ];
 
-  const handleSubmitRecord = (data: {
-    name: string;
+  const handleSubmitRecord = async (data: {
+    brand: string;
     impression: string;
-    rating: string;
+    rating: Rating;
   }) => {
-    // TODO: 実際のデータ保存処理
-    console.log("Record saved:", data);
-    alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
-    setIsRecordModalOpen(false);
+    try {
+      // TODO: 実際のAPI呼び出しに置き換え
+      // const response = await fetch('/api/records', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${token}`
+      //   },
+      //   body: JSON.stringify(data)
+      // });
+      // const newRecord = await response.json();
+
+      // モックデータとして新しいレコードを追加
+      const newRecord: DrinkingRecord = {
+        id: `rec-${Date.now()}`,
+        userId: "user-mock-001",
+        brand: data.brand,
+        impression: data.impression,
+        rating: data.rating,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setRecords([newRecord, ...records]);
+      alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
+      setIsRecordModalOpen(false);
+    } catch (error) {
+      console.error("Failed to save record:", error);
+      alert("記録の保存に失敗しました。もう一度お試しください。");
+    }
   };
 
   const handleSubmitMenu = (items: string[]) => {
     setMenuItems(items);
     setIsMenuModalOpen(false);
-    // TODO: ここでおすすめを再取得する処理を追加
-    console.log("Updated menu items:", items);
   };
 
   return (
@@ -112,7 +130,11 @@ export default function HistoryPage() {
           </h2>
 
           {/* 記録リスト */}
-          {records.length === 0 ? (
+          {isLoading ? (
+            <div className="py-12 text-center text-gray-500">
+              <p className="text-body-lg">記録を読み込んでいます...</p>
+            </div>
+          ) : records.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
               <p className="text-body-lg">まだ記録がありません</p>
               <p className="mt-2 text-body">飲んだお酒を記録してみましょう</p>
@@ -130,14 +152,14 @@ export default function HistoryPage() {
                   {/* ヘッダー */}
                   <div className="mb-3 flex items-start justify-between">
                     <h3 className="text-subtitle text-gray-800">
-                      {record.name}
+                      {record.brand}
                     </h3>
                     <span
                       className={`rounded-full px-3 py-1 text-body font-medium ${getRatingColor(
                         record.rating
                       )}`}
                     >
-                      {record.rating}
+                      {RATING_LABELS[record.rating]}
                     </span>
                   </div>
 
@@ -148,7 +170,7 @@ export default function HistoryPage() {
 
                   {/* 日付 */}
                   <p className="text-body text-gray-500">
-                    {new Date(record.date).toLocaleDateString("ja-JP", {
+                    {new Date(record.createdAt).toLocaleDateString("ja-JP", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -177,7 +199,7 @@ export default function HistoryPage() {
 
       {/* メニュー編集モーダル */}
       <Modal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}>
-        <MenuEditor onSubmit={handleSubmitMenu} />
+        <MenuEditor initialItems={menuItems} onSubmit={handleSubmitMenu} />
       </Modal>
     </div>
   );
