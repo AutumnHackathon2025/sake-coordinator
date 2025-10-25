@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Modal } from "@/components/Modal";
+import { RecordForm } from "@/components/RecordForm";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
@@ -17,6 +19,8 @@ interface DrinkingRecord {
 }
 
 export default function HistoryPage() {
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  
   // モックデータ
   const [records] = useState<DrinkingRecord[]>([
     {
@@ -69,6 +73,17 @@ export default function HistoryPage() {
       href: "/history"
     },
   ];
+
+  const handleSubmitRecord = (data: {
+    name: string;
+    impression: string;
+    rating: string;
+  }) => {
+    // TODO: 実際のデータ保存処理
+    console.log("Record saved:", data);
+    alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
+    setIsRecordModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,7 +154,18 @@ export default function HistoryPage() {
       </main>
 
       <Footer items={footerItems} />
-      <AddRecordButton variant="motivational" />
+      <AddRecordButton 
+        variant="motivational"
+        onClick={() => setIsRecordModalOpen(true)}
+      />
+
+      {/* 記録追加モーダル */}
+      <Modal isOpen={isRecordModalOpen} onClose={() => setIsRecordModalOpen(false)}>
+        <RecordForm 
+          onSubmit={handleSubmitRecord}
+          onCancel={() => setIsRecordModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 }

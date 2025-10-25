@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
+import { RecordForm } from "@/components/RecordForm";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
@@ -10,7 +11,8 @@ import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 
 export default function RecommendationsPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<string[]>([
     "出羽桜",
     "獺祭",
@@ -51,9 +53,20 @@ export default function RecommendationsPage() {
 
   const handleSubmitMenu = (items: string[]) => {
     setMenuItems(items);
-    setIsModalOpen(false);
+    setIsMenuModalOpen(false);
     // TODO: ここでおすすめを再取得する処理を追加
     console.log("Updated menu items:", items);
+  };
+
+  const handleSubmitRecord = (data: {
+    name: string;
+    impression: string;
+    rating: string;
+  }) => {
+    // TODO: 実際のデータ保存処理
+    console.log("Record saved:", data);
+    alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
+    setIsRecordModalOpen(false);
   };
 
   return (
@@ -104,7 +117,7 @@ export default function RecommendationsPage() {
               おすすめを選出します。
             </p>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsMenuModalOpen(true)}
               className="flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-body-lg text-white transition-all hover:bg-[#3B3D7F]"
             >
               <span className="text-2xl">✏️</span>
@@ -115,11 +128,19 @@ export default function RecommendationsPage() {
       </main>
 
       <Footer items={footerItems} />
-      <AddRecordButton />
+      <AddRecordButton onClick={() => setIsRecordModalOpen(true)} />
 
       {/* メニュー編集モーダル */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}>
         <MenuEditor onSubmit={handleSubmitMenu} />
+      </Modal>
+
+      {/* 記録追加モーダル */}
+      <Modal isOpen={isRecordModalOpen} onClose={() => setIsRecordModalOpen(false)}>
+        <RecordForm 
+          onSubmit={handleSubmitRecord}
+          onCancel={() => setIsRecordModalOpen(false)}
+        />
       </Modal>
     </div>
   );
