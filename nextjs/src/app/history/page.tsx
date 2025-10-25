@@ -7,6 +7,7 @@ import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
+import { HintCaption } from "@/components/HintCaption";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 import EditIcon from "@mui/icons-material/Edit";
@@ -112,13 +113,6 @@ export default function HistoryPage() {
             飲酒記録
           </h2>
 
-          {/* モチベーションメッセージ */}
-          <div className="mb-6 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-l-4 border-amber-500">
-            <p className="text-body font-medium text-amber-800">
-              🎯 記録が増えるほど、AIがあなたの好みを学習します
-            </p>
-          </div>
-
           {/* 記録リスト */}
           {records.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
@@ -170,6 +164,7 @@ export default function HistoryPage() {
       </main>
 
       <Footer items={footerItems} />
+      <HintCaption message="🎯 記録が増えるほど、AIがあなたの好みを学習します" />
       <AddRecordButton 
         variant="motivational"
         onClick={() => setIsRecordModalOpen(true)}

@@ -7,6 +7,7 @@ import { RecordForm } from "@/components/RecordForm";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
+import { HintCaption } from "@/components/HintCaption";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 import EditIcon from "@mui/icons-material/Edit";
@@ -91,13 +92,6 @@ export default function RecommendationsPage() {
             </button>
           </div>
 
-          {/* ヒントメッセージ */}
-          <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-l-4 border-blue-500">
-            <p className="text-body text-blue-800">
-              💡 気に入った日本酒を見つけたら、感想を記録しておきましょう
-            </p>
-          </div>
-
           {/* おすすめリスト */}
           <div className="space-y-6">
             {recommendations.map((sake, index) => (
@@ -121,6 +115,7 @@ export default function RecommendationsPage() {
       </main>
 
       <Footer items={footerItems} />
+      <HintCaption message="💡 気に入った日本酒を見つけたら、感想を記録しておきましょう" />
       <AddRecordButton onClick={() => setIsRecordModalOpen(true)} />
 
       {/* メニュー編集モーダル */}
