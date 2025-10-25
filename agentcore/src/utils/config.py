@@ -52,7 +52,7 @@ class Config(BaseModel):
     
     # Bedrock設定（設計書に準拠）
     bedrock_model_id: str = Field(
-        default=os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-5-sonnet-20240620-v1:0"),
+        default=os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0"),
         description="BedrockモデルID（Claude 3.5 Sonnet v1）"
     )
     bedrock_region: str = Field(
