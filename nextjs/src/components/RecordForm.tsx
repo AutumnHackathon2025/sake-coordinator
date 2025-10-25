@@ -1,36 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import { Rating, RATING_LABELS } from "@/types/api";
 
 interface RecordFormProps {
   onSubmit: (data: {
-    name: string;
+    brand: string;
     impression: string;
-    rating: "非常に好き" | "好き" | "合わない" | "非常に合わない";
+    rating: Rating;
   }) => void;
   onCancel?: () => void;
 }
 
 export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
   const [formData, setFormData] = useState({
-    name: "",
+    brand: "",
     impression: "",
-    rating: "" as "" | "非常に好き" | "好き" | "合わない" | "非常に合わない",
+    rating: "" as "" | Rating,
   });
   const [isSaving, setIsSaving] = useState(false);
 
-  const ratings = [
-    { value: "非常に好き", label: "非常に好き", emoji: "😍", color: "bg-red-500" },
-    { value: "好き", label: "好き", emoji: "😊", color: "bg-pink-500" },
-    { value: "合わない", label: "合わない", emoji: "😐", color: "bg-gray-400" },
-    { value: "非常に合わない", label: "非常に合わない", emoji: "😞", color: "bg-gray-600" },
-  ] as const;
+  const ratings: Array<{
+    value: Rating;
+    label: string;
+    emoji: string;
+    color: string;
+  }> = [
+    { value: "VERY_GOOD", label: RATING_LABELS["VERY_GOOD"], emoji: "😍", color: "bg-rating-love" },
+    { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊", color: "bg-rating-like" },
+    { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐", color: "bg-rating-dislike" },
+    { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞", color: "bg-rating-hate" },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // バリデーション
-    if (!formData.name.trim()) {
+    if (!formData.brand.trim()) {
       alert("銘柄を入力してください");
       return;
     }
@@ -45,19 +51,23 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
 
     setIsSaving(true);
     
-    // TODO: 実際のデータ保存処理
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    onSubmit({
-      name: formData.name,
-      impression: formData.impression,
-      rating: formData.rating,
-    });
-    
-    setIsSaving(false);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      onSubmit({
+        brand: formData.brand,
+        impression: formData.impression,
+        rating: formData.rating,
+      });
+    } catch (error) {
+      console.error("Error submitting record:", error);
+      alert("記録の保存に失敗しました");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const isFormValid = formData.name.trim() && formData.impression.trim() && formData.rating;
+  const isFormValid = formData.brand.trim() && formData.impression.trim() && formData.rating;
 
   return (
     <div className="flex flex-col p-6">
@@ -76,20 +86,20 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* 銘柄 */}
         <div>
-          <label htmlFor="name" className="mb-2 block text-body-lg font-medium text-gray-700">
+          <label htmlFor="brand" className="mb-2 block text-body-lg font-medium text-gray-700">
             銘柄 <span className="text-red-500">*</span>
           </label>
           <input
-            id="name"
+            id="brand"
             type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.brand}
+            onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
             placeholder="例：獺祭 純米大吟醸"
             maxLength={64}
             className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
           />
           <p className="mt-1 text-body text-gray-500">
-            {formData.name.length}/64文字
+            {formData.brand.length}/64文字
           </p>
         </div>
 
