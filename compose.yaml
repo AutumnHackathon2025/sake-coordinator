@@ -7,11 +7,13 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - DYNAMODB_ENDPOINT=http://dynamodb-local:8000
-      - AWS_REGION=us-west-2
-      - AWS_ACCESS_KEY_ID=dummy
-      - AWS_SECRET_ACCESS_KEY=dummy
+      SKIP_AUTH: true
+      USE_LOCAL_AGENT: true
+      LOCAL_AGENT_URL: http://sake-agent:8080
+      DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+      AWS_REGION: us-west-2
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
     depends_on:
       - dynamodb-local
     networks:

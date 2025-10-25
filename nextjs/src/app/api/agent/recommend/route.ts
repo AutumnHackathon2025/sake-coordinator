@@ -50,14 +50,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const agentService = new AgentCoreService();
       agentResponse = await agentService.recommendSake(userId, menu, 10);
     } catch (error) {
+      // 開発モードでは詳細なエラー情報を返す
+      const isDev = process.env.SKIP_AUTH === 'true';
+      console.error('AgentCore呼び出しエラー:', error);
+
       if (error instanceof AgentCoreError) {
-        return errorResponse(ERROR_CODES.AGENT_ERROR, error.message, 500);
+        const message = isDev
+          ? `推薦処理に失敗しました: ${error.message}`
+          : error.message;
+        return errorResponse(ERROR_CODES.AGENT_ERROR, message, 500);
       }
-      return errorResponse(
-        ERROR_CODES.AGENT_ERROR,
-        ERROR_MESSAGES.AGENT_ERROR,
-        500
-      );
+
+      const message = isDev
+        ? `推薦処理に失敗しました: ${error instanceof Error ? error.message : String(error)}`
+        : ERROR_MESSAGES.AGENT_ERROR;
+      return errorResponse(ERROR_CODES.AGENT_ERROR, message, 500);
     }
 
     // 4. レスポンスの整形

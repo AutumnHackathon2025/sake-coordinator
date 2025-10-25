@@ -18,7 +18,8 @@
     "react-dom": "19.2.0",
     "@aws-sdk/client-dynamodb": "^3.478.0",
     "@aws-sdk/lib-dynamodb": "^3.478.0",
-    "@aws-sdk/client-bedrock-agent-runtime": "^3.478.0",
+    "@aws-sdk/util-dynamodb": "^3.478.0",
+    "@aws-sdk/client-bedrock-agentcore": "^3.478.0",
     "jose": "^5.2.0"
   },
   "devDependencies": {

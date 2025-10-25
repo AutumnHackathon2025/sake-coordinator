@@ -1,4 +1,4 @@
-import { RecommendationResponse, Recommendation } from '../services/agentcore-service';
+import { RecommendationResponse } from '../services/agentcore-service';
 
 /**
  * API仕様書の形式に変換された推薦結果
@@ -24,22 +24,8 @@ export interface ApiRecommendation {
 export function transformToApiResponse(
   agentResponse: RecommendationResponse
 ): ApiRecommendationResponse {
+  // AgentCoreのレスポンスは既にAPI仕様書の形式（brand, score, reason）
   return {
-    recommendations: agentResponse.recommendations.map((rec) =>
-      transformRecommendation(rec)
-    ),
-  };
-}
-
-/**
- * 推薦アイテムをAPI仕様書の形式に変換
- * @param recommendation AgentCoreの推薦アイテム
- * @returns API仕様書形式の推薦アイテム
- */
-function transformRecommendation(recommendation: Recommendation): ApiRecommendation {
-  return {
-    brand: recommendation.sake_name,
-    score: recommendation.score,
-    reason: recommendation.explanation,
+    recommendations: agentResponse.recommendations,
   };
 }

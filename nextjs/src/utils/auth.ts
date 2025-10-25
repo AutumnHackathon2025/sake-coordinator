@@ -8,6 +8,24 @@ import * as jose from 'jose';
  * @throws 認証エラー時にエラーをスロー
  */
 export async function verifyAuthToken(request: NextRequest): Promise<string> {
+  // SKIP_AUTHが設定されている場合は認証をスキップ
+  const skipAuth = process.env.SKIP_AUTH === 'true';
+  
+  // デバッグログ
+  console.log('🔍 認証チェック:', {
+    NODE_ENV: process.env.NODE_ENV,
+    SKIP_AUTH: process.env.SKIP_AUTH,
+    skipAuth,
+  });
+  
+  if (skipAuth) {
+    console.log('⚠️  開発モード: 認証をスキップしています (SKIP_AUTH=true)');
+    // テスト用のユーザーIDを返す
+    const devUserId = process.env.DEV_USER_ID || 'test_user_001';
+    console.log(`✅ テストユーザーとして認証: ${devUserId}`);
+    return devUserId;
+  }
+
   // Authorizationヘッダーからトークンを抽出
   const authHeader = request.headers.get('authorization');
   
