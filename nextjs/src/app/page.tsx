@@ -14,6 +14,7 @@ export default function Home() {
       <div className="w-full max-w-2xl space-y-6 pb-32">
         <LinkButton href="/recommendations">おすすめを見る</LinkButton>
         <LinkButton href="/record">記録する</LinkButton>
+        <LinkButton href="/history">履歴を見る</LinkButton>
       </div>
     </div>
   );

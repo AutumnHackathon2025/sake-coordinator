@@ -5,6 +5,8 @@ import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import StarIcon from "@mui/icons-material/Star";
+import HistoryIcon from "@mui/icons-material/History";
 
 export default function RecommendationsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,8 +36,16 @@ export default function RecommendationsPage() {
   ];
 
   const footerItems = [
-    { icon: "🏆", label: "出羽桜" },
-    { icon: "🏆", label: "出羽桜" },
+    { 
+      icon: <StarIcon />, 
+      label: "おすすめ",
+      href: "/recommendations"
+    },
+    { 
+      icon: <HistoryIcon />, 
+      label: "履歴",
+      href: "/history"
+    },
   ];
 
   const handleSubmitMenu = (items: string[]) => {
