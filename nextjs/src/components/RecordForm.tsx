@@ -25,12 +25,11 @@ export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps
     value: Rating;
     label: string;
     emoji: string;
-    color: string;
   }> = [
-    { value: "VERY_GOOD", label: RATING_LABELS["VERY_GOOD"], emoji: "😍", color: "bg-rating-love" },
-    { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊", color: "bg-rating-like" },
-    { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐", color: "bg-rating-dislike" },
-    { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞", color: "bg-rating-hate" },
+    { value: "VERY_GOOD", label: RATING_LABELS["VERY_GOOD"], emoji: "😍" },
+    { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊" },
+    { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐" },
+    { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,7 +116,7 @@ export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps
                 onClick={() => setFormData({ ...formData, rating: rating.value })}
                 className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 text-center transition-all ${
                   formData.rating === rating.value
-                    ? `${rating.color} border-transparent text-white shadow-lg scale-105`
+                    ? "bg-action-record border-transparent text-white shadow-lg scale-105"
                     : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                 }`}
               >
