@@ -8,28 +8,28 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 export default function HowToUsePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg-page">
       <Header showHelpLink={false} />
 
       <main className="pb-32 pt-14">
         <div className="px-6 py-6">
-          <h1 className="mb-4 text-title text-[#2B2D5F]">
+          <h1 className="mb-4 text-title text-primary">
             使い方
           </h1>
           
-          <p className="mb-8 text-body text-gray-600">
+          <p className="mb-8 text-body text-gray-700">
             飲んだお酒を記録するほど、あなた好みのおすすめが表示されます
           </p>
 
           {/* 簡潔な3ステップ */}
           <div className="mb-8 space-y-4">
             {/* ステップ1 */}
-            <div className="rounded-xl bg-white p-5 shadow-sm">
+            <div className="rounded-lg bg-bg-card p-5 shadow-sm border border-border-subtle">
               <div className="mb-3 flex items-center gap-3">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2B2D5F] text-body font-bold text-white">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-body font-bold text-text-light">
                   1
                 </span>
-                <h2 className="text-body-lg font-semibold text-[#2B2D5F]">
+                <h2 className="text-body-lg font-semibold text-primary">
                   メニューを入力
                 </h2>
               </div>
@@ -39,12 +39,12 @@ export default function HowToUsePage() {
             </div>
 
             {/* ステップ2 */}
-            <div className="rounded-xl bg-white p-5 shadow-sm">
+            <div className="rounded-lg bg-bg-card p-5 shadow-sm border border-border-subtle">
               <div className="mb-3 flex items-center gap-3">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2B2D5F] text-body font-bold text-white">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-body font-bold text-text-light">
                   2
                 </span>
-                <h2 className="text-body-lg font-semibold text-[#2B2D5F]">
+                <h2 className="text-body-lg font-semibold text-primary">
                   おすすめを確認
                 </h2>
               </div>
@@ -54,12 +54,12 @@ export default function HowToUsePage() {
             </div>
 
             {/* ステップ3 */}
-            <div className="rounded-xl bg-white p-5 shadow-sm">
+            <div className="rounded-lg bg-bg-card p-5 shadow-sm border border-border-subtle">
               <div className="mb-3 flex items-center gap-3">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2B2D5F] text-body font-bold text-white">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-body font-bold text-text-light">
                   3
                 </span>
-                <h2 className="text-body-lg font-semibold text-[#2B2D5F]">
+                <h2 className="text-body-lg font-semibold text-primary">
                   感想を記録
                 </h2>
               </div>
@@ -70,8 +70,8 @@ export default function HowToUsePage() {
           </div>
 
           {/* ポイント */}
-          <div className="mb-8 rounded-xl border-2 border-[#2B2D5F] bg-gradient-to-r from-purple-50 to-blue-50 p-5">
-            <h2 className="mb-3 text-body-lg font-semibold text-[#2B2D5F]">
+          <div className="mb-8 rounded-lg border-2 border-secondary bg-gradient-to-r from-bg-card to-bg-page p-5">
+            <h2 className="mb-3 text-body-lg font-semibold text-primary">
               💡 ポイント
             </h2>
             <ul className="space-y-2 text-body text-gray-700">
@@ -93,7 +93,7 @@ export default function HowToUsePage() {
           {/* アクションボタン */}
           <Link
             href="/recommendations"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2B2D5F] py-4 text-body-lg font-medium text-white shadow-lg transition-all hover:bg-[#3B3D7F] hover:shadow-xl active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-4 text-body-lg font-medium text-text-light shadow-lg transition-all hover:bg-primary-hover hover:shadow-xl active:scale-[0.98]"
           >
             <span>おすすめを見る</span>
             <ArrowForwardIcon />

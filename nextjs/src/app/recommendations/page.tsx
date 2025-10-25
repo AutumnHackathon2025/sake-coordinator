@@ -21,19 +21,19 @@ export default function RecommendationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg-page">
       <Header />
 
       {/* メインコンテンツ */}
       <main className="pb-32 pt-14">
         <div className="px-6 py-6">
           <div className="mb-6 flex flex-col gap-3">
-            <h2 className="text-title text-[#2B2D5F]">
+            <h2 className="text-title text-primary">
               今夜のおすすめ日本酒
             </h2>
             <button
               onClick={() => setIsMenuModalOpen(true)}
-              className="flex w-fit items-center gap-1 self-end rounded-lg bg-gray-100 px-3 py-2 text-[#2B2D5F] transition-colors hover:bg-gray-200"
+              className="flex w-fit items-center gap-1 self-end rounded-lg bg-bg-subtle px-3 py-2 text-primary transition-colors hover:bg-border-subtle"
               aria-label="メニューを編集"
             >
               <EditIcon className="text-lg" />
@@ -64,18 +64,24 @@ export default function RecommendationsPage() {
                 const ranking = getRankingDisplay(index);
 
                 return (
-                  <div key={`${sake.brand}-${index}`} className="border-b border-gray-300 pb-4">
+                  <div 
+                    key={`${sake.brand}-${index}`} 
+                    className="relative rounded-sm border-2 border-secondary bg-gradient-to-br from-bg-card to-bg-page p-4 shadow-sm"
+                    style={{
+                      boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), 0 2px 4px rgba(107,68,35,0.15)'
+                    }}
+                  >
                     <div className="flex items-start gap-4">
-                      <div className={ranking.isEmoji ? "text-3xl" : "flex h-9 w-9 items-center justify-center text-body-lg font-bold text-gray-600"}>
+                      <div className={ranking.isEmoji ? "text-3xl" : "flex h-9 w-9 items-center justify-center text-body-lg font-bold text-primary"}>
                         {ranking.icon}
                       </div>
                       <div className="flex-1">
                         <div className="mb-2 flex items-start justify-between gap-4">
-                          <h3 className="text-subtitle text-gray-800">
+                          <h3 className="text-subtitle text-primary-dark">
                             {sake.brand}
                           </h3>
-                          <span className="flex-shrink-0 rounded-full bg-[#2B2D5F] px-3 py-1 text-body font-medium text-white">
-                            {sake.score}/5
+                          <span className="flex-shrink-0 rounded bg-primary px-3 py-1 text-body font-medium text-white shadow-sm">
+                            {sake.score.toFixed(1)}
                           </span>
                         </div>
                         <p className="text-body text-gray-700 leading-relaxed">

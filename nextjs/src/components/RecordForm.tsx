@@ -71,12 +71,12 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
 
   return (
     <div className="flex flex-col p-6">
-      <h2 className="mb-4 text-title text-[#2B2D5F]">
+      <h2 className="mb-4 text-title text-primary">
         飲酒記録を追加
       </h2>
       
       {/* モチベーションメッセージ */}
-      <div className="mb-6 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-l-4 border-[#2B2D5F]">
+      <div className="mb-6 rounded-lg bg-gradient-to-r from-bg-card to-bg-page p-4 border-l-4 border-primary">
         <p className="text-body text-gray-700 leading-relaxed">
           💡 記録すればするほど、あなたの好みに合ったおすすめが表示されるようになります
         </p>
@@ -96,7 +96,7 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
             onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
             placeholder="例：獺祭 純米大吟醸"
             maxLength={64}
-            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
+            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-primary focus:outline-none"
           />
           <p className="mt-1 text-body text-gray-500">
             {formData.brand.length}/64文字
@@ -139,7 +139,7 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
             placeholder="例：フルーティで華やかな香り。甘みと酸味のバランスが良く、とても飲みやすい。"
             maxLength={1000}
             rows={6}
-            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
+            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-primary focus:outline-none"
           />
           <p className="mt-1 text-body text-gray-500">
             {formData.impression.length}/1000文字
@@ -160,9 +160,9 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
           <button
             type="submit"
             disabled={!isFormValid || isSaving}
-            className={`flex-1 rounded-lg py-4 text-body-lg font-medium text-white transition-all ${
+            className={`flex-1 rounded-lg py-4 text-body-lg font-medium text-text-light transition-all ${
               isFormValid && !isSaving
-                ? "bg-[#2B2D5F] hover:bg-[#3B3D7F] shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                ? "bg-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >

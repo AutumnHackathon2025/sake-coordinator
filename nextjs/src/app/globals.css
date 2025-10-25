@@ -8,20 +8,20 @@
   --footer-height: 60px;
   --floating-element-gap: 16px;
 
-  /* ========== プライマリカラー（ブランドカラー） ========== */
-  --primary: #2B2D5F;
-  --primary-hover: #3B3D7F;
-  --primary-light: #4B4D8F;
-  --primary-dark: #1B1D4F;
+  /* ========== プライマリカラー（ブランドカラー）- 枡の木の色 ========== */
+  --primary: #6B4423; /* 深い茶色（檜の色） */
+  --primary-hover: #8B6F47; /* 明るい茶色 */
+  --primary-light: #A68968; /* さらに明るい茶色 */
+  --primary-dark: #4A2F1A; /* より深い茶色 */
   
   /* ========== セカンダリカラー ========== */
-  --secondary: #6B6D9F;
-  --secondary-hover: #5B5D8F;
+  --secondary: #8B7355; /* 中間の茶色 */
+  --secondary-hover: #A68968; /* 明るめの茶色 */
   
-  /* ========== 背景色 ========== */
-  --bg-primary: #ffffff;
-  --bg-secondary: #F9FAFB; /* gray-50 */
-  --bg-tertiary: #F3F4F6; /* gray-100 */
+  /* ========== 背景色 - 和紙・木の温かみ ========== */
+  --bg-primary: #FFFEF9; /* 和紙の白 */
+  --bg-secondary: #FFF8E7; /* 薄いベージュ */
+  --bg-tertiary: #F5F1E8; /* ベージュ */
   
   /* ========== テキストカラー ========== */
   --text-primary: #1F2937; /* gray-800 */
@@ -33,6 +33,7 @@
   /* ========== ボーダー・区切り線 ========== */
   --border-primary: #D1D5DB; /* gray-300 */
   --border-secondary: #E5E7EB; /* gray-200 */
+  --border-subtle: #E8DFD0; /* 淡いベージュ */
   
   /* ========== アクセントカラー（情報表示用） ========== */
   /* Blue - 情報 */
@@ -111,6 +112,25 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* カスタムカラー - Tailwindから参照可能 */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  
+  --color-bg-page: var(--bg-secondary);
+  --color-bg-card: var(--bg-primary);
+  --color-bg-subtle: var(--bg-tertiary);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-light: var(--bg-secondary);
+  
+  --color-border: var(--secondary);
+  --color-border-subtle: var(--border-secondary);
 }
 
 @media (prefers-color-scheme: dark) {

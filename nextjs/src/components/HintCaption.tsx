@@ -18,9 +18,9 @@ export function HintCaption({ message }: HintCaptionProps) {
     >
       <button
         onClick={() => setIsVisible(false)}
-        className="w-full rounded-lg bg-[#2B2D5F]/90 backdrop-blur-sm px-4 py-3 shadow-lg border border-white/20 transition-all hover:bg-[#2B2D5F] cursor-pointer"
+        className="w-full rounded-lg bg-primary/90 backdrop-blur-sm px-4 py-3 shadow-lg border border-primary-light/30 transition-all hover:bg-primary cursor-pointer"
       >
-        <p className="text-body text-center text-white font-medium">
+        <p className="text-body text-center text-text-light font-medium">
           {message}
         </p>
       </button>

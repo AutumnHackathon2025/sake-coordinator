@@ -44,7 +44,7 @@ export function MenuEditor({ initialItems = [], onSubmit }: MenuEditorProps) {
   return (
     <div className="flex min-h-[80vh] flex-col p-6">
       {/* タイトル */}
-      <h2 className="mb-6 text-title text-[#2B2D5F]">銘柄</h2>
+      <h2 className="mb-6 text-title text-primary">銘柄</h2>
 
       {/* 銘柄リスト */}
       <div className="flex-1 space-y-3">
@@ -54,12 +54,12 @@ export function MenuEditor({ initialItems = [], onSubmit }: MenuEditorProps) {
               type="text"
               value={item}
               onChange={(e) => handleUpdateItem(index, e.target.value)}
-              className="flex-1 border-2 border-gray-800 bg-white px-6 py-4 text-body-lg text-gray-800 focus:border-[#2B2D5F] focus:outline-none"
+              className="flex-1 border-2 border-secondary bg-white px-6 py-4 text-body-lg text-gray-800 focus:border-primary focus:outline-none"
               placeholder="銘柄名を入力"
             />
             <button
               onClick={() => handleRemoveItem(index)}
-              className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-[#6B6D9F] text-white transition-all hover:bg-[#5B5D8F]"
+              className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-text-light transition-all hover:bg-primary"
               aria-label="削除"
             >
               <span className="text-2xl font-light">−</span>
@@ -72,7 +72,7 @@ export function MenuEditor({ initialItems = [], onSubmit }: MenuEditorProps) {
       <button
         onClick={handleAddItem}
         disabled={menuItems.length >= 10}
-        className="mt-4 w-full bg-[#6B6D9F] py-4 text-body-lg text-white transition-all hover:bg-[#5B5D8F] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 w-full bg-secondary py-4 text-body-lg text-text-light transition-all hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className="mr-2 text-2xl">＋</span>
         銘柄を追加する
@@ -81,7 +81,7 @@ export function MenuEditor({ initialItems = [], onSubmit }: MenuEditorProps) {
       {/* おすすめを探すボタン */}
       <button
         onClick={handleSubmit}
-        className="mt-4 flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-body-lg text-white transition-all hover:bg-[#3B3D7F]"
+        className="mt-4 flex w-full items-center justify-center gap-3 bg-primary py-4 text-body-lg text-text-light transition-all hover:bg-primary-hover"
       >
         <span className="text-2xl">🍶</span>
         <span>おすすめを探す</span>

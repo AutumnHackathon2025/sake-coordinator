@@ -62,13 +62,13 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg-page">
       <Header />
 
       {/* メインコンテンツ */}
       <main className="pb-32 pt-14">
         <div className="px-6 py-6">
-          <h2 className="mb-6 text-title text-[#2B2D5F]">
+          <h2 className="mb-6 text-title text-primary">
             飲酒記録
           </h2>
 
