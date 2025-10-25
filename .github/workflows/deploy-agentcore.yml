@@ -31,7 +31,6 @@ name: Deploy AgentCore to Bedrock Runtime
 on:
   push:
     branches: [ main ]
-    paths: [ 'agentcore/**' ]
 
 env:
   AWS_REGION: ap-northeast-1
