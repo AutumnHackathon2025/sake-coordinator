@@ -8,7 +8,8 @@ env:
   AWS_REGION: ap-northeast-1
   ECR_REPOSITORY: sake-recommendation-prod-nextjs
   ECS_CLUSTER: sake-recommendation-prod-cluster
-  ECS_SERVICE: sake-recommendation-prod-nextjs
+  ECS_SERVICE: sake-recommendation-prod-nextjs-service
+  ECS_TASK_DEFINITION_NAME: sake-recommendation-prod-nextjs
   WORKING_DIRECTORY: nextjs
 
 jobs:
@@ -246,15 +247,13 @@ jobs:
         
         # 現在のタスク定義を取得（詳細なエラーハンドリング付き）
         echo "📋 Retrieving current task definition..."
-        echo "🎯 Task definition name: $ECS_SERVICE"
+        echo "🎯 Task definition name: $ECS_TASK_DEFINITION_NAME"
         echo "🌏 AWS region: $AWS_REGION"
         
-        if ! TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $ECS_SERVICE --region $AWS_REGION 2>task_def_error.log); then
-          echo "❌ Failed to retrieve task definition for $ECS_SERVICE"
+        if ! TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION_NAME --region $AWS_REGION 2>task_def_error.log); then
+          echo "❌ Failed to retrieve task definition for $ECS_TASK_DEFINITION_NAME"
           echo "🔍 Task definition retrieval failure analysis:"
-          echo "   - Verify task definition exists: $ECS_SERVICE"
-          echo "   - Check ECS permissions: ecs:DescribeTaskDefinition"
-          echo "   - Verify AWS region is correct: $AWS_REGION"
+          echo "   - Verify task definition exists: $ECS_TASK_DEFINITION_NAME"
           
           if [ -f task_def_error.log ]; then
             echo "📋 AWS CLI error details:"
@@ -300,7 +299,7 @@ jobs:
         echo "🔄 Updating ECS service..."
         echo "🎯 Cluster: $ECS_CLUSTER"
         echo "🔧 Service: $ECS_SERVICE"
-        echo "📋 New task definition: $ECS_SERVICE:$NEW_REVISION"
+        echo "📋 New task definition: $ECS_TASK_DEFINITION_NAME:$NEW_REVISION"
         
         # サービスの現在の状態を確認
         echo "🔍 Checking current service status..."
@@ -330,7 +329,7 @@ jobs:
         echo "   - Desired tasks: $CURRENT_DESIRED"
         
         # サービス更新の実行
-        if ! UPDATE_RESULT=$(aws ecs update-service --region $AWS_REGION --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $ECS_SERVICE:$NEW_REVISION 2>update_error.log); then
+        if ! UPDATE_RESULT=$(aws ecs update-service --region $AWS_REGION --cluster $ECS_CLUSTER --service $ECS_SERVICE --task-definition $ECS_TASK_DEFINITION_NAME:$NEW_REVISION 2>update_error.log); then
           echo "❌ Failed to update ECS service"
           echo "🔍 Service update failure analysis:"
           echo "   - Check ECS permissions: ecs:UpdateService"
