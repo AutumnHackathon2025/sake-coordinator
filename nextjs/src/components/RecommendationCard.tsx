@@ -17,12 +17,12 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
         </div>
 
         {/* 四隅の組み込み装飾 */}
-        <div className="masu-corner pointer-events-none absolute inset-0" />
-        <div className="masu-corner-bottom pointer-events-none absolute inset-0" />
         <div className="masu-edge-left pointer-events-none absolute top-8 left-0 inset-0" />
         <div className="masu-edge-left pointer-events-none absolute top-22 left-0 inset-0" />
         <div className="masu-edge-right pointer-events-none absolute top-16 right-0 inset-0" />
         <div className="masu-edge-right pointer-events-none absolute top-32 right-0 inset-0" />
+        <div className="masu-corner pointer-events-none absolute inset-0" />
+        <div className="masu-corner-bottom pointer-events-none absolute inset-0" />
 
         {/* コンテンツ */}
         <div className="relative z-10 pl-8">
