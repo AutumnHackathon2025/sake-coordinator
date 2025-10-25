@@ -53,28 +53,39 @@ export default function RecommendationsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {recommendations.map((sake, index) => (
-                <div key={`${sake.brand}-${index}`} className="border-b border-gray-300 pb-4">
-                  <div className="flex items-start gap-4">
-                    <div className="text-3xl">
-                      {sake.score === 5 ? "🏆" : sake.score === 4 ? "⭐" : "✨"}
-                    </div>
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-start justify-between gap-4">
-                        <h3 className="text-subtitle text-gray-800">
-                          {sake.brand}
-                        </h3>
-                        <span className="flex-shrink-0 rounded-full bg-[#2B2D5F] px-3 py-1 text-body font-medium text-white">
-                          {sake.score}/5
-                        </span>
+              {recommendations.map((sake, index) => {
+                const getRankingDisplay = (rank: number) => {
+                  if (rank === 0) return { icon: "🥇", isEmoji: true };
+                  if (rank === 1) return { icon: "🥈", isEmoji: true };
+                  if (rank === 2) return { icon: "🥉", isEmoji: true };
+                  return { icon: (rank + 1).toString(), isEmoji: false };
+                };
+
+                const ranking = getRankingDisplay(index);
+
+                return (
+                  <div key={`${sake.brand}-${index}`} className="border-b border-gray-300 pb-4">
+                    <div className="flex items-start gap-4">
+                      <div className={ranking.isEmoji ? "text-3xl" : "flex h-9 w-9 items-center justify-center text-body-lg font-bold text-gray-600"}>
+                        {ranking.icon}
                       </div>
-                      <p className="text-body text-gray-700 leading-relaxed">
-                        {sake.reason}
-                      </p>
+                      <div className="flex-1">
+                        <div className="mb-2 flex items-start justify-between gap-4">
+                          <h3 className="text-subtitle text-gray-800">
+                            {sake.brand}
+                          </h3>
+                          <span className="flex-shrink-0 rounded-full bg-[#2B2D5F] px-3 py-1 text-body font-medium text-white">
+                            {sake.score}/5
+                          </span>
+                        </div>
+                        <p className="text-body text-gray-700 leading-relaxed">
+                          {sake.reason}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

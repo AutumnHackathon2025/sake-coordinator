@@ -30,7 +30,7 @@ export function useRecommendations(initialMenu: string[]) {
       // const data = await response.json();
       // setRecommendations(data.recommendations);
 
-      // モックデータを使用
+      // モックデータを使用（スコア順でソート済み）
       await new Promise((resolve) => setTimeout(resolve, 500)); // API呼び出しを模擬
       const mockRecommendations = generateMockRecommendations(menu);
       setRecommendations(mockRecommendations);
