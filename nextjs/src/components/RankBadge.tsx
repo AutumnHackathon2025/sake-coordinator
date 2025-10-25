@@ -45,10 +45,10 @@ export function RankBadge({ rank }: RankBadgeProps) {
 
   if (style.isMedal) {
     return (
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex flex-col items-center">
         {/* メダル本体 */}
         <div
-          className={`relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${style.bgGradient} border-3 ${style.borderColor} shadow-lg`}
+          className={`relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${style.bgGradient} border-3 ${style.borderColor} shadow-lg z-10`}
           style={{
             boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.5)",
           }}
@@ -62,12 +62,26 @@ export function RankBadge({ rank }: RankBadgeProps) {
           </span>
         </div>
 
-        {/* リボン部分（上部） */}
-        <div className="absolute -top-1 left-1/2 h-6 w-2 -translate-x-1/2">
+        {/* リボン部分（下部・2本） */}
+        <div className="absolute top-10 flex gap-0.5">
+          {/* 左のリボン（右に傾ける） */}
           <div
-            className={`h-full w-full bg-gradient-to-b ${style.bgGradient} ${style.borderColor} border-l border-r`}
+            className="h-8 w-2.5 bg-gradient-to-b from-red-600 via-red-600 to-red-700 shadow-sm"
             style={{
-              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
+              clipPath: "polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)",
+              boxShadow: "inset -1px 0 2px rgba(0, 0, 0, 0.3), 0 2px 3px rgba(0, 0, 0, 0.2)",
+              transform: "rotate(12deg)",
+              transformOrigin: "top center",
+            }}
+          />
+          {/* 右のリボン（左に傾ける） */}
+          <div
+            className="h-8 w-2.5 bg-gradient-to-b from-red-600 via-red-600 to-red-700 shadow-sm"
+            style={{
+              clipPath: "polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)",
+              boxShadow: "inset 1px 0 2px rgba(0, 0, 0, 0.3), 0 2px 3px rgba(0, 0, 0, 0.2)",
+              transform: "rotate(-12deg)",
+              transformOrigin: "top center",
             }}
           />
         </div>
