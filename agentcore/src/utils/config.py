@@ -56,8 +56,8 @@ class Config(BaseModel):
         description="BedrockモデルID（Claude 3.5 Sonnet v1）"
     )
     bedrock_region: str = Field(
-        default=os.getenv("BEDROCK_REGION", "us-east-1"),
-        description="Bedrockリージョン"
+        default=os.getenv("BEDROCK_REGION", "ap-northeast-1"),
+        description="Bedrockリージョン（デフォルト: ap-northeast-1）"
     )
     bedrock_max_tokens: int = Field(
         default=int(os.getenv("BEDROCK_MAX_TOKENS", "2000")),

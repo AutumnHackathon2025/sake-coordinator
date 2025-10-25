@@ -194,11 +194,18 @@ class BedrockService:
                 error_code = e.response.get("Error", {}).get("Code", "Unknown")
                 error_message = e.response.get("Error", {}).get("Message", str(e))
                 
+                # エラーメッセージに応じた追加情報を提供
+                additional_info = ""
+                if "AccessDeniedException" in error_code:
+                    additional_info = " (ヒント: AWS SCPでモデルへのアクセスが拒否されています。許可されているモデルを使用してください)"
+                elif "ValidationException" in error_code and "inference profile" in error_message:
+                    additional_info = " (ヒント: Novaモデルは inference profile ARN を使用してください。例: us.amazon.nova-lite-v1:0)"
+                
                 logger.warning(
                     "Bedrock呼び出しでClientErrorが発生",
                     model_id=self.model_id,
                     error_code=error_code,
-                    error_message=error_message,
+                    error_message=error_message + additional_info,
                     attempt=attempt + 1,
                     max_attempts=self.MAX_RETRIES + 1,
                 )

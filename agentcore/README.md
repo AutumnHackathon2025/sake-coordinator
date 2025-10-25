@@ -108,6 +108,25 @@ cp .env.example .env
 # .envファイルを編集して必要な環境変数を設定
 ```
 
+**重要: Bedrockモデルの設定**
+
+使用するBedrockモデルは、組織のAWS Service Control Policy (SCP)で許可されているものを選択してください。
+
+推奨モデル:
+- `anthropic.claude-3-5-sonnet-20240620-v1:0` (Claude 3.5 Sonnet - デフォルト)
+- `anthropic.claude-3-sonnet-20240229-v1:0` (Claude 3 Sonnet)
+
+Nova系モデル（inference profile ARN - リージョン別）:
+- **us-east-1**: `us.amazon.nova-lite-v1:0`, `us.amazon.nova-pro-v1:0`
+- **ap-northeast-1**: `ap-northeast-1.amazon.nova-lite-v1:0`, `ap-northeast-1.amazon.nova-pro-v1:0`
+- **eu-west-1**: `eu.amazon.nova-lite-v1:0`, `eu.amazon.nova-pro-v1:0`
+
+**注意**: 
+- Nova系モデルを使用する場合は、リージョンに応じた inference profile ARN を指定してください
+- 直接モデルID（例: `amazon.nova-pro-v1:0`）を使用するとエラーになります
+- SCPで拒否されているモデルは使用できません
+- inference profile ARNの形式: `<region-prefix>.amazon.nova-<model>-v1:0`
+
 ### 2. 開発環境の起動
 
 ```bash
