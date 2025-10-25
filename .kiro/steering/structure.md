@@ -1,144 +1,89 @@
-# プロジェクト構造
+---
+inclusion: always
+---
 
-## 組織化の原則
+# Project Structure & Architecture Guidelines
 
-- Next.jsフルスタック構成（フロントエンド + API Routes）
-- 機能別にファイルを整理（API エンドポイント別）
-- 共通ロジックは再利用可能なモジュールとして分離
-- インフラコードとアプリケーションコードを明確に分離
+## Core Architecture
 
-## 推奨フォルダ構造
+This is a Japanese sake recommendation service with Next.js fullstack app + Amazon Bedrock AgentCore AI agent.
+
+**CRITICAL**: Always reference `docs/api-doc.md` and `docs/product.md` before implementing any features.
+
+## Current Project Structure
 
 ```text
-.
-├── .kiro/                     # Kiro設定とステアリング
-│   └── steering/             # AIアシスタントガイダンス文書
-├── docs/                     # プロジェクトドキュメント
-│   ├── api-doc.md           # REST API仕様書（必須参照）
-│   ├── product.md           # プロダクト機能仕様書（必須参照）
-│   └── agent-core.md        # Amazon Bedrock AgentCore技術資料
-├── app/                     # Next.jsフルスタックアプリケーション
-│   ├── src/
-│   │   ├── app/            # App Router（Next.js 13+）
-│   │   │   ├── api/       # API Routes（バックエンド）
-│   │   │   │   ├── records/    # 飲酒記録関連API
-│   │   │   │   ├── uploads/    # ファイルアップロード関連
-│   │   │   │   └── ocr/        # OCR処理関連
-│   │   │   ├── (pages)/   # フロントエンドページ
-│   │   │   └── globals.css
-│   │   ├── components/     # Reactコンポーネント
-│   │   ├── hooks/          # カスタムフック
-│   │   ├── lib/            # ユーティリティライブラリ
-│   │   ├── services/       # ビジネスロジック
-│   │   ├── stores/         # 状態管理（Zustand）
-│   │   ├── types/          # TypeScript型定義
-│   │   └── utils/          # 共通ユーティリティ
-│   ├── public/             # 静的ファイル
-│   ├── Dockerfile          # ECS用Dockerファイル
-│   ├── package.json
-│   └── next.config.js
-├── ai-agent/               # Amazon Bedrock AgentCore (Python + uv + Strands)
-│   ├── src/
-│   │   ├── agent.py       # メインエージェントロジック（Strands使用）
-│   │   ├── agents/        # 個別エージェント実装
-│   │   ├── tools/         # カスタムツール実装
-│   │   ├── memory/        # メモリ戦略設定
-│   │   └── utils/         # ユーティリティ
-│   ├── tests/             # Pythonテスト
-│   ├── Dockerfile         # AgentCore Runtime用
-│   ├── pyproject.toml     # uv設定ファイル
-│   ├── uv.lock           # uvロックファイル
-│   └── .bedrock_agentcore.yaml  # AgentCore設定
-├── infrastructure/         # Terraformインフラコード（prod環境のみ）
-│   ├── modules/           # 再利用可能なTerraformモジュール
-│   │   ├── ecs/          # ECS関連リソース
-│   │   ├── agentcore/    # AgentCore関連リソース
-│   │   ├── storage/      # S3, DynamoDB関連
-│   │   └── cognito/      # Cognito関連リソース
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
-├── tests/                  # テストファイル
-│   ├── app/               # Next.jsアプリテスト
-│   ├── ai-agent/          # AIエージェントテスト
-│   └── e2e/               # E2Eテスト
-└── scripts/               # デプロイ・ビルドスクリプト
+nextjs/                    # Next.js fullstack application (current workspace)
+├── src/app/              # App Router (Next.js 13+)
+│   ├── api/             # API Routes (backend)
+│   │   ├── records/     # Drinking records API
+│   │   ├── uploads/     # File upload API  
+│   │   └── ocr/         # OCR processing API
+│   ├── (pages)/         # Frontend pages
+│   ├── components/      # React components
+│   ├── hooks/           # Custom hooks
+│   ├── lib/             # Utility libraries
+│   ├── services/        # Business logic
+│   ├── stores/          # State management (Zustand)
+│   ├── types/           # TypeScript definitions
+│   └── utils/           # Common utilities
+├── public/              # Static files
+└── package.json
 ```
 
-## 命名規則
+**Future Structure** (when expanding):
+- `ai-agent/` - Amazon Bedrock AgentCore (Python + uv + Strands)
+- `infrastructure/` - Terraform (prod only)
+- `docs/` - API specs and product requirements
 
-### ファイル・フォルダ
+## Naming Conventions
 
-- API Routes: `kebab-case` (例: `route.ts`, `create-record/route.ts`)
-- ディレクトリ: `kebab-case` (例: `drinking-records/`)
-- 設定ファイル: `kebab-case` (例: `next.config.js`)
+- **Files/Folders**: `kebab-case` (`route.ts`, `drinking-records/`)
+- **Variables/Functions**: `camelCase` (`getUserId`, `drinkingRecord`)
+- **Constants**: `UPPER_SNAKE_CASE` (`MAX_FILE_SIZE`, `API_VERSION`)
+- **Types/Classes**: `PascalCase` (`DrinkingRecord`, `ApiResponse`)
+- **Environment Variables**: `UPPER_SNAKE_CASE` (`COGNITO_USER_POOL_ID`)
 
-### コード
+## Implementation Guidelines
 
-- 変数・関数: `camelCase` (例: `getUserId`, `drinkingRecord`)
-- 定数: `UPPER_SNAKE_CASE` (例: `MAX_FILE_SIZE`, `API_VERSION`)
-- クラス・型: `PascalCase` (例: `DrinkingRecord`, `ApiResponse`)
-- 環境変数: `UPPER_SNAKE_CASE` (例: `COGNITO_USER_POOL_ID`)
+### API Routes Structure
+Create API endpoints following this pattern:
+- `POST /api/records` → `src/app/api/records/route.ts`
+- `GET /api/records` → `src/app/api/records/route.ts`
+- `PUT /api/records/[id]` → `src/app/api/records/[id]/route.ts`
+- `DELETE /api/records/[id]` → `src/app/api/records/[id]/route.ts`
+- `POST /api/uploads/presigned-url` → `src/app/api/uploads/presigned-url/route.ts`
+- `POST /api/ocr/menu` → `src/app/api/ocr/menu/route.ts`
 
-## 各層の実装方針
+### Frontend Architecture
+- **App Router**: Use Next.js 13+ App Router exclusively
+- **Components**: Atomic Design pattern (atoms/molecules/organisms)
+- **State Management**: React Query (server state) + Zustand (client state)
+- **Authentication**: Amazon Cognito + JWT validation
+- **Styling**: TailwindCSS
 
-### Next.jsフルスタック（ECS）
+### Required Utility Modules
+- `src/utils/auth.ts`: Cognito JWT validation
+- `src/utils/response.ts`: Unified API response format
+- `src/utils/validation.ts`: Input validation
+- `src/types/drinking-record.ts`: Core data models
 
-#### フロントエンド
+## Error Handling Standards
 
-- **App Router**: Next.js 13+のApp Routerを使用
-- **コンポーネント設計**: Atomic Designパターンを採用
-- **状態管理**: サーバー状態はReact Query、クライアント状態はZustand
-- **認証**: Amazon Cognito + JWT
-- **API通信**: 内部API Routes呼び出し
+**MANDATORY**: All API responses must use this exact format:
+```typescript
+// Success response
+{ data: T }
 
-#### バックエンド（API Routes）
+// Error response  
+{ error: { code: string, message: string } }
+```
 
-各APIエンドポイントはNext.js API Routesとして実装：
-
-**飲酒記録関連**
-
-- `POST /api/records` → `app/src/app/api/records/route.ts`
-- `GET /api/records` → `app/src/app/api/records/route.ts`
-- `PUT /api/records/[id]` → `app/src/app/api/records/[id]/route.ts`
-- `DELETE /api/records/[id]` → `app/src/app/api/records/[id]/route.ts`
-
-**ファイルアップロード関連**
-
-- `POST /api/uploads/presigned-url` → `app/src/app/api/uploads/presigned-url/route.ts`
-
-**OCR関連**
-
-- `POST /api/ocr/menu` → `app/src/app/api/ocr/menu/route.ts`
-
-**推薦関連（AgentCore連携）**
-
-- `POST /agent/recommend` → Amazon Bedrock AgentCore Runtime
-
-### AI Agent（Amazon Bedrock AgentCore + Strands）
-
-- **推薦エンジン**: `POST /agent/recommend`エンドポイント
-- **フレームワーク**: Strands（マルチエージェントフレームワーク）
-- **パッケージ管理**: uv（高速Pythonパッケージマネージャー）
-- **AgentCore Runtime**: Pythonベースのエージェント実装
-- **AgentCore Memory**: ユーザーの飲酒履歴を長期記憶として活用
-- **AgentCore Gateway**: Next.js API Routesとの連携
-- **エージェント構成**: 複数の専門エージェントによる協調処理
-
-### 共通モジュール
-
-- `app/src/utils/auth.ts`: Cognito JWT検証
-- `app/src/utils/response.ts`: 統一レスポンス形式
-- `app/src/utils/validation.ts`: 入力値検証
-- `app/src/types/drinking-record.ts`: データモデル定義
-
-## エラーハンドリング
-
-- 統一されたエラーレスポンス形式を使用（`{error: {code: string, message: string}}`）
-- 日本語エラーメッセージを提供
-- 適切なHTTPステータスコードの使用（400, 401, 404, 500等）
-- ログ出力は構造化ログ（JSON形式）を使用
-- エラーコードは意味のある定数として定義（VALIDATION_ERROR等）
+**Requirements**:
+- Japanese error messages for user-facing errors
+- Proper HTTP status codes (400, 401, 404, 500)
+- Structured JSON logging
+- Meaningful error codes as constants (e.g., `VALIDATION_ERROR`, `UNAUTHORIZED`)
 
 ## テスト構成
 
