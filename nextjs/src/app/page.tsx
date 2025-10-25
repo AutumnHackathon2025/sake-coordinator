@@ -11,7 +11,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
         {/* アプリ名 */}
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-display-lg text-text-light font-light tracking-wider">
+          <h1 className="mb-2 text-display-lg text-text-light font-light tracking-wider font-label">
             御酒印帳
           </h1>
           <div className="h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-text-light to-transparent opacity-50"></div>

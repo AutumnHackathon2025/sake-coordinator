@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Zen_Kurenaido, Yuji_Syuku } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const zenKurenaido = Zen_Kurenaido({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-zen-kurenaido",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const yujiSyuku = Yuji_Syuku({
+  weight: "400",
   subsets: ["latin"],
+  variable: "--font-yuji-syuku",
 });
 
 export const metadata: Metadata = {
@@ -23,9 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${zenKurenaido.variable} ${yujiSyuku.variable} antialiased`}
       >
         {children}
       </body>

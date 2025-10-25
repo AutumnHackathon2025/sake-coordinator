@@ -29,14 +29,14 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
           {/* コンテンツ */}
           <div className="relative z-10 pl-8">
             <div className="mb-2 flex items-start justify-between gap-4">
-              <h3 className="text-subtitle text-primary-dark">
+              <h3 className="text-subtitle text-primary-dark font-label">
                 {sake.brand}
               </h3>
               <span className="flex-shrink-0 rounded bg-primary px-3 py-1 text-body font-medium text-white shadow-sm">
                 {sake.score.toFixed(1)}
               </span>
             </div>
-            <p className="text-body text-gray-700 leading-relaxed">
+            <p className="text-body leading-relaxed font-zen-kurenaido">
               {sake.reason}
             </p>
           </div>

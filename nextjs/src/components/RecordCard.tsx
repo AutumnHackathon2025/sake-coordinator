@@ -25,7 +25,7 @@ export function RecordCard({ record }: RecordCardProps) {
       <div className="relative z-10">
         {/* ヘッダー */}
         <div className="mb-4 flex items-start justify-between">
-          <h3 className="text-subtitle text-primary font-semibold">
+          <h3 className="text-subtitle text-primary font-semibold font-label">
             {record.brand}
           </h3>
           <span
@@ -38,12 +38,12 @@ export function RecordCard({ record }: RecordCardProps) {
         </div>
 
         {/* 感想 */}
-        <p className="mb-4 text-body text-gray-800 leading-relaxed">
+        <p className="mb-4 text-body text-gray-800 leading-relaxed font-zen-kurenaido">
           {record.impression}
         </p>
 
         {/* 日付 */}
-        <p className="text-body text-gray-600">
+        <p className="text-body text-gray-600 font-zen-kurenaido">
           {new Date(record.createdAt).toLocaleDateString("ja-JP", {
             year: "numeric",
             month: "long",

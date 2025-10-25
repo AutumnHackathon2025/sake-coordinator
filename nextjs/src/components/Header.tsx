@@ -19,7 +19,7 @@ export function Header({
     <header className="fixed left-0 right-0 top-0 z-40 bg-primary py-3">
       <div className="relative flex items-center justify-center px-4">
         {enableHomeLink ? (
-          <Link href="/" className="text-body-lg font-medium text-text-light transition-opacity hover:opacity-80">
+          <Link href="/" className="text-body-lg font-medium text-text-light transition-opacity hover:opacity-80 font-label">
             {title}
           </Link>
         ) : (
