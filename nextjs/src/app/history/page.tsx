@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { RecordForm } from "@/components/RecordForm";
 import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
-import { DrinkingRecord, Rating, RATING_LABELS } from "@/types/api";
-import { generateMockRecords } from "@/lib/mockData";
+import { Rating, RATING_LABELS } from "@/types/api";
+import { useRecords } from "./useRecords";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 
@@ -16,37 +16,7 @@ export default function HistoryPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<string[]>([]);
-  const [records, setRecords] = useState<DrinkingRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // 初回読み込み時にデータを取得
-  useEffect(() => {
-    fetchRecords();
-  }, []);
-
-  const fetchRecords = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // const response = await fetch('/api/records', {
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // });
-      // const data = await response.json();
-      // setRecords(data);
-
-      // モックデータを使用
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const mockRecords = generateMockRecords();
-      setRecords(mockRecords);
-    } catch (error) {
-      console.error("Failed to fetch records:", error);
-      setRecords([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { records, isLoading, addRecord } = useRecords();
 
   const getRatingColor = (rating: Rating) => {
     switch (rating) {
@@ -82,29 +52,7 @@ export default function HistoryPage() {
     rating: Rating;
   }) => {
     try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // const response = await fetch('/api/records', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify(data)
-      // });
-      // const newRecord = await response.json();
-
-      // モックデータとして新しいレコードを追加
-      const newRecord: DrinkingRecord = {
-        id: `rec-${Date.now()}`,
-        userId: "user-mock-001",
-        brand: data.brand,
-        impression: data.impression,
-        rating: data.rating,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setRecords([newRecord, ...records]);
+      await addRecord(data);
       alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
       setIsRecordModalOpen(false);
     } catch (error) {

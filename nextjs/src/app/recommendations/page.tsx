@@ -1,52 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HintCaption } from "@/components/HintCaption";
-import { RecommendationResult } from "@/types/api";
-import { generateMockRecommendations, getDefaultMenu } from "@/lib/mockData";
+import { useRecommendations } from "./useRecommendations";
+import { getDefaultMenu } from "@/lib/mockData";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 import EditIcon from "@mui/icons-material/Edit";
 
 export default function RecommendationsPage() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
-  const [menuItems, setMenuItems] = useState<string[]>(getDefaultMenu());
-  const [recommendations, setRecommendations] = useState<RecommendationResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // メニューが変更されたら推薦を再取得（モック）
-  useEffect(() => {
-    fetchRecommendations(menuItems);
-  }, []);
-
-  const fetchRecommendations = async (menu: string[]) => {
-    setIsLoading(true);
-    try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // const response = await fetch('/agent/recommend', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ menu })
-      // });
-      // const data = await response.json();
-      // setRecommendations(data.recommendations);
-
-      // モックデータを使用
-      await new Promise((resolve) => setTimeout(resolve, 500)); // API呼び出しを模擬
-      const mockRecommendations = generateMockRecommendations(menu);
-      setRecommendations(mockRecommendations);
-    } catch (error) {
-      console.error("Failed to fetch recommendations:", error);
-      // エラー時は空配列
-      setRecommendations([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { menuItems, recommendations, isLoading, updateMenu } = useRecommendations(getDefaultMenu());
 
   const footerItems = [
     { 
@@ -62,10 +30,8 @@ export default function RecommendationsPage() {
   ];
 
   const handleSubmitMenu = (items: string[]) => {
-    setMenuItems(items);
+    updateMenu(items);
     setIsMenuModalOpen(false);
-    // メニュー更新後、推薦を再取得
-    fetchRecommendations(items);
   };
 
   return (

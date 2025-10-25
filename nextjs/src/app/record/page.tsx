@@ -1,21 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Rating, RATING_LABELS } from "@/types/api";
+import { useRecordForm } from "./useRecordForm";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 
 export default function RecordPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    brand: "",
-    impression: "",
-    rating: "" as "" | Rating,
-  });
-  const [isSaving, setIsSaving] = useState(false);
+  const { formData, isSaving, isFormValid, updateField, submitForm } = useRecordForm();
 
   const ratings: Array<{
     value: Rating;
@@ -44,24 +39,8 @@ export default function RecordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // バリデーション
-    if (!formData.brand.trim()) {
-      alert("銘柄を入力してください");
-      return;
-    }
-    if (!formData.impression.trim()) {
-      alert("味の感想を入力してください");
-      return;
-    }
-    if (!formData.rating) {
-      alert("評価を選択してください");
-      return;
-    }
 
-    setIsSaving(true);
-    
-    try {
+    const success = await submitForm(async (data) => {
       // TODO: 実際のAPI呼び出しに置き換え
       // const response = await fetch('/api/records', {
       //   method: 'POST',
@@ -69,23 +48,20 @@ export default function RecordPage() {
       //     'Content-Type': 'application/json',
       //     'Authorization': `Bearer ${token}`
       //   },
-      //   body: JSON.stringify(formData)
+      //   body: JSON.stringify(data)
       // });
 
       await new Promise(resolve => setTimeout(resolve, 800));
-      
-      console.log("記録データ:", formData);
+      console.log("記録データ:", data);
+    });
+
+    if (success) {
       alert("記録を保存しました！\nあなたの好みがより正確に分析されます。");
       router.push("/history");
-    } catch (error) {
-      console.error("Failed to save record:", error);
+    } else {
       alert("記録の保存に失敗しました。もう一度お試しください。");
-    } finally {
-      setIsSaving(false);
     }
   };
-
-  const isFormValid = formData.brand.trim() && formData.impression.trim() && formData.rating;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,7 +92,7 @@ export default function RecordPage() {
                 id="brand"
                 type="text"
                 value={formData.brand}
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                onChange={(e) => updateField("brand", e.target.value)}
                 placeholder="例：獺祭 純米大吟醸"
                 maxLength={64}
                 className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
@@ -136,7 +112,7 @@ export default function RecordPage() {
                   <button
                     key={rating.value}
                     type="button"
-                    onClick={() => setFormData({ ...formData, rating: rating.value })}
+                    onClick={() => updateField("rating", rating.value)}
                     className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 text-center transition-all ${
                       formData.rating === rating.value
                         ? `${rating.color} border-transparent text-white shadow-lg scale-105`
@@ -158,7 +134,7 @@ export default function RecordPage() {
               <textarea
                 id="impression"
                 value={formData.impression}
-                onChange={(e) => setFormData({ ...formData, impression: e.target.value })}
+                onChange={(e) => updateField("impression", e.target.value)}
                 placeholder="例：フルーティで華やかな香り。甘みと酸味のバランスが良く、とても飲みやすい。"
                 maxLength={1000}
                 rows={6}
