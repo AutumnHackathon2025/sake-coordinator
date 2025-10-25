@@ -17,32 +17,32 @@ export async function GET() {
     };
 
     // DynamoDB接続チェック（オプション）
-    let dbStatus = "unknown";
-    try {
-      // 設定ファイルから設定を取得
-      const { awsConfig, dynamodbConfig } = await import("@/lib/config");
+    // let dbStatus = "unknown";
+    // try {
+    //   // 設定ファイルから設定を取得
+    //   const { awsConfig, dynamodbConfig } = await import("@/lib/config");
       
-      // DynamoDBクライアントが利用可能かチェック
-      if (awsConfig.region && dynamodbConfig.tableName) {
-        const { dynamodbClient } = await import("@/lib/dynamodb");
-        const { ListTablesCommand } = await import("@aws-sdk/client-dynamodb");
+    //   // DynamoDBクライアントが利用可能かチェック
+    //   if (awsConfig.region && dynamodbConfig.tableName) {
+    //     const { dynamodbClient } = await import("@/lib/dynamodb");
+    //     const { ListTablesCommand } = await import("@aws-sdk/client-dynamodb");
         
-        // 簡単な接続テスト
-        await dynamodbClient.send(new ListTablesCommand({}));
-        dbStatus = "connected";
-      } else {
-        dbStatus = "not_configured";
-      }
-    } catch (error) {
-      console.warn("DynamoDB health check failed:", error);
-      dbStatus = "disconnected";
-    }
+    //     // 簡単な接続テスト
+    //     await dynamodbClient.send(new ListTablesCommand({}));
+    //     dbStatus = "connected";
+    //   } else {
+    //     dbStatus = "not_configured";
+    //   }
+    // } catch (error) {
+    //   console.warn("DynamoDB health check failed:", error);
+    //   dbStatus = "disconnected";
+    // }
 
     const response = {
       ...healthStatus,
-      dependencies: {
-        database: dbStatus
-      }
+      // dependencies: {
+      //   database: dbStatus
+      // }
     };
 
     return NextResponse.json(response, { status: 200 });
