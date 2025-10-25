@@ -3,6 +3,103 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* ========== プライマリカラー（ブランドカラー） ========== */
+  --primary: #2B2D5F;
+  --primary-hover: #3B3D7F;
+  --primary-light: #4B4D8F;
+  --primary-dark: #1B1D4F;
+  
+  /* ========== セカンダリカラー ========== */
+  --secondary: #6B6D9F;
+  --secondary-hover: #5B5D8F;
+  
+  /* ========== 背景色 ========== */
+  --bg-primary: #ffffff;
+  --bg-secondary: #F9FAFB; /* gray-50 */
+  --bg-tertiary: #F3F4F6; /* gray-100 */
+  
+  /* ========== テキストカラー ========== */
+  --text-primary: #1F2937; /* gray-800 */
+  --text-secondary: #374151; /* gray-700 */
+  --text-tertiary: #4B5563; /* gray-600 */
+  --text-quaternary: #6B7280; /* gray-500 */
+  --text-disabled: #9CA3AF; /* gray-400 */
+  
+  /* ========== ボーダー・区切り線 ========== */
+  --border-primary: #D1D5DB; /* gray-300 */
+  --border-secondary: #E5E7EB; /* gray-200 */
+  
+  /* ========== アクセントカラー（情報表示用） ========== */
+  /* Blue - 情報 */
+  --accent-blue: #3B82F6;
+  --accent-blue-bg: #EFF6FF; /* blue-50 */
+  --accent-blue-text: #1E3A8A; /* blue-900 */
+  
+  /* Indigo - 情報（プライマリに近い） */
+  --accent-indigo: #6366F1;
+  --accent-indigo-bg: #EEF2FF; /* indigo-50 */
+  --accent-indigo-text: #312E81; /* indigo-900 */
+  
+  /* Amber - 注意・ヒント */
+  --accent-amber: #F59E0B;
+  --accent-amber-bg: #FFFBEB; /* amber-50 */
+  --accent-amber-text: #78350F; /* amber-900 */
+  
+  /* Orange - 警告 */
+  --accent-orange: #F97316;
+  --accent-orange-bg: #FFF7ED; /* orange-50 */
+  --accent-orange-text: #7C2D12; /* orange-900 */
+  
+  /* Purple - 特別な機能 */
+  --accent-purple: #A855F7;
+  --accent-purple-bg: #FAF5FF; /* purple-50 */
+  --accent-purple-text: #581C87; /* purple-900 */
+  
+  /* ========== ステータスカラー ========== */
+  /* Success - 成功 */
+  --status-success: #10B981;
+  --status-success-bg: #ECFDF5; /* green-50 */
+  --status-success-text: #065F46; /* green-900 */
+  
+  /* Error - エラー */
+  --status-error: #EF4444;
+  --status-error-bg: #FEF2F2; /* red-50 */
+  --status-error-text: #7F1D1D; /* red-900 */
+  
+  /* Warning - 警告 */
+  --status-warning: #F59E0B;
+  --status-warning-bg: #FFFBEB; /* yellow-50 */
+  --status-warning-text: #78350F; /* yellow-900 */
+  
+  /* Info - 情報 */
+  --status-info: #3B82F6;
+  --status-info-bg: #EFF6FF; /* blue-50 */
+  --status-info-text: #1E3A8A; /* blue-900 */
+  
+  /* ========== 評価カラー（飲酒記録用） ========== */
+  --rating-love: #EF4444; /* 非常に好き - red-500 */
+  --rating-love-bg: #FEE2E2; /* red-100 */
+  --rating-love-text: #7F1D1D; /* red-900 */
+  
+  --rating-like: #EC4899; /* 好き - pink-500 */
+  --rating-like-bg: #FCE7F3; /* pink-100 */
+  --rating-like-text: #831843; /* pink-900 */
+  
+  --rating-dislike: #6B7280; /* 合わない - gray-500 */
+  --rating-dislike-bg: #F3F4F6; /* gray-100 */
+  --rating-dislike-text: #374151; /* gray-700 */
+  
+  --rating-hate: #4B5563; /* 非常に合わない - gray-600 */
+  --rating-hate-bg: #E5E7EB; /* gray-200 */
+  --rating-hate-text: #1F2937; /* gray-800 */
+  
+  /* ========== シャドウ ========== */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 }
 
 @theme inline {
@@ -25,7 +122,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* デザインシステム - タイポグラフィ */
+/* ========================================
+   デザインシステム - タイポグラフィ
+   ======================================== */
 
 /* Display - 最も大きい見出し（ヒーローセクション用） */
 .text-display-xl {
@@ -69,6 +168,25 @@ body {
   line-height: 1.6;
   font-weight: 400;
 }
+
+/* ========================================
+   デザインシステム - カラーユーティリティ
+   ======================================== */
+
+/* プライマリカラー */
+.bg-primary { background-color: var(--primary); }
+.bg-primary-hover { background-color: var(--primary-hover); }
+.bg-primary-light { background-color: var(--primary-light); }
+.text-primary-color { color: var(--primary); }
+
+/* テキストカラー */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+
+/* ボーダー */
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }
 
 /* カスタムアニメーション */
 @keyframes pulse-slow {
