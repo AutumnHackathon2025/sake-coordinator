@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 
 interface FooterItem {
@@ -13,22 +16,30 @@ interface FooterProps {
 }
 
 export function Footer({ items }: FooterProps) {
+  const pathname = usePathname();
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-2 border-t border-gray-300 bg-white">
       {items.map((item, index) => {
+        const isActive = item.href && pathname === item.href;
+        
         const content = (
           <>
             <span className="text-2xl">{item.icon}</span>
-            <span className="text-base">{item.label}</span>
+            <span className="text-base font-medium">{item.label}</span>
           </>
         );
+
+        const activeStyles = isActive
+          ? "text-[#2B2D5F] bg-blue-50"
+          : "text-gray-600 hover:bg-gray-50";
 
         if (item.href) {
           return (
             <Link
               key={index}
               href={item.href}
-              className="flex flex-row items-center justify-center gap-2 py-3 text-gray-600 transition-colors hover:bg-gray-50"
+              className={`flex flex-row items-center justify-center gap-2 py-3 transition-colors ${activeStyles}`}
             >
               {content}
             </Link>
@@ -39,7 +50,7 @@ export function Footer({ items }: FooterProps) {
           <button
             key={index}
             onClick={item.onClick}
-            className="flex flex-row items-center justify-center gap-2 py-3 text-gray-600 transition-colors hover:bg-gray-50"
+            className={`flex flex-row items-center justify-center gap-2 py-3 transition-colors ${activeStyles}`}
           >
             {content}
           </button>
