@@ -96,11 +96,11 @@ export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps
             value={formData.brand}
             onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
             placeholder="例：獺祭 純米大吟醸"
-            maxLength={64}
+            maxLength={20}
             className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-primary focus:outline-none"
           />
           <p className="mt-1 text-body text-gray-500">
-            {formData.brand.length}/64文字
+            {formData.brand.length}/20文字
           </p>
         </div>
 

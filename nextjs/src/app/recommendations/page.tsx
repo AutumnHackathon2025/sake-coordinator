@@ -67,7 +67,9 @@ export default function RecommendationsPage() {
       </main>
 
       <Footer items={FOOTER_ITEMS} />
-      <HintCaption message="💡 気に入った日本酒を見つけたら、感想を記録しておきましょう" />
+      <HintCaption  >
+      💡 気に入った日本酒を見つけたら<br/>感想を記録しておきましょう
+      </HintCaption>
 
       {/* メニュー編集モーダル */}
       <Modal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}>
