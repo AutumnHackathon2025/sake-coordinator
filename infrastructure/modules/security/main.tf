@@ -56,8 +56,8 @@ resource "aws_security_group_rule" "alb_ingress_https" {
 
 resource "aws_security_group_rule" "alb_egress_ecs" {
   type                     = "egress"
-  from_port                = 8080
-  to_port                  = 8080
+  from_port                = 3000
+  to_port                  = 3000
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.ecs.id
   security_group_id        = aws_security_group.alb.id
@@ -67,8 +67,8 @@ resource "aws_security_group_rule" "alb_egress_ecs" {
 # ECSセキュリティグループルール
 resource "aws_security_group_rule" "ecs_ingress_alb" {
   type                     = "ingress"
-  from_port                = 8080
-  to_port                  = 8080
+  from_port                = 3000
+  to_port                  = 3000
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.alb.id
   security_group_id        = aws_security_group.ecs.id

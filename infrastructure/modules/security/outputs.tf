@@ -27,6 +27,11 @@ output "ecs_task_role_arn" {
   value       = aws_iam_role.ecs_task.arn
 }
 
+output "ecs_task_role_name" {
+  description = "ECS タスクロール名"
+  value       = aws_iam_role.ecs_task.name
+}
+
 output "cognito_authenticated_role_arn" {
   description = "Cognito authenticated user role ARN"
   value       = aws_iam_role.cognito_authenticated.arn
