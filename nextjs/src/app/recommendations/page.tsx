@@ -1,4 +1,18 @@
+"use client";
+
+import { useState } from "react";
+import { Modal } from "@/components/Modal";
+import { MenuEditor } from "@/components/MenuEditor";
+
 export default function RecommendationsPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState<string[]>([
+    "出羽桜",
+    "獺祭",
+    "hogehoge",
+    "菊",
+  ]);
+
   const recommendations = [
     {
       name: "獺祭",
@@ -16,6 +30,13 @@ export default function RecommendationsPage() {
       reason: "理由",
     },
   ];
+
+  const handleSubmitMenu = (items: string[]) => {
+    setMenuItems(items);
+    setIsModalOpen(false);
+    // TODO: ここでおすすめを再取得する処理を追加
+    console.log("Updated menu items:", items);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -59,7 +80,10 @@ export default function RecommendationsPage() {
             <br />
             おすすめを選出します。
           </p>
-          <button className="flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-lg text-white transition-all hover:bg-[#3B3D7F]">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-lg text-white transition-all hover:bg-[#3B3D7F]"
+          >
             <span className="text-2xl">✏️</span>
             <span>メニューを編集する</span>
           </button>
@@ -77,6 +101,11 @@ export default function RecommendationsPage() {
           <span className="text-sm">出羽桜</span>
         </button>
       </footer>
+
+      {/* メニュー編集モーダル */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <MenuEditor onSubmit={handleSubmitMenu} />
+      </Modal>
     </div>
   );
 }
