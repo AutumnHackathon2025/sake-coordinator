@@ -349,12 +349,84 @@ body {
 
 .sake-label-card {
   position: relative;
-  background: linear-gradient(180deg, #FFFCF5 0%, #F5F1E8 100%);
-  border: 2px solid #d4c7b6;
-  box-shadow: 
-    0 4px 6px rgba(0, 0, 0, 0.3),
-    0 1px 3px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* より白っぽい色に変更 */
+  background: linear-gradient(180deg, #FEFDFB 0%, #FAF9F7 100%);
+  border: none;
+  /* ちょっと影大きめ */
+  box-shadow: var(--shadow-xl);
+  
+  /* ギザギザの端を実現 */
+  -webkit-mask-image: 
+    /* 上辺のギザギザ */
+    repeating-linear-gradient(
+      90deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 0 0 / 100% 3px no-repeat,
+    /* 下辺のギザギザ */
+    repeating-linear-gradient(
+      90deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 0 100% / 100% 3px no-repeat,
+    /* 左辺のギザギザ */
+    repeating-linear-gradient(
+      0deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 0 0 / 3px 100% no-repeat,
+    /* 右辺のギザギザ */
+    repeating-linear-gradient(
+      0deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 100% 0 / 3px 100% no-repeat,
+    /* メイン部分 */
+    linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat;
+  
+  mask-image: 
+    /* 上辺のギザギザ */
+    repeating-linear-gradient(
+      90deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 0 0 / 100% 3px no-repeat,
+    /* 下辺のギザギザ */
+    repeating-linear-gradient(
+      90deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 0 100% / 100% 3px no-repeat,
+    /* 左辺のギザギザ */
+    repeating-linear-gradient(
+      0deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 0 0 / 3px 100% no-repeat,
+    /* 右辺のギザギザ */
+    repeating-linear-gradient(
+      0deg,
+      #000 0px,
+      #000 8px,
+      transparent 8px,
+      transparent 10px
+    ) 100% 0 / 3px 100% no-repeat,
+    /* メイン部分 */
+    linear-gradient(#000, #000) 3px 3px / calc(100% - 6px) calc(100% - 6px) no-repeat;
 }
 
 /* ラベルのような質感 */
@@ -367,18 +439,17 @@ body {
       90deg,
       transparent,
       transparent 2px,
-      rgba(200, 190, 170, 0.03) 2px,
-      rgba(200, 190, 170, 0.03) 4px
+      rgba(200, 190, 180, 0.02) 2px,
+      rgba(200, 190, 180, 0.02) 4px
     ),
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 2px,
-      rgba(200, 190, 170, 0.03) 2px,
-      rgba(200, 190, 170, 0.03) 4px
+      rgba(200, 190, 180, 0.02) 2px,
+      rgba(200, 190, 180, 0.02) 4px
     );
   pointer-events: none;
-  border-radius: inherit;
   z-index: 0;
 }
 
@@ -386,9 +457,8 @@ body {
 .sake-label-card::after {
   content: '';
   position: absolute;
-  inset: 8px;
-  border: 1px solid rgba(107, 68, 35, 0.15);
+  inset: 12px;
+  border: 1px solid rgba(107, 68, 35, 0.12);
   pointer-events: none;
-  border-radius: 2px;
   z-index: 0;
 }
