@@ -1,117 +1,156 @@
-# Sake Coordinator - DynamoDB Local 開発環境
+# 日本酒推薦サービス
 
-このプロジェクトはNext.jsアプリケーションとDynamoDB Localを使用したローカル開発環境です。
+Next.jsフルスタックアプリケーションとAmazon Bedrock AgentCoreを組み合わせた日本酒推薦システム
 
-## 📋 前提条件
+## アーキテクチャ
 
-- Docker
-- Docker Compose
+- **フロントエンド**: Next.js (React + TypeScript)
+- **バックエンド**: Next.js API Routes
+- **AI Agent**: Amazon Bedrock AgentCore (Python + Strands)
+- **データベース**: DynamoDB (本番) / DynamoDB Local (開発)
+- **認証**: Amazon Cognito
+- **ストレージ**: Amazon S3
 
-## 🚀 開始方法
+## プロジェクト構造
 
-### 1. プロジェクトのクローンと移動
+```
+├── nextjs/                 # Next.jsフルスタックアプリケーション
+│   ├── src/app/           # App Router
+│   ├── src/components/    # Reactコンポーネント
+│   └── src/services/      # ビジネスロジック
+├── agentcore/             # AI Agent (Python + Strands)
+│   ├── src/agents/        # エージェント実装
+│   ├── src/models/        # データモデル
+│   └── src/services/      # AIサービス
+├── docs/                  # ドキュメント
+│   ├── api-doc.md         # API仕様書
+│   └── product.md         # プロダクト仕様書
+└── compose.yaml           # Docker Compose設定
+```
+
+## クイックスタート
+
+### 1. 環境変数の設定
+
 ```bash
-cd /Users/shunsuke.a.wakamatsu/programs/autum-hackathon/sake-coordinator
+# プロジェクトルートで実行
+cp .env.example .env
+# .envファイルを編集して必要な環境変数を設定
 ```
 
-### 2. Docker Composeでサービスを起動
+### 2. 開発環境の起動
+
 ```bash
-docker-compose up --build
+# 全サービスを起動（Next.js + AgentCore + DynamoDB）
+compose up -d
+
+# ログを確認
+compose logs -f
 ```
 
-## 🔧 サービス
+### 3. アクセス
 
-### Next.js アプリケーション
-- **URL**: http://localhost:3000
-- **テストページ**: http://localhost:3000/dynamodb-test
-- DynamoDB Localに接続するWebアプリケーション
+- **Next.js アプリ**: http://localhost:3000
+- **DynamoDB Admin UI**: http://localhost:8001
+- **AgentCore**: http://localhost:8000 (開発時)
 
-### DynamoDB Local
-- **URL**: http://localhost:8000
-- ローカル開発用のDynamoDBインスタンス
-- データは`dynamodb-data`ボリュームに永続化されます
+## 開発コマンド
 
-### DynamoDB Admin
-- **URL**: http://localhost:8001
-- DynamoDB LocalのWeb管理インターface
-- テーブルやデータの管理に使用
+### 基本操作
 
-## 🧪 動作確認
-
-1. http://localhost:3000/dynamodb-test にアクセス
-2. 「テーブル作成」ボタンをクリックしてテーブルを作成
-3. アイテムを追加・削除してDynamoDB操作を確認
-4. http://localhost:8001 でDynamoDB Adminからもデータを確認可能
-
-## 📁 プロジェクト構造
-
-```
-.
-├── compose.yaml              # Docker Compose設定
-├── nextjs/
-│   ├── Dockerfile           # Next.js用Dockerfile
-│   ├── package.json         # 依存関係（AWS SDK含む）
-│   ├── .env.local          # 環境変数（ローカル開発用）
-│   └── src/
-│       ├── app/
-│       │   ├── api/
-│       │   │   └── dynamodb/
-│       │   │       └── route.ts    # DynamoDB API エンドポイント
-│       │   └── dynamodb-test/
-│       │       └── page.tsx        # テスト用フロントエンド
-│       └── lib/
-│           └── dynamodb.ts         # DynamoDB接続設定
-```
-
-## 🔌 API エンドポイント
-
-### GET /api/dynamodb
-- `?action=list-tables` - テーブル一覧取得
-- `?action=create-table` - テーブル作成
-- `?action=get-all` - 全アイテム取得
-- `?action=get-item&id={id}` - 特定アイテム取得
-
-### POST /api/dynamodb
-- アイテム追加
-- Body: `{"name": "名前", "description": "説明"}`
-
-### DELETE /api/dynamodb
-- `?id={id}` - 特定アイテム削除
-
-## 🛠️ 開発時のTips
-
-### 依存関係の追加
 ```bash
-cd nextjs
-pnpm install <package-name>
-docker-compose up --build  # 再ビルドが必要
+# 全サービス起動
+compose up -d
+
+# 特定のサービスのみ起動
+compose up nextjs sake-agent-dev
+
+# ログ確認
+compose logs -f nextjs
+compose logs -f sake-agent-dev
+
+# コンテナに入る
+compose exec nextjs bash
+compose exec sake-agent-dev bash
+
+# サービス停止
+compose down
 ```
 
-### ログの確認
+### AgentCore開発
+
 ```bash
-docker-compose logs nextjs        # Next.jsのログ
-docker-compose logs dynamodb-local  # DynamoDBのログ
+# テスト実行
+compose --profile test run --rm sake-agent-test
+# または
+compose exec sake-agent-dev uv run test
+
+# リンティング
+compose --profile lint run --rm sake-agent-lint
+# または
+compose exec sake-agent-dev uv run lint
+
+# フォーマット
+compose --profile format run --rm sake-agent-format
+# または
+compose exec sake-agent-dev uv run format
+
+# 型チェック
+compose --profile typecheck run --rm sake-agent-typecheck
+# または
+compose exec sake-agent-dev uv run typecheck
+
+# ホットリロード付きで起動
+compose up sake-agent-dev --watch
 ```
 
-### DynamoDBデータの初期化
+### 本番環境
+
 ```bash
-docker-compose down -v  # ボリュームも削除
-docker-compose up --build
+# 本番用サービス起動
+compose --profile prod up -d sake-agent nextjs
 ```
 
-## 🌐 本番環境への展開
+## 利用可能なプロファイル
 
-本番環境では、`.env.local`の設定を以下のように変更してください：
+- **prod**: 本番環境
+- **test**: テスト環境
+- **lint**: リンティング実行
+- **format**: コードフォーマット実行
+- **typecheck**: 型チェック実行
+- **localstack**: LocalStack環境（Bedrock用）
 
-```env
-# DYNAMODB_ENDPOINT=（コメントアウト - AWS DynamoDBを使用）
-AWS_REGION=ap-northeast-1
-AWS_ACCESS_KEY_ID=（実際のアクセスキー）
-AWS_SECRET_ACCESS_KEY=（実際のシークレットキー）
-```
+## 機能
 
-## 📚 参考資料
+### Next.jsアプリケーション
+- 飲酒記録の管理
+- 日本酒推薦の表示
+- メニュー画像のOCR処理
+- ユーザー認証（Cognito）
 
-- [AWS SDK for JavaScript v3](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/index.html)
-- [DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html)
-- [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
+### AI Agent (AgentCore)
+- ユーザーの飲酒履歴に基づく推薦
+- 味の好みの学習と分析
+- メニューからの最適な銘柄選択支援
+- 推薦理由の説明生成
+
+## 開発ガイドライン
+
+- **API仕様**: `docs/api-doc.md`を参照
+- **プロダクト仕様**: `docs/product.md`を参照
+- **技術スタック**: `.kiro/steering/tech.md`を参照
+- **プロジェクト構造**: `.kiro/steering/structure.md`を参照
+
+## トラブルシューティング
+
+### ポート競合
+- Next.js: 3000
+- DynamoDB Local: 8000
+- DynamoDB Admin: 8001
+- AgentCore: 8000 (開発時)
+- LocalStack: 4566
+
+### よくある問題
+1. **DynamoDBに接続できない**: DynamoDB Localが起動しているか確認
+2. **AgentCoreが起動しない**: 環境変数が正しく設定されているか確認
+3. **ビルドエラー**: `compose build --no-cache`でキャッシュをクリア
