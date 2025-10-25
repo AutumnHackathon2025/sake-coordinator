@@ -63,13 +63,13 @@ export default function RecommendationsPage() {
       {/* メインコンテンツ */}
       <main className="pb-16 pt-14">
         <div className="px-6 py-8">
-          <h2 className="mb-8 text-3xl font-medium text-[#2B2D5F]">
+          <h2 className="mb-8 text-title text-[#2B2D5F]">
             今夜のおすすめ日本酒
           </h2>
 
           {/* ヒントメッセージ */}
           <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-l-4 border-blue-500">
-            <p className="text-sm text-blue-800">
+            <p className="text-body text-blue-800">
               💡 気に入った日本酒を見つけたら、感想を記録しておきましょう
             </p>
           </div>
@@ -81,12 +81,12 @@ export default function RecommendationsPage() {
                 <div className="flex items-start gap-4">
                   <div className="text-3xl">🏆</div>
                   <div className="flex-1">
-                    <h3 className="mb-3 text-2xl font-medium text-gray-800">
+                    <h3 className="mb-3 text-subtitle text-gray-800">
                       {sake.name}
                     </h3>
                     <div className="space-y-2 text-gray-700">
-                      <p className="pl-8">{sake.features}</p>
-                      <p className="pl-8">{sake.reason}</p>
+                      <p className="pl-8 text-body">{sake.features}</p>
+                      <p className="pl-8 text-body">{sake.reason}</p>
                     </div>
                   </div>
                 </div>
@@ -98,14 +98,14 @@ export default function RecommendationsPage() {
         {/* モーダル風の情報カード */}
         <div className="px-6 pb-6">
           <div className="rounded-3xl bg-white px-6 py-8 shadow-lg">
-            <p className="mb-4 text-center text-gray-700">
+            <p className="mb-4 text-center text-body text-gray-700">
               メニューをもとに
               <br />
               おすすめを選出します。
             </p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-lg text-white transition-all hover:bg-[#3B3D7F]"
+              className="flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-body-lg text-white transition-all hover:bg-[#3B3D7F]"
             >
               <span className="text-2xl">✏️</span>
               <span>メニューを編集する</span>

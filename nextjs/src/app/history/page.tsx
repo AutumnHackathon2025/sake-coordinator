@@ -77,13 +77,13 @@ export default function HistoryPage() {
       {/* メインコンテンツ */}
       <main className="pb-16 pt-14">
         <div className="px-6 py-8">
-          <h2 className="mb-8 text-3xl font-medium text-[#2B2D5F]">
+          <h2 className="mb-8 text-title text-[#2B2D5F]">
             飲酒記録
           </h2>
 
           {/* モチベーションメッセージ */}
           <div className="mb-6 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-l-4 border-amber-500">
-            <p className="text-sm font-medium text-amber-800">
+            <p className="text-body font-medium text-amber-800">
               🎯 記録が増えるほど、AIがあなたの好みを学習します
             </p>
           </div>
@@ -91,10 +91,10 @@ export default function HistoryPage() {
           {/* 記録リスト */}
           {records.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
-              <p className="text-lg">まだ記録がありません</p>
-              <p className="mt-2 text-sm">飲んだお酒を記録してみましょう</p>
+              <p className="text-body-lg">まだ記録がありません</p>
+              <p className="mt-2 text-body">飲んだお酒を記録してみましょう</p>
               <div className="mt-6">
-                <p className="text-xs text-gray-400">右下の「+」ボタンから記録できます</p>
+                <p className="text-body text-gray-400">右下の「+」ボタンから記録できます</p>
               </div>
             </div>
           ) : (
@@ -106,11 +106,11 @@ export default function HistoryPage() {
                 >
                   {/* ヘッダー */}
                   <div className="mb-4 flex items-start justify-between">
-                    <h3 className="text-2xl font-medium text-gray-800">
+                    <h3 className="text-subtitle text-gray-800">
                       {record.name}
                     </h3>
                     <span
-                      className={`rounded-full px-3 py-1 text-sm font-medium ${getRatingColor(
+                      className={`rounded-full px-3 py-1 text-body font-medium ${getRatingColor(
                         record.rating
                       )}`}
                     >
@@ -119,12 +119,12 @@ export default function HistoryPage() {
                   </div>
 
                   {/* 感想 */}
-                  <p className="mb-3 text-gray-700 leading-relaxed">
+                  <p className="mb-3 text-body text-gray-700 leading-relaxed">
                     {record.impression}
                   </p>
 
                   {/* 日付 */}
-                  <p className="text-sm text-gray-500">
+                  <p className="text-body text-gray-500">
                     {new Date(record.date).toLocaleDateString("ja-JP", {
                       year: "numeric",
                       month: "long",

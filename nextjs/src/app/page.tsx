@@ -5,7 +5,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#2B2D5F] px-8">
       {/* HOME タイトル */}
       <div className="flex-1 flex items-center justify-center">
-        <h1 className="text-8xl font-light tracking-[0.2em] text-white">
+        <h1 className="text-display-xl text-white">
           HOME
         </h1>
       </div>
