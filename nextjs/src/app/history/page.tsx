@@ -106,8 +106,8 @@ export default function HistoryPage() {
 
       {/* メインコンテンツ */}
       <main className="pb-32 pt-14">
-        <div className="px-6 py-8">
-          <h2 className="mb-8 text-title text-[#2B2D5F]">
+        <div className="px-6 py-6">
+          <h2 className="mb-6 text-title text-[#2B2D5F]">
             飲酒記録
           </h2>
 
@@ -121,14 +121,14 @@ export default function HistoryPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {records.map((record) => (
                 <div
                   key={record.id}
-                  className="rounded-lg bg-white p-6 shadow-sm"
+                  className="rounded-lg bg-white p-4 shadow-sm"
                 >
                   {/* ヘッダー */}
-                  <div className="mb-4 flex items-start justify-between">
+                  <div className="mb-3 flex items-start justify-between">
                     <h3 className="text-subtitle text-gray-800">
                       {record.name}
                     </h3>

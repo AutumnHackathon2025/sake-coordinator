@@ -63,8 +63,8 @@ export default function RecommendationsPage() {
 
       {/* メインコンテンツ */}
       <main className="pb-32 pt-14">
-        <div className="px-6 py-8">
-          <div className="mb-8 flex flex-col gap-3">
+        <div className="px-6 py-6">
+          <div className="mb-6 flex flex-col gap-3">
             <h2 className="text-title text-[#2B2D5F]">
               今夜のおすすめ日本酒
             </h2>
@@ -79,16 +79,16 @@ export default function RecommendationsPage() {
           </div>
 
           {/* おすすめリスト */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {recommendations.map((sake, index) => (
-              <div key={index} className="border-b border-gray-300 pb-6">
+              <div key={index} className="border-b border-gray-300 pb-4">
                 <div className="flex items-start gap-4">
                   <div className="text-3xl">🏆</div>
                   <div className="flex-1">
-                    <h3 className="mb-3 text-subtitle text-gray-800">
+                    <h3 className="mb-2 text-subtitle text-gray-800">
                       {sake.name}
                     </h3>
-                    <div className="space-y-2 text-gray-700">
+                    <div className="space-y-1 text-gray-700">
                       <p className="pl-8 text-body">{sake.features}</p>
                       <p className="pl-8 text-body">{sake.reason}</p>
                     </div>

@@ -60,20 +60,20 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
   const isFormValid = formData.name.trim() && formData.impression.trim() && formData.rating;
 
   return (
-    <div className="flex flex-col p-8">
+    <div className="flex flex-col p-6">
       <h2 className="mb-4 text-title text-[#2B2D5F]">
         飲酒記録を追加
       </h2>
       
       {/* モチベーションメッセージ */}
-      <div className="mb-8 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-l-4 border-[#2B2D5F]">
+      <div className="mb-6 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-l-4 border-[#2B2D5F]">
         <p className="text-body text-gray-700 leading-relaxed">
           💡 記録すればするほど、あなたの好みに合ったおすすめが表示されるようになります
         </p>
       </div>
 
       {/* 記録フォーム */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {/* 銘柄 */}
         <div>
           <label htmlFor="name" className="mb-2 block text-body-lg font-medium text-gray-700">
