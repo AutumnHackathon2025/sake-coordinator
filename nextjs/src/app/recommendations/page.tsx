@@ -62,7 +62,7 @@ export default function RecommendationsPage() {
       <Header />
 
       {/* メインコンテンツ */}
-      <main className="pb-16 pt-14">
+      <main className="pb-32 pt-14">
         <div className="px-6 py-8">
           <div className="mb-8 flex flex-col gap-3">
             <h2 className="text-title text-[#2B2D5F]">

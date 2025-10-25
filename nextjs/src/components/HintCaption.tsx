@@ -1,18 +1,29 @@
+"use client";
+
+import { useState } from "react";
+
 interface HintCaptionProps {
   message: string;
-  hasFloatingButton?: boolean;
 }
 
-export function HintCaption({ message, hasFloatingButton = false }: HintCaptionProps) {
+export function HintCaption({ message }: HintCaptionProps) {
+  const [isVisible, setIsVisible] = useState(true);
+
+  if (!isVisible) return null;
+
   return (
-    <div className={`fixed left-0 right-0 z-30 pointer-events-none ${
-      hasFloatingButton ? 'bottom-36' : 'bottom-16'
-    }`}>
-      <div className="mx-4 mb-2 rounded-lg bg-[#2B2D5F]/90 backdrop-blur-sm px-4 py-3 shadow-lg border border-white/20">
+    <div 
+      className="fixed left-0 right-0 z-30 px-4"
+      style={{ bottom: 'calc(var(--footer-height) + var(--floating-element-gap))' }}
+    >
+      <button
+        onClick={() => setIsVisible(false)}
+        className="w-full rounded-lg bg-[#2B2D5F]/90 backdrop-blur-sm px-4 py-3 shadow-lg border border-white/20 transition-all hover:bg-[#2B2D5F] cursor-pointer"
+      >
         <p className="text-body text-center text-white font-medium">
           {message}
         </p>
-      </div>
+      </button>
     </div>
   );
 }

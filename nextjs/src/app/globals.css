@@ -3,7 +3,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  
+
+  /* ========== レイアウト ========== */
+  --footer-height: 60px;
+  --floating-element-gap: 16px;
+
   /* ========== プライマリカラー（ブランドカラー） ========== */
   --primary: #2B2D5F;
   --primary-hover: #3B3D7F;

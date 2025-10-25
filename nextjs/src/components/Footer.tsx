@@ -19,7 +19,10 @@ export function Footer({ items }: FooterProps) {
   const pathname = usePathname();
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-2 border-t border-gray-300 bg-white">
+    <footer 
+      className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-2 border-t border-gray-300 bg-white"
+      style={{ height: 'var(--footer-height)' }}
+    >
       {items.map((item, index) => {
         const isActive = item.href && pathname === item.href;
         
