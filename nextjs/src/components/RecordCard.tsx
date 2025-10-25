@@ -43,7 +43,7 @@ export function RecordCard({ record }: RecordCardProps) {
         </p>
 
         {/* 日付 */}
-        <p className="text-body text-gray-600 font-zen-kurenaido">
+        <p className="text-body text-gray-600 font-zen-kurenaido text-right">
           {new Date(record.createdAt).toLocaleDateString("ja-JP", {
             year: "numeric",
             month: "long",
