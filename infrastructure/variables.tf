@@ -281,3 +281,95 @@ variable "notification_email" {
     error_message = "有効なメールアドレス形式を指定してください。"
   }
 }
+
+variable "sns_topic_arn" {
+  description = "アラート通知用SNSトピックARN（オプション）"
+  type        = string
+  default     = null
+}
+
+# AgentCore設定
+variable "agentcore_error_threshold" {
+  description = "AgentCoreエラー率の閾値（%）"
+  type        = number
+  default     = 5
+
+  validation {
+    condition     = var.agentcore_error_threshold >= 0 && var.agentcore_error_threshold <= 100
+    error_message = "エラー率閾値は0-100の範囲で指定してください。"
+  }
+}
+
+variable "agentcore_response_time_threshold" {
+  description = "AgentCore応答時間の閾値（ミリ秒）"
+  type        = number
+  default     = 10000
+
+  validation {
+    condition     = var.agentcore_response_time_threshold > 0
+    error_message = "応答時間閾値は正の数である必要があります。"
+  }
+}
+
+variable "agentcore_log_level" {
+  description = "AgentCoreのログレベル"
+  type        = string
+  default     = "INFO"
+
+  validation {
+    condition     = contains(["DEBUG", "INFO", "WARN", "ERROR"], var.agentcore_log_level)
+    error_message = "ログレベルはDEBUG, INFO, WARN, ERRORのいずれかである必要があります。"
+  }
+}
+
+variable "agentcore_network_mode" {
+  description = "AgentCoreのネットワークモード"
+  type        = string
+  default     = "PUBLIC"
+
+  validation {
+    condition     = contains(["PUBLIC", "PRIVATE"], var.agentcore_network_mode)
+    error_message = "ネットワークモードはPUBLICまたはPRIVATEである必要があります。"
+  }
+}
+
+variable "agentcore_protocol" {
+  description = "AgentCoreのプロトコル設定"
+  type        = string
+  default     = "HTTP"
+
+  validation {
+    condition     = contains(["HTTP", "HTTPS"], var.agentcore_protocol)
+    error_message = "プロトコルはHTTPまたはHTTPSである必要があります。"
+  }
+}
+
+variable "ecr_image_tag_mutability" {
+  description = "ECRイメージタグの変更可能性"
+  type        = string
+  default     = "MUTABLE"
+
+  validation {
+    condition     = contains(["MUTABLE", "IMMUTABLE"], var.ecr_image_tag_mutability)
+    error_message = "ECRイメージタグ変更可能性はMUTABLEまたはIMMUTABLEである必要があります。"
+  }
+}
+
+variable "ecr_lifecycle_keep_count" {
+  description = "ECRで保持するイメージ数"
+  type        = number
+  default     = 10
+
+  validation {
+    condition     = var.ecr_lifecycle_keep_count > 0
+    error_message = "保持するイメージ数は正の数である必要があります。"
+  }
+}
+
+variable "bedrock_model_arns" {
+  description = "使用するBedrock基盤モデルのARNリスト"
+  type        = list(string)
+  default = [
+    "arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0"
+  ]
+}

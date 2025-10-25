@@ -180,6 +180,38 @@ output "cloudwatch_dashboard_url" {
   value       = module.monitoring.dashboard_url
 }
 
+# AgentCore出力
+output "agentcore_ecr_repository_url" {
+  description = "AgentCore用ECRリポジトリURL"
+  value       = module.agentcore.ecr_repository_url
+}
+
+output "agentcore_runtime_id" {
+  description = "AgentCore Runtime ID"
+  value       = module.agentcore.agentcore_runtime_id
+  sensitive   = false
+}
+
+output "agentcore_runtime_arn" {
+  description = "AgentCore Runtime ARN"
+  value       = module.agentcore.agentcore_runtime_arn
+}
+
+output "agentcore_runtime_name" {
+  description = "AgentCore Runtime名"
+  value       = module.agentcore.agentcore_runtime_name
+}
+
+output "agentcore_invoke_policy_arn" {
+  description = "AgentCore呼び出し用IAMポリシーARN"
+  value       = module.agentcore.agentcore_invoke_policy_arn
+}
+
+output "agentcore_log_group_name" {
+  description = "AgentCore用CloudWatchロググループ名"
+  value       = module.agentcore.cloudwatch_log_group_name
+}
+
 # 環境変数設定用出力（Next.jsアプリケーション用）
 output "environment_variables" {
   description = "Next.js アプリケーション用環境変数"
@@ -199,6 +231,10 @@ output "environment_variables" {
     # ECS設定
     ECR_REPOSITORY_URL = module.compute.ecr_repository_url
     ALB_DNS_NAME       = module.compute.alb_dns_name
+
+    # AgentCore設定
+    AGENTCORE_RUNTIME_ID  = module.agentcore.agentcore_runtime_id
+    AGENTCORE_RUNTIME_ARN = module.agentcore.agentcore_runtime_arn
   }
   sensitive = false
 }

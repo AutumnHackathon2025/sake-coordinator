@@ -126,6 +126,44 @@ module "storage" {
   depends_on = [module.security]
 }
 
+# AgentCoreモジュール
+module "agentcore" {
+  source = "./modules/agentcore"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+  owner        = var.owner
+  cost_center  = var.cost_center
+
+  # 既存ECSタスクロールにAgentCore呼び出し権限を追加
+  existing_ecs_task_role_name = module.security.ecs_task_role_name
+
+  # 監視設定
+  sns_topic_arn                     = var.sns_topic_arn
+  agentcore_error_threshold         = var.agentcore_error_threshold
+  agentcore_response_time_threshold = var.agentcore_response_time_threshold
+  cloudwatch_log_retention_days     = var.cloudwatch_log_retention_days
+
+  # AgentCore Runtime設定
+  agentcore_log_level    = var.agentcore_log_level
+  agentcore_network_mode = var.agentcore_network_mode
+  agentcore_protocol     = var.agentcore_protocol
+
+  # ECR設定
+  ecr_image_tag_mutability = var.ecr_image_tag_mutability
+  ecr_lifecycle_keep_count = var.ecr_lifecycle_keep_count
+
+  # Bedrock設定
+  bedrock_model_arns = var.bedrock_model_arns
+
+  # CloudWatchログ暗号化を無効化（KMSキーの問題を回避）
+  enable_cloudwatch_log_encryption = false
+
+  # セキュリティモジュールに依存（ECSタスクロールが必要）
+  depends_on = [module.security]
+}
+
 # 監視モジュール
 module "monitoring" {
   source = "./modules/monitoring"
@@ -149,6 +187,7 @@ module "monitoring" {
     module.security,
     module.compute,
     module.auth,
-    module.storage
+    module.storage,
+    module.agentcore
   ]
 }
