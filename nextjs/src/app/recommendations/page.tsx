@@ -9,6 +9,7 @@ import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
+import EditIcon from "@mui/icons-material/Edit";
 
 export default function RecommendationsPage() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
@@ -71,7 +72,18 @@ export default function RecommendationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header 
+        rightAction={
+          <button
+            onClick={() => setIsMenuModalOpen(true)}
+            className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-white transition-colors hover:bg-white/20"
+            aria-label="メニューを編集"
+          >
+            <EditIcon className="text-xl" />
+            <span className="text-sm">メニュー</span>
+          </button>
+        }
+      />
 
       {/* メインコンテンツ */}
       <main className="pb-16 pt-14">
@@ -83,7 +95,7 @@ export default function RecommendationsPage() {
           {/* ヒントメッセージ */}
           <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-l-4 border-blue-500">
             <p className="text-body text-blue-800">
-              💡 気に入った日本酒を見つけたら、感想を記録しておきましょう
+              💡 メニューはヘッダーの「メニュー」ボタンから編集できます
             </p>
           </div>
 
@@ -105,24 +117,6 @@ export default function RecommendationsPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* モーダル風の情報カード */}
-        <div className="px-6 pb-6">
-          <div className="rounded-3xl bg-white px-6 py-8 shadow-lg">
-            <p className="mb-4 text-center text-body text-gray-700">
-              メニューをもとに
-              <br />
-              おすすめを選出します。
-            </p>
-            <button
-              onClick={() => setIsMenuModalOpen(true)}
-              className="flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-4 text-body-lg text-white transition-all hover:bg-[#3B3D7F]"
-            >
-              <span className="text-2xl">✏️</span>
-              <span>メニューを編集する</span>
-            </button>
           </div>
         </div>
       </main>

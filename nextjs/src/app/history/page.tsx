@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { RecordForm } from "@/components/RecordForm";
+import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
+import EditIcon from "@mui/icons-material/Edit";
 
 interface DrinkingRecord {
   id: string;
@@ -20,6 +22,13 @@ interface DrinkingRecord {
 
 export default function HistoryPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [menuItems, setMenuItems] = useState<string[]>([
+    "出羽桜",
+    "獺祭",
+    "hogehoge",
+    "菊",
+  ]);
   
   // モックデータ
   const [records] = useState<DrinkingRecord[]>([
@@ -85,9 +94,27 @@ export default function HistoryPage() {
     setIsRecordModalOpen(false);
   };
 
+  const handleSubmitMenu = (items: string[]) => {
+    setMenuItems(items);
+    setIsMenuModalOpen(false);
+    // TODO: ここでおすすめを再取得する処理を追加
+    console.log("Updated menu items:", items);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header 
+        rightAction={
+          <button
+            onClick={() => setIsMenuModalOpen(true)}
+            className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-white transition-colors hover:bg-white/20"
+            aria-label="メニューを編集"
+          >
+            <EditIcon className="text-xl" />
+            <span className="text-sm">メニュー</span>
+          </button>
+        }
+      />
 
       {/* メインコンテンツ */}
       <main className="pb-16 pt-14">
@@ -165,6 +192,11 @@ export default function HistoryPage() {
           onSubmit={handleSubmitRecord}
           onCancel={() => setIsRecordModalOpen(false)}
         />
+      </Modal>
+
+      {/* メニュー編集モーダル */}
+      <Modal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}>
+        <MenuEditor onSubmit={handleSubmitMenu} />
       </Modal>
     </div>
   );
