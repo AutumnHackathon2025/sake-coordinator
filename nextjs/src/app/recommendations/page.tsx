@@ -8,26 +8,12 @@ import { Footer } from "@/components/Footer";
 import { HintCaption } from "@/components/HintCaption";
 import { useRecommendations } from "./useRecommendations";
 import { getDefaultMenu } from "@/lib/mockData";
-import StarIcon from "@mui/icons-material/Star";
-import HistoryIcon from "@mui/icons-material/History";
+import { FOOTER_ITEMS } from "@/constants/navigation";
 import EditIcon from "@mui/icons-material/Edit";
 
 export default function RecommendationsPage() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const { menuItems, recommendations, isLoading, updateMenu } = useRecommendations(getDefaultMenu());
-
-  const footerItems = [
-    { 
-      icon: <StarIcon />, 
-      label: "おすすめ",
-      href: "/recommendations"
-    },
-    { 
-      icon: <HistoryIcon />, 
-      label: "履歴",
-      href: "/history"
-    },
-  ];
 
   const handleSubmitMenu = (items: string[]) => {
     updateMenu(items);
@@ -94,7 +80,7 @@ export default function RecommendationsPage() {
         </div>
       </main>
 
-      <Footer items={footerItems} />
+      <Footer items={FOOTER_ITEMS} />
       <HintCaption message="💡 気に入った日本酒を見つけたら、感想を記録しておきましょう" />
 
       {/* メニュー編集モーダル */}

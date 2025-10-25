@@ -9,8 +9,7 @@ import { Footer } from "@/components/Footer";
 import { AddRecordButton } from "@/components/AddRecordButton";
 import { Rating, RATING_LABELS } from "@/types/api";
 import { useRecords } from "./useRecords";
-import StarIcon from "@mui/icons-material/Star";
-import HistoryIcon from "@mui/icons-material/History";
+import { FOOTER_ITEMS } from "@/constants/navigation";
 
 export default function HistoryPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
@@ -32,19 +31,6 @@ export default function HistoryPage() {
         return "bg-gray-100 text-gray-700";
     }
   };
-
-  const footerItems = [
-    { 
-      icon: <StarIcon />, 
-      label: "おすすめ",
-      href: "/recommendations"
-    },
-    { 
-      icon: <HistoryIcon />, 
-      label: "履歴",
-      href: "/history"
-    },
-  ];
 
   const handleSubmitRecord = async (data: {
     brand: string;
@@ -131,7 +117,7 @@ export default function HistoryPage() {
         </div>
       </main>
 
-      <Footer items={footerItems} />
+      <Footer items={FOOTER_ITEMS} />
       <AddRecordButton 
         variant="motivational"
         onClick={() => setIsRecordModalOpen(true)}

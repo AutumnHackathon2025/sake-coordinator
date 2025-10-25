@@ -5,8 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Rating, RATING_LABELS } from "@/types/api";
 import { useRecordForm } from "./useRecordForm";
-import StarIcon from "@mui/icons-material/Star";
-import HistoryIcon from "@mui/icons-material/History";
+import { FOOTER_ITEMS } from "@/constants/navigation";
 
 export default function RecordPage() {
   const router = useRouter();
@@ -22,19 +21,6 @@ export default function RecordPage() {
     { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊", color: "bg-rating-like" },
     { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐", color: "bg-rating-dislike" },
     { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞", color: "bg-rating-hate" },
-  ];
-
-  const footerItems = [
-    { 
-      icon: <StarIcon />, 
-      label: "おすすめ",
-      href: "/recommendations"
-    },
-    { 
-      icon: <HistoryIcon />, 
-      label: "履歴",
-      href: "/history"
-    },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,7 +147,7 @@ export default function RecordPage() {
         </div>
       </main>
 
-      <Footer items={footerItems} />
+      <Footer items={FOOTER_ITEMS} />
     </div>
   );
 }
