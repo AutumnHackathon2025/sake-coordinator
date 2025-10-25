@@ -29,7 +29,7 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-gray-50 shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-gray-50 shadow-2xl border-4 border-gray-50"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

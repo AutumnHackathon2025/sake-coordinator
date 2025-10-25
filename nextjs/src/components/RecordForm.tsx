@@ -10,11 +10,12 @@ interface RecordFormProps {
     rating: Rating;
   }) => void;
   onCancel?: () => void;
+  initialBrand?: string;
 }
 
-export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
+export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps) {
   const [formData, setFormData] = useState({
-    brand: "",
+    brand: initialBrand || "",
     impression: "",
     rating: "" as "" | Rating,
   });
@@ -24,12 +25,11 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
     value: Rating;
     label: string;
     emoji: string;
-    color: string;
   }> = [
-    { value: "VERY_GOOD", label: RATING_LABELS["VERY_GOOD"], emoji: "😍", color: "bg-rating-love" },
-    { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊", color: "bg-rating-like" },
-    { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐", color: "bg-rating-dislike" },
-    { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞", color: "bg-rating-hate" },
+    { value: "VERY_GOOD", label: RATING_LABELS["VERY_GOOD"], emoji: "😍" },
+    { value: "GOOD", label: RATING_LABELS["GOOD"], emoji: "😊" },
+    { value: "BAD", label: RATING_LABELS["BAD"], emoji: "😐" },
+    { value: "VERY_BAD", label: RATING_LABELS["VERY_BAD"], emoji: "😞" },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,12 +71,12 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
 
   return (
     <div className="flex flex-col p-6">
-      <h2 className="mb-4 text-title text-[#2B2D5F]">
+      <h2 className="mb-4 text-title text-primary">
         飲酒記録を追加
       </h2>
       
       {/* モチベーションメッセージ */}
-      <div className="mb-6 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-l-4 border-[#2B2D5F]">
+      <div className="mb-6 rounded-lg bg-gradient-to-r from-bg-card to-bg-page p-4 border-l-4 border-primary">
         <p className="text-body text-gray-700 leading-relaxed">
           💡 記録すればするほど、あなたの好みに合ったおすすめが表示されるようになります
         </p>
@@ -86,8 +86,8 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* 銘柄 */}
         <div>
-          <label htmlFor="brand" className="mb-2 block text-body-lg font-medium text-gray-700">
-            銘柄 <span className="text-red-500">*</span>
+          <label htmlFor="brand" className="mb-2 flex items-center gap-2 text-body-lg font-medium text-gray-700">
+            銘柄 <span className="inline-flex items-center justify-center rounded bg-action-record px-2 py-0.5 text-caption text-white font-bold">必須</span>
           </label>
           <input
             id="brand"
@@ -95,18 +95,18 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
             value={formData.brand}
             onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
             placeholder="例：獺祭 純米大吟醸"
-            maxLength={64}
-            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
+            maxLength={20}
+            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-primary focus:outline-none"
           />
           <p className="mt-1 text-body text-gray-500">
-            {formData.brand.length}/64文字
+            {formData.brand.length}/20文字
           </p>
         </div>
 
         {/* 評価 */}
         <div>
-          <label className="mb-3 block text-body-lg font-medium text-gray-700">
-            評価 <span className="text-red-500">*</span>
+          <label className="mb-3 flex items-center gap-2 text-body-lg font-medium text-gray-700">
+            評価 <span className="inline-flex items-center justify-center rounded bg-action-record px-2 py-0.5 text-caption text-white font-bold">必須</span>
           </label>
           <div className="grid grid-cols-2 gap-3">
             {ratings.map((rating) => (
@@ -116,7 +116,7 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
                 onClick={() => setFormData({ ...formData, rating: rating.value })}
                 className={`flex items-center justify-center gap-2 rounded-lg border-2 p-4 text-center transition-all ${
                   formData.rating === rating.value
-                    ? `${rating.color} border-transparent text-white shadow-lg scale-105`
+                    ? "bg-action-record border-transparent text-white shadow-lg scale-105"
                     : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                 }`}
               >
@@ -129,8 +129,8 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
 
         {/* 味の感想 */}
         <div>
-          <label htmlFor="impression" className="mb-2 block text-body-lg font-medium text-gray-700">
-            味の感想 <span className="text-red-500">*</span>
+          <label htmlFor="impression" className="mb-2 flex items-center gap-2 text-body-lg font-medium text-gray-700">
+            味の感想 <span className="inline-flex items-center justify-center rounded bg-action-record px-2 py-0.5 text-caption text-white font-bold">必須</span>
           </label>
           <textarea
             id="impression"
@@ -139,7 +139,7 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
             placeholder="例：フルーティで華やかな香り。甘みと酸味のバランスが良く、とても飲みやすい。"
             maxLength={1000}
             rows={6}
-            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-[#2B2D5F] focus:outline-none"
+            className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-body-lg text-gray-800 transition-colors focus:border-primary focus:outline-none"
           />
           <p className="mt-1 text-body text-gray-500">
             {formData.impression.length}/1000文字
@@ -160,9 +160,9 @@ export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
           <button
             type="submit"
             disabled={!isFormValid || isSaving}
-            className={`flex-1 rounded-lg py-4 text-body-lg font-medium text-white transition-all ${
+            className={`flex-1 rounded-lg py-4 text-body-lg font-medium text-text-light transition-all ${
               isFormValid && !isSaving
-                ? "bg-[#2B2D5F] hover:bg-[#3B3D7F] shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                ? "bg-primary hover:bg-primary-hover shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >

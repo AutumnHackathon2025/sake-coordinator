@@ -20,7 +20,7 @@ export function Footer({ items }: FooterProps) {
 
   return (
     <footer 
-      className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-2 border-t border-gray-300 bg-white"
+      className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-2 border-t border-border bg-bg-card"
       style={{ height: 'var(--footer-height)' }}
     >
       {items.map((item, index) => {
@@ -34,8 +34,8 @@ export function Footer({ items }: FooterProps) {
         );
 
         const activeStyles = isActive
-          ? "text-[#2B2D5F] bg-blue-50"
-          : "text-gray-600 hover:bg-gray-50";
+          ? "text-primary bg-bg-subtle"
+          : "text-secondary hover:bg-bg-page";
 
         if (item.href) {
           return (
