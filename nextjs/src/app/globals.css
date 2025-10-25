@@ -9,10 +9,10 @@
   --floating-element-gap: 16px;
 
   /* ========== プライマリカラー（ブランドカラー）- 枡の木の色 ========== */
-  --primary: #6B4423; /* 深い茶色（檜の色） */
-  --primary-hover: #8B6F47; /* 明るい茶色 */
-  --primary-light: #A68968; /* さらに明るい茶色 */
-  --primary-dark: #4A2F1A; /* より深い茶色 */
+  --primary: #2f1e10; /* 深い茶色（焦げた木の色） */
+  --primary-hover: #4a3320; /* 明るい茶色 */
+  --primary-light: #6B4423; /* さらに明るい茶色 */
+  --primary-dark: #1a0f08; /* より深い茶色 */
   
   /* ========== セカンダリカラー ========== */
   --secondary: #8B7355; /* 中間の茶色 */
@@ -233,4 +233,110 @@ body {
 
 .animate-pulse-slow {
   animation: pulse-slow 3s ease-in-out infinite;
+}/* ---------------------------------------------------------------------- */
+/* 1. ヒノキの木目テクスチャ (wood-texture) */
+/* ---------------------------------------------------------------------- */
+
+.wood-texture {
+  /* ベースカラー: 黄みを帯びた自然なヒノキの色 (#FAF5E7) */
+  background-color: #FAF5E7; 
+  position: relative;
+  overflow: hidden;
+  /* 角丸をなくし、カクカクとした枡の形状を維持 */
+  border-radius: 0; 
+  border: 1px solid #d4c7b6; /* 落ち着いた薄い境界線 */
+  
+  /* ベースとなる背景グラデーション（横に流れる木目） */
+  background-image: 
+      /* 横の淡い線（木材の繊維の流れ）を表現 */
+      linear-gradient(to bottom, rgba(200,190,170,0.1) 1px, transparent 1px),
+      /* 縦の線を非常に薄く、目立たなくする */
+      linear-gradient(to right, rgba(200,190,170,0.05) 1px, transparent 1px),
+      /* 全体的な明るさと黄みの揺らぎ */
+      linear-gradient(180deg, #FFFEF9 0%, #F7ECDF 100%);
+
+  background-size: 
+      100% 30px, /* 横線間隔を広めに */
+      20px 100%, /* 縦線間隔を広めに */
+      cover; 
+}
+
+/* より複雑な木目を疑似要素で追加し、マットな質感を表現 */
+.wood-texture::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  
+  /* ぼんやりとした木目や節のような模様 */
+  background-image: 
+      radial-gradient(circle at 20% 40%, rgba(200,180,160,0.05) 5%, transparent 15%),
+      radial-gradient(circle at 80% 60%, rgba(200,180,160,0.05) 5%, transparent 15%),
+      /* 横方向の流れを強調するために角度を調整 (例: 5度) */
+      linear-gradient(5deg, rgba(200,180,160,0.02) 0%, transparent 50%, rgba(200,180,160,0.02) 100%);
+  background-size: 
+      300px 300px,
+      250px 250px,
+      150% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.7; /* マット感を出す */
+  z-index: 0; /* コンテンツの下に配置 */
+}
+
+
+/* ---------------------------------------------------------------------- */
+/* 2. 枡の角の装飾 (masu-corner) */
+/* これはオプションですが、枡の重厚感を出すために使用できます */
+/* ---------------------------------------------------------------------- */
+
+/* 上側の角の装飾 */
+.masu-corner {
+  /* 疑似要素でL字型の装飾を作成 */
+  
+  /* 控えめな銀色や酸化銅のような色 */
+  --corner-color: #c4a88a; 
+  --corner-size: 24px; /* 装飾のサイズ */
+
+  /* 上の左と右の角に配置 */
+  background: 
+      /* 左上 */
+      linear-gradient(to bottom right, var(--corner-color) 50%, transparent 50.1%) top left / var(--corner-size) var(--corner-size) no-repeat,
+      /* 右上 */
+      linear-gradient(to bottom left, var(--corner-color) 50%, transparent 50.1%) top right / var(--corner-size) var(--corner-size) no-repeat;
+}
+
+/* 下側の角の装飾 (上側の装飾と重ならないように別のクラスを使用) */
+.masu-corner-bottom {
+  --corner-color: #c4a88a;
+  --corner-size: 24px; 
+
+  /* 下の左と右の角に配置 */
+  background:
+      /* 左下 */
+      linear-gradient(to top right, var(--corner-color) 50%, transparent 50.1%) bottom left / var(--corner-size) var(--corner-size) no-repeat,
+      /* 右下 */
+      linear-gradient(to top left, var(--corner-color) 50%, transparent 50.1%) bottom right / var(--corner-size) var(--corner-size) no-repeat;
+}
+
+/* 左の辺に四角の装飾を追加 */
+.masu-edge-left {
+  --corner-color: #ebe0d3;
+  --corner-size: 24px; 
+
+  /* 左の辺に四角の装飾を追加 */
+  background:
+      linear-gradient(to bottom left, var(--corner-color) 100%, transparent 50.1%) top left / var(--corner-size) var(--corner-size) no-repeat;
+}
+
+/* 右の辺に四角の装飾を追加 */
+.masu-edge-right {
+  --corner-color: #ebe0d3;
+  --corner-size: 24px; 
+
+  /* 右の辺に四角の装飾を追加 */
+  background:
+      linear-gradient(to bottom right, var(--corner-color) 100%, transparent 50.1%) top right / var(--corner-size) var(--corner-size) no-repeat;
 }

@@ -16,13 +16,17 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
   const ranking = getRankingDisplay(rank);
 
   return (
-    <div 
-      className="relative rounded-sm border-2 border-secondary bg-gradient-to-br from-bg-card to-bg-page p-4 shadow-sm"
-      style={{
-        boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.8), 0 2px 4px rgba(107,68,35,0.15)'
-      }}
-    >
-      <div className="flex items-start gap-4">
+    <div className="wood-texture relative p-4 shadow-md">
+      {/* 四隅の組み込み装飾 */}
+      <div className="masu-corner pointer-events-none absolute inset-0" />
+      <div className="masu-corner-bottom pointer-events-none absolute inset-0" />
+      <div className="masu-edge-left pointer-events-none absolute top-8 left-0 inset-0" />
+      <div className="masu-edge-left pointer-events-none absolute top-22 left-0 inset-0" />
+      <div className="masu-edge-right pointer-events-none absolute top-16 right-0 inset-0" />
+      <div className="masu-edge-right pointer-events-none absolute top-32 right-0 inset-0" />
+      
+      {/* コンテンツ */}
+      <div className="flex items-start gap-4 relative z-10">
         <div className={ranking.isEmoji ? "text-3xl" : "flex h-9 w-9 items-center justify-center text-body-lg font-bold text-primary"}>
           {ranking.icon}
         </div>
