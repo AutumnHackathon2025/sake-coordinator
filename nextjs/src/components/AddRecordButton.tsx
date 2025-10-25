@@ -13,7 +13,7 @@ export function AddRecordButton({ variant = "default", onClick }: AddRecordButto
         className="fixed bottom-16 right-6 z-30 flex h-14 items-center gap-3 rounded-full bg-gradient-to-r from-[#2B2D5F] to-[#4B4D8F] px-6 text-white shadow-2xl transition-all hover:scale-110 hover:shadow-3xl animate-pulse-slow"
       >
         <AddIcon className="text-2xl" />
-        <span className="text-sm font-medium">記録する</span>
+        <span className="text-body font-medium">記録する</span>
       </button>
     );
   }

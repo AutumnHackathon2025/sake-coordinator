@@ -72,30 +72,29 @@ export default function RecommendationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        rightAction={
-          <button
-            onClick={() => setIsMenuModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-white transition-colors hover:bg-white/20"
-            aria-label="メニューを編集"
-          >
-            <EditIcon className="text-xl" />
-            <span className="text-sm">メニュー</span>
-          </button>
-        }
-      />
+      <Header />
 
       {/* メインコンテンツ */}
       <main className="pb-16 pt-14">
         <div className="px-6 py-8">
-          <h2 className="mb-8 text-title text-[#2B2D5F]">
-            今夜のおすすめ日本酒
-          </h2>
+          <div className="mb-8 flex flex-col gap-3">
+            <h2 className="text-title text-[#2B2D5F]">
+              今夜のおすすめ日本酒
+            </h2>
+            <button
+              onClick={() => setIsMenuModalOpen(true)}
+              className="flex w-fit items-center gap-1 self-end rounded-lg bg-gray-100 px-3 py-2 text-[#2B2D5F] transition-colors hover:bg-gray-200"
+              aria-label="メニューを編集"
+            >
+              <EditIcon className="text-lg" />
+              <span className="text-body font-medium">メニューを編集</span>
+            </button>
+          </div>
 
           {/* ヒントメッセージ */}
           <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-l-4 border-blue-500">
             <p className="text-body text-blue-800">
-              💡 メニューはヘッダーの「メニュー」ボタンから編集できます
+              💡 気に入った日本酒を見つけたら、感想を記録しておきましょう
             </p>
           </div>
 

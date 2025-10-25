@@ -103,18 +103,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header 
-        rightAction={
-          <button
-            onClick={() => setIsMenuModalOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-white transition-colors hover:bg-white/20"
-            aria-label="メニューを編集"
-          >
-            <EditIcon className="text-xl" />
-            <span className="text-sm">メニュー</span>
-          </button>
-        }
-      />
+      <Header />
 
       {/* メインコンテンツ */}
       <main className="pb-16 pt-14">

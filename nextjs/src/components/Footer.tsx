@@ -26,7 +26,7 @@ export function Footer({ items }: FooterProps) {
         const content = (
           <>
             <span className="text-2xl">{item.icon}</span>
-            <span className="text-base font-medium">{item.label}</span>
+            <span className="text-body font-medium">{item.label}</span>
           </>
         );
 

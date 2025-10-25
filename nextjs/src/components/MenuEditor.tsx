@@ -39,7 +39,7 @@ export function MenuEditor({ onSubmit }: MenuEditorProps) {
   return (
     <div className="flex min-h-[80vh] flex-col p-8">
       {/* タイトル */}
-      <h2 className="mb-8 text-3xl font-medium text-[#2B2D5F]">銘柄</h2>
+      <h2 className="mb-8 text-title text-[#2B2D5F]">銘柄</h2>
 
       {/* 銘柄リスト */}
       <div className="flex-1 space-y-4">
@@ -49,7 +49,7 @@ export function MenuEditor({ onSubmit }: MenuEditorProps) {
               type="text"
               value={item}
               onChange={(e) => handleUpdateItem(index, e.target.value)}
-              className="flex-1 border-2 border-gray-800 bg-white px-6 py-4 text-xl text-gray-800 focus:border-[#2B2D5F] focus:outline-none"
+              className="flex-1 border-2 border-gray-800 bg-white px-6 py-4 text-body-lg text-gray-800 focus:border-[#2B2D5F] focus:outline-none"
               placeholder="銘柄名を入力"
             />
             <button
@@ -67,7 +67,7 @@ export function MenuEditor({ onSubmit }: MenuEditorProps) {
       <button
         onClick={handleAddItem}
         disabled={menuItems.length >= 10}
-        className="mt-6 w-full bg-[#6B6D9F] py-5 text-xl text-white transition-all hover:bg-[#5B5D8F] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-6 w-full bg-[#6B6D9F] py-5 text-body-lg text-white transition-all hover:bg-[#5B5D8F] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className="mr-2 text-2xl">＋</span>
         銘柄を追加する
@@ -76,7 +76,7 @@ export function MenuEditor({ onSubmit }: MenuEditorProps) {
       {/* おすすめを探すボタン */}
       <button
         onClick={handleSubmit}
-        className="mt-6 flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-5 text-xl text-white transition-all hover:bg-[#3B3D7F]"
+        className="mt-6 flex w-full items-center justify-center gap-3 bg-[#2B2D5F] py-5 text-body-lg text-white transition-all hover:bg-[#3B3D7F]"
       >
         <span className="text-2xl">🍶</span>
         <span>おすすめを探す</span>
