@@ -22,6 +22,7 @@
   --bg-primary: #FAF9F7; /* 檜に近いオフホワイト（彩度を抑えた白） */
   --bg-secondary: #F7F5F2; /* 落ち着いた薄いグレーベージュ */
   --bg-tertiary: #F0EDE8; /* やや濃いグレーベージュ */
+  --bg-collection-wall: #3d3531; /* コレクションの壁（暗い茶色） */
   
   /* ========== テキストカラー ========== */
   --text-primary: #1F2937; /* gray-800 */
@@ -124,6 +125,7 @@
   --color-bg-page: var(--bg-secondary);
   --color-bg-card: var(--bg-primary);
   --color-bg-subtle: var(--bg-tertiary);
+  --color-bg-collection-wall: var(--bg-collection-wall);
   
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -339,4 +341,54 @@ body {
   /* 右の辺に四角の装飾を追加 */
   background:
       linear-gradient(to bottom right, var(--corner-color) 100%, transparent 50.1%) top right / var(--corner-size) var(--corner-size) no-repeat;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 3. 日本酒ラベル風カード (sake-label-card) */
+/* ---------------------------------------------------------------------- */
+
+.sake-label-card {
+  position: relative;
+  background: linear-gradient(180deg, #FFFCF5 0%, #F5F1E8 100%);
+  border: 2px solid #d4c7b6;
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ラベルのような質感 */
+.sake-label-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(200, 190, 170, 0.03) 2px,
+      rgba(200, 190, 170, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(200, 190, 170, 0.03) 2px,
+      rgba(200, 190, 170, 0.03) 4px
+    );
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 0;
+}
+
+/* 縁取りの装飾 */
+.sake-label-card::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(107, 68, 35, 0.15);
+  pointer-events: none;
+  border-radius: 2px;
+  z-index: 0;
 }

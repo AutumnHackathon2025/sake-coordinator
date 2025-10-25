@@ -67,23 +67,23 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-page">
+    <div className="min-h-screen bg-bg-collection-wall">
       <Header />
 
       {/* メインコンテンツ */}
       <main className="pb-32 pt-14">
         <div className="px-6 py-6">
-          <h2 className="mb-6 text-title text-primary">
-            飲酒記録
+          <h2 className="mb-6 text-title text-text-light">
+            飲酒記録コレクション
           </h2>
 
           {/* 記録リスト */}
           {isLoading ? (
-            <div className="py-12 text-center text-gray-500">
+            <div className="py-12 text-center text-gray-400">
               <p className="text-body-lg">記録を読み込んでいます...</p>
             </div>
           ) : records.length === 0 ? (
-            <div className="py-12 text-center text-gray-500">
+            <div className="py-12 text-center text-gray-300">
               <p className="text-body-lg">まだ記録がありません</p>
               <p className="mt-2 text-body">飲んだお酒を記録してみましょう</p>
               <div className="mt-6">
@@ -91,39 +91,41 @@ export default function HistoryPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {records.map((record) => (
                 <div
                   key={record.id}
-                  className="rounded-lg bg-white p-4 shadow-sm"
+                  className="sake-label-card rounded-md p-5"
                 >
-                  {/* ヘッダー */}
-                  <div className="mb-3 flex items-start justify-between">
-                    <h3 className="text-subtitle text-gray-800">
-                      {record.brand}
-                    </h3>
-                    <span
-                      className={`rounded-full px-3 py-1 text-body font-medium ${getRatingColor(
-                        record.rating
-                      )}`}
-                    >
-                      {RATING_LABELS[record.rating]}
-                    </span>
+                  <div className="relative z-10">
+                    {/* ヘッダー */}
+                    <div className="mb-4 flex items-start justify-between">
+                      <h3 className="text-subtitle text-primary font-semibold">
+                        {record.brand}
+                      </h3>
+                      <span
+                        className={`rounded-full px-3 py-1 text-body font-medium ${getRatingColor(
+                          record.rating
+                        )}`}
+                      >
+                        {RATING_LABELS[record.rating]}
+                      </span>
+                    </div>
+
+                    {/* 感想 */}
+                    <p className="mb-4 text-body text-gray-800 leading-relaxed">
+                      {record.impression}
+                    </p>
+
+                    {/* 日付 */}
+                    <p className="text-body text-gray-600">
+                      {new Date(record.createdAt).toLocaleDateString("ja-JP", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
                   </div>
-
-                  {/* 感想 */}
-                  <p className="mb-3 text-body text-gray-700 leading-relaxed">
-                    {record.impression}
-                  </p>
-
-                  {/* 日付 */}
-                  <p className="text-body text-gray-500">
-                    {new Date(record.createdAt).toLocaleDateString("ja-JP", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
                 </div>
               ))}
             </div>
