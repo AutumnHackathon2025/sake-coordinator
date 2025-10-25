@@ -31,65 +31,65 @@
   - エラーメッセージを日本語化
   - _要件: 1.3, 1.4_
 
-- [-] 2. BedrockServiceの実装完了
+- [x] 2. BedrockServiceの実装完了
   - 既存のgenerate_text()メソッドを確認・修正
   - エラーハンドリングの追加
   - タイムアウト設定（15秒）
   - _要件: 3.3, 5.3, 7.4_
 
-- [-] 2.1 Bedrock呼び出しの実装
+- [x] 2.1 Bedrock呼び出しの実装
   - Claude 3.5 Sonnetモデルの設定確認
   - リクエストボディの構築（anthropic_version, max_tokens, temperature）
   - レスポンスのパース処理
   - _要件: 3.3_
 
-- [ ] 2.2 エラーハンドリングとリトライ
+- [x] 2.2 エラーハンドリングとリトライ
   - ClientErrorのハンドリング
   - 2回までの自動リトライ（固定間隔）
   - タイムアウト設定（15秒）
   - 詳細なログ記録
   - _要件: 5.3, 7.4_
 
-- [ ] 3. DrinkingRecordServiceの実装完了
+- [x] 3. DrinkingRecordServiceの実装完了
   - 既存のget_user_records()メソッドを確認・修正
   - DynamoDB接続の実装
   - エラーハンドリングの追加
   - _要件: 2.1, 2.2, 5.2, 8.1_
 
-- [ ] 3.1 DynamoDBクエリの実装
+- [x] 3.1 DynamoDBクエリの実装
   - user_idでのクエリ実行
   - 最新100件の取得（ScanIndexForward=False, Limit=100）
   - created_atでのソート
   - _要件: 2.1, 7.2, 8.1_
 
-- [ ] 3.2 エラーハンドリングとリトライ
+- [x] 3.2 エラーハンドリングとリトライ
   - ClientErrorのハンドリング
   - 3回までの自動リトライ（指数バックオフ）
   - タイムアウト設定（5秒）
   - 詳細なログ記録
   - _要件: 5.2_
 
-- [ ] 4. RecommendationServiceの推薦アルゴリズム実装
+- [x] 4. RecommendationServiceの推薦アルゴリズム実装
   - プロンプト構築ロジックの完成
   - Bedrockレスポンスのパース処理
   - 推薦結果のスコアリングとソート
   - _要件: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2_
 
-- [ ] 4.1 味の好み分析の実装
+- [x] 4.1 味の好み分析の実装
   - 飲酒履歴を評価別に分類（好き/合わない）
   - 味の感想テキストから特徴抽出
   - 好みの傾向をスコア化
   - 分析結果の構造化（preferred_tastes, disliked_tastes, analysis_summary）
   - _要件: 2.2, 2.3, 2.4_
 
-- [ ] 4.2 推薦プロンプトの構築
+- [x] 4.2 推薦プロンプトの構築
   - ユーザーの好み分析結果を含める
   - 最新10件の飲酒履歴を含める
   - メニューリスト（指定時）を含める
   - JSON形式でのレスポンスを要求
   - _要件: 3.1, 3.4_
 
-- [ ] 4.3 推薦結果のパースとバリデーション
+- [x] 4.3 推薦結果のパースとバリデーション
   - BedrockのJSONレスポンスをパース
   - Recommendationモデルに変換
   - 文字数とスコア範囲のバリデーション
@@ -97,31 +97,31 @@
   - 上位10件を選択
   - _要件: 3.3, 3.5, 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 4.4 飲酒履歴0件時の処理
+- [x] 4.4 飲酒履歴0件時の処理
   - 空の推薦リストを返す（エラーではない）
   - メタデータとして「飲酒記録がありません。まずは飲んだお酒を記録してください」を含める
   - _要件: 2.5_
 
-- [ ] 5. SakeRecommendationAgentの統合
+- [x] 5. SakeRecommendationAgentの統合
   - recommend_sake()メソッドの完成
   - サービス層の呼び出しとエラーハンドリング
   - RecommendationResponseの構築
   - _要件: 1.1, 1.2, 4.1, 4.2, 4.3_
 
-- [ ] 5.1 recommend_sake()の実装
+- [x] 5.1 recommend_sake()の実装
   - DrinkingRecordServiceから飲酒履歴を取得
   - RecommendationServiceで推薦を生成
   - RecommendationResponseに整形
   - エラー時の適切な例外スロー
   - _要件: 1.1, 1.2, 4.1, 4.2, 4.3_
 
-- [ ] 5.2 analyze_taste_preference()の実装
+- [x] 5.2 analyze_taste_preference()の実装
   - DrinkingRecordServiceから飲酒履歴を取得
   - RecommendationServiceで味の好み分析を実行
   - 分析結果を返却
   - _要件: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 6. Next.js API Routeの実装
+- [x] 6. Next.js API Routeの実装
   - POST /agent/recommendエンドポイントの作成
   - 認証トークンの検証
   - リクエストバリデーション
@@ -129,14 +129,14 @@
   - レスポンス整形
   - _要件: 1.1, 1.2, 1.3, 1.4, 5.1, 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 6.1 認証ミドルウェアの実装
+- [x] 6.1 認証ミドルウェアの実装
   - Authorizationヘッダーからトークンを抽出
   - Cognito JWTトークンの検証（署名、有効期限、issuer、audience）
   - トークンからユーザーID（sub）を抽出
   - 認証エラー時は401 Unauthorizedを返す
   - _要件: 5.1, 6.5, 8.4_
 
-- [ ] 6.2 リクエストバリデーションの実装
+- [x] 6.2 リクエストバリデーションの実装
   - リクエストボディのパース
   - menuフィールドの存在チェック
   - menuが配列であることを確認
@@ -144,21 +144,21 @@
   - バリデーションエラー時は400 Bad Requestを返す
   - _要件: 1.3, 1.4_
 
-- [ ] 6.3 AgentCore Runtime呼び出しの実装
+- [x] 6.3 AgentCore Runtime呼び出しの実装
   - SakeRecommendationAgentのrecommend_sake()を呼び出し
   - user_idとmenuを渡す
   - max_recommendations=10を指定
   - タイムアウト設定（30秒）
   - _要件: 1.1, 1.5, 7.1_
 
-- [ ] 6.4 レスポンス整形の実装
+- [x] 6.4 レスポンス整形の実装
   - RecommendationResponseをAPI仕様書の形式に変換
   - {"recommendations": [{"brand": "...", "score": ..., "reason": "..."}]}
   - Content-Type: application/jsonを設定
   - 200 OKステータスコードを返す
   - _要件: 4.3, 6.3, 6.4_
 
-- [ ] 6.5 エラーハンドリングの実装
+- [x] 6.5 エラーハンドリングの実装
   - 認証エラー: 401 Unauthorized
   - バリデーションエラー: 400 Bad Request
   - データベースエラー: 500 Internal Server Error
@@ -167,19 +167,19 @@
   - 日本語エラーメッセージ
   - _要件: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 7. 設定ファイルとユーティリティの実装
+- [x] 7. 設定ファイルとユーティリティの実装
   - 環境変数の読み込み
   - 設定ファイルの管理
   - ログ設定
   - _要件: 5.5, 8.5_
 
-- [ ] 7.1 環境変数の設定
+- [x] 7.1 環境変数の設定
   - .env.exampleファイルの作成
   - 必要な環境変数のリスト化（BEDROCK_REGION, BEDROCK_MODEL_ID, DYNAMODB_TABLE_NAME等）
   - 開発環境と本番環境の設定分離
   - _要件: 該当なし（インフラ設定）_
 
-- [ ] 7.2 ログ設定の実装
+- [x] 7.2 ログ設定の実装
   - structlogの設定
   - ログレベルの設定（開発: DEBUG, 本番: INFO）
   - ログフォーマットの統一（JSON形式）

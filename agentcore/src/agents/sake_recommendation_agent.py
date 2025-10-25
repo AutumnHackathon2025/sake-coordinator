@@ -3,7 +3,7 @@
 import asyncio
 from typing import List, Optional
 import structlog
-from strands import Agent, Context
+from strands import Agent, ToolContext
 
 from ..models import DrinkingRecord, Recommendation, RecommendationResponse, Menu
 from ..services.recommendation_service import RecommendationService
@@ -26,10 +26,10 @@ class SakeRecommendationAgent(Agent):
     
     async def recommend_sake(
         self, 
-        context: Context,
+        context: ToolContext,
         user_id: str,
         menu: Optional[Menu] = None,
-        max_recommendations: int = 5
+        max_recommendations: int = 10
     ) -> RecommendationResponse:
         """日本酒推薦を実行
         
@@ -37,10 +37,13 @@ class SakeRecommendationAgent(Agent):
             context: Strandsコンテキスト
             user_id: ユーザーID
             menu: メニュー情報（任意）
-            max_recommendations: 最大推薦数
+            max_recommendations: 最大推薦数（デフォルト: 10）
             
         Returns:
             RecommendationResponse: 推薦結果
+            
+        Raises:
+            Exception: DrinkingRecordServiceまたはRecommendationServiceでエラーが発生した場合
         """
         logger.info("日本酒推薦を開始", user_id=user_id, max_recommendations=max_recommendations)
         
@@ -57,6 +60,7 @@ class SakeRecommendationAgent(Agent):
                 max_recommendations=max_recommendations
             )
             
+            # RecommendationResponseに整形
             response = RecommendationResponse(
                 user_id=user_id,
                 recommendations=recommendations,
@@ -67,12 +71,13 @@ class SakeRecommendationAgent(Agent):
             return response
             
         except Exception as e:
-            logger.error("日本酒推薦でエラーが発生", user_id=user_id, error=str(e))
+            logger.error("日本酒推薦でエラーが発生", user_id=user_id, error=str(e), exc_info=True)
+            # エラーを再スローして上位層で適切に処理
             raise
     
     async def analyze_taste_preference(
         self,
-        context: Context,
+        context: ToolContext,
         user_id: str
     ) -> dict:
         """味の好み分析
@@ -83,12 +88,20 @@ class SakeRecommendationAgent(Agent):
             
         Returns:
             dict: 味の好み分析結果
+                - preferred_tastes: 好む味の特徴リスト
+                - disliked_tastes: 避けるべき味の特徴リスト
+                - rating_distribution: 評価の分布
+                - analysis_summary: 好みの要約（200文字以内）
+                
+        Raises:
+            Exception: DrinkingRecordServiceまたはRecommendationServiceでエラーが発生した場合
         """
         logger.info("味の好み分析を開始", user_id=user_id)
         
         try:
             # ユーザーの飲酒履歴を取得
             drinking_records = await self.drinking_record_service.get_user_records(user_id)
+            logger.info("飲酒履歴を取得", user_id=user_id, record_count=len(drinking_records))
             
             # 味の好み分析を実行
             analysis = await self.recommendation_service.analyze_taste_preference(
@@ -100,5 +113,6 @@ class SakeRecommendationAgent(Agent):
             return analysis
             
         except Exception as e:
-            logger.error("味の好み分析でエラーが発生", user_id=user_id, error=str(e))
+            logger.error("味の好み分析でエラーが発生", user_id=user_id, error=str(e), exc_info=True)
+            # エラーを再スローして上位層で適切に処理
             raise

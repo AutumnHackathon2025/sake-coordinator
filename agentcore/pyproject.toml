@@ -11,10 +11,15 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "httpx>=0.25.0",
     "structlog>=23.2.0",
+    "strands-agents>=0.1.0",
+    "bedrock-agentcore>=0.1.0",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
+
+[project.scripts]
+dev = "agent:main"
 
 [project.optional-dependencies]
 dev = [

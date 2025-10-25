@@ -19,6 +19,7 @@ RUN useradd --create-home --shell /bin/bash app
 # プロジェクトファイルをコピー
 COPY pyproject.toml ./
 COPY uv.lock* ./
+COPY README.md ./
 
 # ソースコードをコピー
 COPY src/ ./src/
@@ -30,10 +31,10 @@ RUN chown -R app:app /app
 # 本番用ステージ
 FROM base as production
 
+USER app
+
 # 本番用依存関係のみインストール
 RUN uv sync --frozen --no-dev
-
-USER app
 
 # ヘルスチェック
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -43,24 +44,18 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # エントリーポイント
-CMD ["uv", "run", "dev"]
+CMD ["uv", "run", "python", "-m", "src.agent"]
 
 # 開発用ステージ
 FROM base as development
 
+USER app
+
 # 開発用依存関係も含めてインストール
 RUN uv sync --frozen --extra dev
-
-# 開発用ツールを追加インストール
-RUN apt-get update && apt-get install -y \
-    vim \
-    htop \
-    && rm -rf /var/lib/apt/lists/*
-
-USER app
 
 # ポートを公開（デバッグポート含む）
 EXPOSE 8000 5678
 
 # 開発用エントリーポイント
-CMD ["uv", "run", "dev"]
+CMD ["uv", "run", "python", "-m", "src.agent"]

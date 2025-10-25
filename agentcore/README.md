@@ -155,6 +155,58 @@ agentcore/
 - 味の好みの学習と分析
 - メニューからの最適な銘柄選択支援
 - 推薦理由の説明生成
+
+## API使用例
+
+### 日本酒推薦リクエスト
+
+```json
+{
+  "type": "recommendation",
+  "user_id": "test_user_001",
+  "drinking_records": [
+    {
+      "id": "rec_001",
+      "user_id": "test_user_001",
+      "brand": "獺祭",
+      "impression": "フルーティーで飲みやすい",
+      "rating": "非常に好き",
+      "created_at": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": "rec_002",
+      "user_id": "test_user_001",
+      "brand": "久保田",
+      "impression": "すっきりとした味わい",
+      "rating": "好き",
+      "created_at": "2025-01-02T00:00:00Z"
+    }
+  ],
+  "menu_brands": ["獺祭", "久保田", "十四代", "八海山"],
+  "max_recommendations": 3
+}
+```
+
+### 味の好み分析リクエスト
+
+```json
+{
+  "type": "taste_analysis",
+  "user_id": "test_user_001",
+  "drinking_records": [
+    {
+      "id": "rec_001",
+      "user_id": "test_user_001",
+      "brand": "獺祭",
+      "impression": "フルーティーで飲みやすい",
+      "rating": "非常に好き",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+**注意**: 飲酒記録データは、Next.js API Routesから取得したデータをリクエストペイロードに含めて送信してください。エージェント側ではDynamoDBへの直接アクセスは行いません。
 ## クイックスタート
 
 ### Docker開発

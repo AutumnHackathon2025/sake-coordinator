@@ -1,109 +1,49 @@
 """飲酒記録サービス"""
 
-from typing import List, Optional
 import structlog
-import boto3
-from botocore.exceptions import ClientError
 
 from ..models import DrinkingRecord
-from ..utils.config import get_config
 
 logger = structlog.get_logger(__name__)
 
 
 class DrinkingRecordService:
-    """飲酒記録サービス"""
+    """飲酒記録サービス
+    
+    リクエストペイロードから飲酒記録データを受け取り、
+    DrinkingRecordモデルに変換する
+    """
 
     def __init__(self):
-        config = get_config()
-        self.dynamodb = boto3.resource("dynamodb", region_name=config.dynamodb_region)
-        self.table = self.dynamodb.Table(config.dynamodb_table_name)
+        logger.info("飲酒記録サービスを初期化")
 
-    async def get_user_records(
-        self, user_id: str, limit: Optional[int] = None
-    ) -> List[DrinkingRecord]:
-        """ユーザーの飲酒記録を取得
+    async def parse_records(
+        self, records_data: list[dict]
+    ) -> list[DrinkingRecord]:
+        """飲酒記録データをパース
 
         Args:
-            user_id: ユーザーID
-            limit: 取得件数制限
+            records_data: 飲酒記録の辞書リスト
 
         Returns:
             List[DrinkingRecord]: 飲酒記録リスト
         """
-        logger.info("飲酒記録を取得", user_id=user_id, limit=limit)
+        logger.info("飲酒記録をパース", record_count=len(records_data))
 
-        try:
-            # DynamoDBからユーザーの記録を取得
-            response = self.table.query(
-                KeyConditionExpression="user_id = :user_id",
-                ExpressionAttributeValues={":user_id": user_id},
-                ScanIndexForward=False,  # 新しい順でソート
-                Limit=limit if limit else 100,
-            )
-
-            records = []
-            for item in response.get("Items", []):
-                try:
-                    record = DrinkingRecord(**item)
-                    records.append(record)
-                except Exception as e:
-                    logger.warning("飲酒記録のパースに失敗", item=item, error=str(e))
-                    continue
-
-            logger.info(
-                "飲酒記録を取得完了", user_id=user_id, record_count=len(records)
-            )
-            return records
-
-        except ClientError as e:
-            logger.error("DynamoDB操作でエラーが発生", user_id=user_id, error=str(e))
-            raise
-        except Exception as e:
-            logger.error("飲酒記録取得でエラーが発生", user_id=user_id, error=str(e))
-            raise
-
-    async def get_record_by_id(
-        self, user_id: str, record_id: str
-    ) -> Optional[DrinkingRecord]:
-        """IDで飲酒記録を取得
-
-        Args:
-            user_id: ユーザーID
-            record_id: 記録ID
-
-        Returns:
-            Optional[DrinkingRecord]: 飲酒記録（存在しない場合はNone）
-        """
-        logger.info("飲酒記録を取得", user_id=user_id, record_id=record_id)
-
-        try:
-            response = self.table.get_item(Key={"user_id": user_id, "id": record_id})
-
-            item = response.get("Item")
-            if not item:
-                logger.info(
-                    "飲酒記録が見つかりません", user_id=user_id, record_id=record_id
+        records = []
+        for item in records_data:
+            try:
+                record = DrinkingRecord(**item)
+                records.append(record)
+            except Exception as e:
+                logger.warning(
+                    "飲酒記録のパースに失敗", item=item, error=str(e)
                 )
-                return None
+                continue
 
-            record = DrinkingRecord(**item)
-            logger.info("飲酒記録を取得完了", user_id=user_id, record_id=record_id)
-            return record
-
-        except ClientError as e:
-            logger.error(
-                "DynamoDB操作でエラーが発生",
-                user_id=user_id,
-                record_id=record_id,
-                error=str(e),
-            )
-            raise
-        except Exception as e:
-            logger.error(
-                "飲酒記録取得でエラーが発生",
-                user_id=user_id,
-                record_id=record_id,
-                error=str(e),
-            )
-            raise
+        logger.info(
+            "飲酒記録のパース完了", 
+            input_count=len(records_data),
+            parsed_count=len(records)
+        )
+        return records
