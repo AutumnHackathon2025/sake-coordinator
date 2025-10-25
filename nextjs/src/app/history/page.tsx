@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { RecordForm } from "@/components/RecordForm";
 import { MenuEditor } from "@/components/MenuEditor";
@@ -12,10 +13,18 @@ import { useRecords } from "./useRecords";
 import { FOOTER_ITEMS } from "@/constants/navigation";
 
 export default function HistoryPage() {
+  const searchParams = useSearchParams();
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<string[]>([]);
   const { records, isLoading, addRecord } = useRecords();
+
+  // URLパラメータでモーダルを自動で開く
+  useEffect(() => {
+    if (searchParams.get("openRecordModal") === "true") {
+      setIsRecordModalOpen(true);
+    }
+  }, [searchParams]);
 
   const getRatingColor = (rating: Rating) => {
     switch (rating) {
