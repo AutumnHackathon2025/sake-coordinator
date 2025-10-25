@@ -5,6 +5,7 @@ import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AddRecordButton } from "@/components/AddRecordButton";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 
@@ -66,6 +67,13 @@ export default function RecommendationsPage() {
             今夜のおすすめ日本酒
           </h2>
 
+          {/* ヒントメッセージ */}
+          <div className="mb-6 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-l-4 border-blue-500">
+            <p className="text-sm text-blue-800">
+              💡 気に入った日本酒を見つけたら、感想を記録しておきましょう
+            </p>
+          </div>
+
           {/* おすすめリスト */}
           <div className="space-y-6">
             {recommendations.map((sake, index) => (
@@ -107,6 +115,7 @@ export default function RecommendationsPage() {
       </main>
 
       <Footer items={footerItems} />
+      <AddRecordButton />
 
       {/* メニュー編集モーダル */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>

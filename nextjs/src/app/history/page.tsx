@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AddRecordButton } from "@/components/AddRecordButton";
 import StarIcon from "@mui/icons-material/Star";
 import HistoryIcon from "@mui/icons-material/History";
 
@@ -80,11 +81,21 @@ export default function HistoryPage() {
             飲酒記録
           </h2>
 
+          {/* モチベーションメッセージ */}
+          <div className="mb-6 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-l-4 border-amber-500">
+            <p className="text-sm font-medium text-amber-800">
+              🎯 記録が増えるほど、AIがあなたの好みを学習します
+            </p>
+          </div>
+
           {/* 記録リスト */}
           {records.length === 0 ? (
             <div className="py-12 text-center text-gray-500">
-              <p>まだ記録がありません</p>
+              <p className="text-lg">まだ記録がありません</p>
               <p className="mt-2 text-sm">飲んだお酒を記録してみましょう</p>
+              <div className="mt-6">
+                <p className="text-xs text-gray-400">右下の「+」ボタンから記録できます</p>
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -128,6 +139,7 @@ export default function HistoryPage() {
       </main>
 
       <Footer items={footerItems} />
+      <AddRecordButton variant="motivational" />
     </div>
   );
 }
