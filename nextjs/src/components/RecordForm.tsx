@@ -86,8 +86,8 @@ export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* 銘柄 */}
         <div>
-          <label htmlFor="brand" className="mb-2 block text-body-lg font-medium text-gray-700">
-            銘柄 <span className="text-red-500">*</span>
+          <label htmlFor="brand" className="mb-2 flex items-center gap-2 text-body-lg font-medium text-gray-700">
+            銘柄 <span className="inline-flex items-center justify-center rounded bg-action-record px-2 py-0.5 text-caption text-white font-bold">必須</span>
           </label>
           <input
             id="brand"
@@ -105,8 +105,8 @@ export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps
 
         {/* 評価 */}
         <div>
-          <label className="mb-3 block text-body-lg font-medium text-gray-700">
-            評価 <span className="text-red-500">*</span>
+          <label className="mb-3 flex items-center gap-2 text-body-lg font-medium text-gray-700">
+            評価 <span className="inline-flex items-center justify-center rounded bg-action-record px-2 py-0.5 text-caption text-white font-bold">必須</span>
           </label>
           <div className="grid grid-cols-2 gap-3">
             {ratings.map((rating) => (
@@ -129,8 +129,8 @@ export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps
 
         {/* 味の感想 */}
         <div>
-          <label htmlFor="impression" className="mb-2 block text-body-lg font-medium text-gray-700">
-            味の感想 <span className="text-red-500">*</span>
+          <label htmlFor="impression" className="mb-2 flex items-center gap-2 text-body-lg font-medium text-gray-700">
+            味の感想 <span className="inline-flex items-center justify-center rounded bg-action-record px-2 py-0.5 text-caption text-white font-bold">必須</span>
           </label>
           <textarea
             id="impression"
