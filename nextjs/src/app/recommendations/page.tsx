@@ -53,7 +53,7 @@ export default function RecommendationsPage() {
               <p className="mt-2 text-body">メニューを編集して、もう一度お試しください</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {recommendations.map((sake, index) => (
                 <RecommendationCard 
                   key={`${sake.brand}-${index}`}

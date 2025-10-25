@@ -10,11 +10,12 @@ interface RecordFormProps {
     rating: Rating;
   }) => void;
   onCancel?: () => void;
+  initialBrand?: string;
 }
 
-export function RecordForm({ onSubmit, onCancel }: RecordFormProps) {
+export function RecordForm({ onSubmit, onCancel, initialBrand }: RecordFormProps) {
   const [formData, setFormData] = useState({
-    brand: "",
+    brand: initialBrand || "",
     impression: "",
     rating: "" as "" | Rating,
   });

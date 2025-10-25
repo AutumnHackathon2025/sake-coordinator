@@ -17,12 +17,17 @@ export default function HistoryPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [menuItems, setMenuItems] = useState<string[]>([]);
+  const [initialBrand, setInitialBrand] = useState<string | undefined>(undefined);
   const { records, isLoading, addRecord } = useRecords();
 
-  // URLパラメータでモーダルを自動で開く
+  // URLパラメータでモーダルを自動で開く & 銘柄の初期値を設定
   useEffect(() => {
     if (searchParams.get("openRecordModal") === "true") {
       setIsRecordModalOpen(true);
+      const brandParam = searchParams.get("brand");
+      if (brandParam) {
+        setInitialBrand(brandParam);
+      }
     }
   }, [searchParams]);
 
@@ -137,6 +142,7 @@ export default function HistoryPage() {
         <RecordForm 
           onSubmit={handleSubmitRecord}
           onCancel={() => setIsRecordModalOpen(false)}
+          initialBrand={initialBrand}
         />
       </Modal>
 
