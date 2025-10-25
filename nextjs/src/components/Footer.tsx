@@ -19,7 +19,7 @@ export function Footer({ items }: FooterProps) {
         const content = (
           <>
             <span className="text-2xl">{item.icon}</span>
-            <span className="text-sm">{item.label}</span>
+            <span className="text-base">{item.label}</span>
           </>
         );
 
@@ -28,7 +28,7 @@ export function Footer({ items }: FooterProps) {
             <Link
               key={index}
               href={item.href}
-              className="flex flex-col items-center justify-center gap-2 py-4 text-gray-600 transition-colors hover:bg-gray-50"
+              className="flex flex-row items-center justify-center gap-2 py-3 text-gray-600 transition-colors hover:bg-gray-50"
             >
               {content}
             </Link>
@@ -39,7 +39,7 @@ export function Footer({ items }: FooterProps) {
           <button
             key={index}
             onClick={item.onClick}
-            className="flex flex-col items-center justify-center gap-2 py-4 text-gray-600 transition-colors hover:bg-gray-50"
+            className="flex flex-row items-center justify-center gap-2 py-3 text-gray-600 transition-colors hover:bg-gray-50"
           >
             {content}
           </button>

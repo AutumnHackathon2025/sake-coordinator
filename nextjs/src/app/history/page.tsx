@@ -75,7 +75,7 @@ export default function HistoryPage() {
       <Header />
 
       {/* メインコンテンツ */}
-      <main className="pb-24 pt-20">
+      <main className="pb-16 pt-14">
         <div className="px-6 py-8">
           <h2 className="mb-8 text-3xl font-medium text-[#2B2D5F]">
             飲酒記録
