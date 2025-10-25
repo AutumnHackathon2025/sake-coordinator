@@ -11,7 +11,9 @@
   "dependencies": {
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "next": "16.0.0"
+    "next": "16.0.0",
+    "@aws-sdk/client-dynamodb": "^3.478.0",
+    "@aws-sdk/lib-dynamodb": "^3.478.0"
   },
   "devDependencies": {
     "typescript": "^5",
