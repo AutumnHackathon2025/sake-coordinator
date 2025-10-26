@@ -8,19 +8,31 @@ interface RecommendationCardProps {
 }
 
 export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
-  // カテゴリに応じた色設定
-  const getCategoryColor = (category?: string) => {
-    switch (category) {
-      case "鉄板マッチ":
-        return "bg-action-record text-white";
-      case "次の一手":
-        return "bg-primary text-white";
-      case "運命の出会い":
-        return "bg-secondary text-primary-dark";
-      default:
-        return "bg-gray-500 text-white";
+  // 日本酒ラベルっぽい色のパレット
+  const labelColors = [
+    { bg: "#9C2A1D", text: "#FFFFFF" }, // 赤茶色（獺祭など）
+    { bg: "#1E3A8A", text: "#FFFFFF" }, // 深い青（十四代など）
+    { bg: "#065F46", text: "#FFFFFF" }, // 深緑（黒龍など）
+    { bg: "#7C2D12", text: "#FFFFFF" }, // 焦茶色（八海山など）
+    { bg: "#581C87", text: "#FFFFFF" }, // 紫（久保田など）
+    { bg: "#92400E", text: "#FFFFFF" }, // 琥珀色
+    { bg: "#991B1B", text: "#FFFFFF" }, // 深紅
+    { bg: "#1F2937", text: "#FFFFFF" }, // 墨色
+    { bg: "#6B4423", text: "#FFFFFF" }, // 焼酎色
+    { bg: "#0F766E", text: "#FFFFFF" }, // 青緑
+  ];
+
+  // 銘柄名から一貫性のある色を選択
+  const getColorFromBrand = (brand: string) => {
+    let hash = 0;
+    for (let i = 0; i < brand.length; i++) {
+      hash = brand.charCodeAt(i) + ((hash << 5) - hash);
     }
+    const index = Math.abs(hash) % labelColors.length;
+    return labelColors[index];
   };
+
+  const categoryColor = getColorFromBrand(sake.brand);
 
   return (
     <Link href={`/history?openRecordModal=true&brand=${sake.brand}`}>
@@ -44,7 +56,10 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
           <div className="relative z-10 space-y-4">
             {/* ヘッダー: 銘柄とマッチスコア */}
             <div className="flex items-start justify-between gap-3">
-              <h3 className="flex-1 text-title font-bold text-primary-dark">
+              <h3 
+                className="flex-1 text-title font-bold text-primary-dark"
+                style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
+              >
                 {sake.brand}
               </h3>
               <div className="flex-shrink-0 text-center">
@@ -62,7 +77,11 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
             {sake.category && (
               <div className="flex justify-center">
                 <span
-                  className={`inline-block rounded-full px-4 py-1 text-body-lg font-bold shadow-sm ${getCategoryColor(sake.category)}`}
+                  className="inline-block rounded-full px-4 py-1 text-body-lg font-bold shadow-sm"
+                  style={{
+                    backgroundColor: categoryColor.bg,
+                    color: categoryColor.text,
+                  }}
                 >
                   {sake.category}
                 </span>
