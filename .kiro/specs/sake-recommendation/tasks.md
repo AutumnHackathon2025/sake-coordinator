@@ -20,10 +20,13 @@
   - バリデーションエラーメッセージを日本語化
   - _要件: 1.3, 5.4_
 
-- [x] 1.2 Recommendationモデルの更新
-  - API仕様書に合わせてフィールド名を調整（sake_name → brand, explanation → reason）
-  - スコア範囲のバリデーション（1-5）を確認
-  - _要件: 4.4_
+- [x] 1.2 BestRecommendationとRecommendationモデルの更新
+  - BestRecommendationモデルの作成（brand, brand_description, expected_experience, match_score）
+  - Recommendationモデルの更新（brand, brand_description, expected_experience, category, match_score）
+  - マッチ度範囲のバリデーション（1-100）
+  - カテゴリーのバリデーション（動的な文言、1-50文字）
+  - 文字数バリデーション（brand: 1-64, brand_description: 1-200, expected_experience: 1-500）
+  - _要件: 3.3, 3.4, 4.2, 4.3, 4.4, 4.5, 4.8, 4.9_
 
 - [x] 1.3 Menuモデルのバリデーション強化
   - 空リストチェック
@@ -70,10 +73,11 @@
   - _要件: 5.2_
 
 - [x] 4. RecommendationServiceの推薦アルゴリズム実装
-  - プロンプト構築ロジックの完成
-  - Bedrockレスポンスのパース処理
-  - 推薦結果のスコアリングとソート
-  - _要件: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2_
+  - プロンプト構築ロジックの更新（カテゴリー分類要件を含める）
+  - Bedrockレスポンスのパース処理（best_recommendとrecommendationsの2層構造）
+  - 推薦結果のマッチ度スコアリングとソート
+  - カテゴリー分類ロジックの実装
+  - _要件: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [x] 4.1 味の好み分析の実装
   - 飲酒履歴を評価別に分類（好き/合わない）
@@ -83,37 +87,41 @@
   - _要件: 2.2, 2.3, 2.4_
 
 - [x] 4.2 推薦プロンプトの構築
-  - ユーザーの好み分析結果を含める
+  - ユーザーの好み分析結果と味覚パーソナリティマップを含める
   - 最新10件の飲酒履歴を含める
   - メニューリスト（指定時）を含める
-  - JSON形式でのレスポンスを要求
-  - _要件: 3.1, 3.4_
+  - カテゴリー分類要件を明示（鉄板マッチは最もマッチ度が高い1件、その他は動的にカテゴリー名を生成）
+  - カテゴリー名は推薦理由や特徴を表現する自由な文言（1-50文字）
+  - JSON形式でのレスポンスを要求（best_recommendとrecommendations）
+  - _要件: 3.1, 3.4, 3.6, 3.7_
 
 - [x] 4.3 推薦結果のパースとバリデーション
-  - BedrockのJSONレスポンスをパース
-  - Recommendationモデルに変換
-  - 文字数とスコア範囲のバリデーション
-  - スコアの高い順にソート
-  - 上位10件を選択
-  - _要件: 3.3, 3.5, 4.1, 4.2, 4.3, 4.4_
+  - BedrockのJSONレスポンスをパース（best_recommendとrecommendations）
+  - BestRecommendationとRecommendationモデルに変換
+  - 文字数とマッチ度範囲のバリデーション
+  - カテゴリーのバリデーション（動的な文言、1-50文字）
+  - best_recommend（1件、最もマッチ度が高い銘柄）を抽出
+  - recommendations（最大2件）を抽出
+  - _要件: 3.3, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 4.8, 4.9_
 
 - [x] 4.4 飲酒履歴0件時の処理
-  - 空の推薦リストを返す（エラーではない）
+  - best_recommendをnullに設定
+  - recommendationsを空配列に設定
   - メタデータとして「飲酒記録がありません。まずは飲んだお酒を記録してください」を含める
-  - _要件: 2.5_
+  - _要件: 2.5, 4.10_
 
 - [x] 5. SakeRecommendationAgentの統合
-  - recommend_sake()メソッドの完成
+  - recommend_sake()メソッドの更新
   - サービス層の呼び出しとエラーハンドリング
-  - RecommendationResponseの構築
-  - _要件: 1.1, 1.2, 4.1, 4.2, 4.3_
+  - RecommendationResponseの構築（best_recommendとrecommendations）
+  - _要件: 1.1, 1.2, 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [x] 5.1 recommend_sake()の実装
   - DrinkingRecordServiceから飲酒履歴を取得
-  - RecommendationServiceで推薦を生成
-  - RecommendationResponseに整形
+  - RecommendationServiceで推薦を生成（best_recommendとrecommendations）
+  - RecommendationResponseに整形（2層構造）
   - エラー時の適切な例外スロー
-  - _要件: 1.1, 1.2, 4.1, 4.2, 4.3_
+  - _要件: 1.1, 1.2, 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [x] 5.2 analyze_taste_preference()の実装
   - DrinkingRecordServiceから飲酒履歴を取得
@@ -153,10 +161,12 @@
 
 - [x] 6.4 レスポンス整形の実装
   - RecommendationResponseをAPI仕様書の形式に変換
-  - {"recommendations": [{"brand": "...", "score": ..., "reason": "..."}]}
+  - {"best_recommend": {...}, "recommendations": [{...}]}の2層構造
+  - best_recommendにbrand, brand_description, expected_experience, match_scoreを含める
+  - recommendationsの各要素にbrand, brand_description, expected_experience, category（動的生成）, match_scoreを含める
   - Content-Type: application/jsonを設定
   - 200 OKステータスコードを返す
-  - _要件: 4.3, 6.3, 6.4_
+  - _要件: 4.2, 4.3, 4.4, 4.5, 6.3, 6.4_
 
 - [x] 6.5 エラーハンドリングの実装
   - 認証エラー: 401 Unauthorized
@@ -202,15 +212,17 @@
 - [x] 8.2 正常系のテスト
   - 飲酒履歴あり、メニューありのケース
   - 飲酒履歴あり、メニューなしのケース
-  - 推薦結果が正しく返されることを確認
-  - _要件: 1.1, 1.2, 2.1, 3.1, 4.1, 4.2, 4.3_
+  - best_recommendが正しく返されることを確認（最もマッチ度が高い銘柄）
+  - recommendationsが最大2件返されることを確認
+  - カテゴリーが動的に生成された文言であることを確認（1-50文字）
+  - _要件: 1.1, 1.2, 2.1, 3.1, 3.6, 3.7, 4.1, 4.2, 4.3, 4.4, 4.5_
 
 - [x] 8.3 異常系のテスト
   - 認証トークンなしのケース（401エラー）
   - メニューが空のケース（400エラー）
-  - 飲酒履歴0件のケース（空の推薦リスト）
+  - 飲酒履歴0件のケース（best_recommend: null, recommendations: []）
   - DynamoDBエラーのシミュレーション（500エラー）
-  - _要件: 1.4, 2.5, 5.1, 5.2_
+  - _要件: 1.4, 2.5, 4.10, 5.1, 5.2_
 
 - [x] 8.4 パフォーマンステスト
   - レスポンス時間の測定（10秒以内を確認）
@@ -218,20 +230,30 @@
   - メモリ使用量の確認
   - _要件: 7.1, 7.3_
 
-- [ ] 9. ドキュメントの更新
+- [x] 9. カテゴリー分類ロジックの更新
+  - 「鉄板マッチ」: 最もマッチ度が高い銘柄を選択（best_recommend）
+  - その他の銘柄: AIが文脈に応じて動的にカテゴリー名を生成
+  - カテゴリー名は推薦理由や特徴を表現する自由な文言（1-50文字）
+  - プロンプトでAIにカテゴリー生成の指示を含める
+  - _要件: 3.6, 3.7, 4.5_
+
+- [-] 10. ドキュメントの更新
   - README.mdの更新（API使用方法）
+  - 新しいレスポンス形式の説明
+  - カテゴリーの意味の説明
   - 環境変数の説明
   - トラブルシューティングガイド
   - _要件: 該当なし（ドキュメント）_
 
-- [ ] 9.1 API使用方法のドキュメント作成
+- [ ] 10.1 API使用方法のドキュメント作成
   - エンドポイントの説明
   - リクエスト例
-  - レスポンス例
+  - レスポンス例（新しい2層構造）
+  - カテゴリーの意味の説明
   - エラーレスポンス例
   - _要件: 該当なし（ドキュメント）_
 
-- [ ] 9.2 開発環境セットアップガイドの更新
+- [ ] 10.2 開発環境セットアップガイドの更新
   - Docker Composeの使用方法
   - 環境変数の設定方法
   - テストデータの投入方法

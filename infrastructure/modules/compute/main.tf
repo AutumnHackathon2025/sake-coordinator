@@ -221,6 +221,22 @@ resource "aws_ecs_task_definition" "nextjs_app" {
         {
           name  = "PORT"
           value = "3000"
+        },
+        {
+          name  = "SKIP_AUTH"
+          value = "true"
+        },
+        {
+          name  = "AGENTCORE_RUNTIME_ARN"
+          value = var.agentcore_runtime_arn
+        },
+        {
+          name  = "DYNAMODB_ENDPOINT"
+          value = var.dynamodb_endpoint
+        },
+        {
+          name  = "DYNAMODB_TABLE_NAME"
+          value = var.dynamodb_table_name
         }
       ]
 

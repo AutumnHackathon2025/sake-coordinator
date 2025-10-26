@@ -373,3 +373,9 @@ variable "bedrock_model_arns" {
     "arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0"
   ]
 }
+
+variable "agentcore_runtime_arn" {
+  description = "AgentCore Runtime ARN"
+  type        = string
+  default     = ""
+}

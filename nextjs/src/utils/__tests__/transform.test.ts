@@ -3,9 +3,10 @@
  * DynamoDB型とAPI型の変換関数をテスト
  */
 
-import { fromDynamoDBRecord, toDynamoDBRecord } from '../transform';
+import { fromDynamoDBRecord, toDynamoDBRecord, transformToApiResponse } from '../transform';
 import { DrinkingRecord } from '@/types/api';
 import { DynamoDBDrinkingRecord } from '@/types/dynamodb';
+import { RecommendationResponse } from '@/services/agentcore-service';
 
 describe('fromDynamoDBRecord', () => {
   describe('正常系: 完全なデータの変換', () => {
@@ -266,6 +267,131 @@ describe('toDynamoDBRecord', () => {
       // 実行前後の時刻の範囲内であることを確認
       expect(dbRecord.updated_at! >= beforeTime).toBe(true);
       expect(dbRecord.updated_at! <= afterTime).toBe(true);
+    });
+  });
+});
+
+describe('transformToApiResponse', () => {
+  describe('正常系: 完全なレスポンスの変換', () => {
+    it('best_recommendとrecommendationsが存在する場合、そのまま返される', () => {
+      const agentResponse: RecommendationResponse = {
+        best_recommend: {
+          brand: '獺祭 純米大吟醸',
+          brand_description: '外れなしの安全圏。現在の味覚パーソナリティに完全に合致する銘柄です。',
+          expected_experience: 'あなたの『穏やかな吟醸香へのこだわり』と『キレの良さの重視』というマップ傾向に最も忠実な選択です。',
+          match_score: 95,
+        },
+        recommendations: [
+          {
+            brand: '黒龍 しずく',
+            brand_description: '現在の好みを保ちつつ、新しい発見ができる銘柄。',
+            expected_experience: '『口当たりの優しさ重視度』を維持しながら、『酸味の許容度』を拡張することで、新しい満足感が得られます。',
+            category: '次の一手',
+            match_score: 70,
+          },
+          {
+            brand: '八海山 普通酒',
+            brand_description: 'あなたの現在のマップから最も離れていますが、意外な感動をもたらす可能性を秘めています。',
+            expected_experience: 'あなたのメインの感性とは対極にある『軽快さ』が、シチュエーションによって新しい扉を開くかもしれません。',
+            category: '運命の出会い',
+            match_score: 50,
+          },
+        ],
+      };
+
+      const apiResponse = transformToApiResponse(agentResponse);
+
+      expect(apiResponse).toEqual({
+        best_recommend: {
+          brand: '獺祭 純米大吟醸',
+          brand_description: '外れなしの安全圏。現在の味覚パーソナリティに完全に合致する銘柄です。',
+          expected_experience: 'あなたの『穏やかな吟醸香へのこだわり』と『キレの良さの重視』というマップ傾向に最も忠実な選択です。',
+          match_score: 95,
+        },
+        recommendations: [
+          {
+            brand: '黒龍 しずく',
+            brand_description: '現在の好みを保ちつつ、新しい発見ができる銘柄。',
+            expected_experience: '『口当たりの優しさ重視度』を維持しながら、『酸味の許容度』を拡張することで、新しい満足感が得られます。',
+            category: '次の一手',
+            match_score: 70,
+          },
+          {
+            brand: '八海山 普通酒',
+            brand_description: 'あなたの現在のマップから最も離れていますが、意外な感動をもたらす可能性を秘めています。',
+            expected_experience: 'あなたのメインの感性とは対極にある『軽快さ』が、シチュエーションによって新しい扉を開くかもしれません。',
+            category: '運命の出会い',
+            match_score: 50,
+          },
+        ],
+      });
+    });
+
+    it('best_recommendのみ存在する場合、recommendationsは空配列になる', () => {
+      const agentResponse: RecommendationResponse = {
+        best_recommend: {
+          brand: '獺祭 純米大吟醸',
+          brand_description: '外れなしの安全圏。',
+          expected_experience: 'あなたの好みに最も合致する選択です。',
+          match_score: 95,
+        },
+        recommendations: [],
+      };
+
+      const apiResponse = transformToApiResponse(agentResponse);
+
+      expect(apiResponse.best_recommend).toEqual({
+        brand: '獺祭 純米大吟醸',
+        brand_description: '外れなしの安全圏。',
+        expected_experience: 'あなたの好みに最も合致する選択です。',
+        match_score: 95,
+      });
+      expect(apiResponse.recommendations).toEqual([]);
+    });
+  });
+
+  describe('エッジケース: 飲酒履歴0件の場合', () => {
+    it('best_recommendがnullで、recommendationsが空配列の場合、そのまま返される', () => {
+      const agentResponse: RecommendationResponse = {
+        best_recommend: null,
+        recommendations: [],
+        metadata: '飲酒記録がありません。まずは飲んだお酒を記録してください',
+      };
+
+      const apiResponse = transformToApiResponse(agentResponse);
+
+      expect(apiResponse).toEqual({
+        best_recommend: null,
+        recommendations: [],
+      });
+    });
+  });
+
+  describe('エッジケース: recommendationsが1件のみの場合', () => {
+    it('recommendationsが1件でも正しく変換される', () => {
+      const agentResponse: RecommendationResponse = {
+        best_recommend: {
+          brand: '獺祭 純米大吟醸',
+          brand_description: '外れなしの安全圏。',
+          expected_experience: 'あなたの好みに最も合致する選択です。',
+          match_score: 95,
+        },
+        recommendations: [
+          {
+            brand: '黒龍 しずく',
+            brand_description: '現在の好みを保ちつつ、新しい発見ができる銘柄。',
+            expected_experience: '新しい満足感が得られます。',
+            category: '次の一手',
+            match_score: 70,
+          },
+        ],
+      };
+
+      const apiResponse = transformToApiResponse(agentResponse);
+
+      expect(apiResponse.best_recommend).toBeDefined();
+      expect(apiResponse.recommendations).toHaveLength(1);
+      expect(apiResponse.recommendations[0].brand).toBe('黒龍 しずく');
     });
   });
 });

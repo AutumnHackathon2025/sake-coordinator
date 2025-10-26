@@ -46,11 +46,13 @@
 
 #### Acceptance Criteria
 
-1. WHEN 飲酒履歴の分析が完了する, THEN THE 推薦システム SHALL メニューリスト内の各銘柄に対しておすすめ度合いを計算する
-2. THE 推薦システム SHALL ユーザーの好みの特徴と各銘柄の特性を比較し、1から5の範囲でスコアを算出する
-3. THE 推薦システム SHALL 各銘柄に対して1文字以上500文字以内の推薦理由を生成する
-4. THE 推薦システム SHALL 推薦理由にユーザーの過去の感想との関連性を含める
-5. THE 推薦システム SHALL スコアの高い順に銘柄をソートする
+1. WHEN 飲酒履歴の分析が完了する, THEN THE 推薦システム SHALL メニューリスト内の各銘柄に対してマッチ度を計算する
+2. THE 推薦システム SHALL ユーザーの好みの特徴と各銘柄の特性を比較し、1から100の範囲でマッチ度を算出する
+3. THE 推薦システム SHALL 各銘柄に対して1文字以上200文字以内の銘柄説明を生成する
+4. THE 推薦システム SHALL 各銘柄に対して1文字以上500文字以内の期待される体験を生成する
+5. THE 推薦システム SHALL マッチ度の高い順に銘柄をソートする
+6. THE 推薦システム SHALL 最もマッチ度の高い銘柄を「鉄板マッチ」として選択する
+7. THE 推薦システム SHALL 残りの銘柄に対して、推薦理由や特徴を表現する動的なカテゴリー名を生成する
 
 ### Requirement 4: 推薦結果の返却
 
@@ -58,11 +60,16 @@
 
 #### Acceptance Criteria
 
-1. WHEN スコアリングが完了する, THEN THE 推薦システム SHALL 上位10件の推薦結果を選択する
-2. THE 推薦システム SHALL 各推薦結果に銘柄、おすすめ度合い（スコア）、推薦理由を含める
-3. THE 推薦システム SHALL 200 OKステータスコードと推薦結果の配列を返す
-4. THE 推薦システム SHALL 各銘柄の文字列が1文字以上64文字以内であることを保証する
-5. IF 推薦結果が0件である, THEN THE 推薦システム SHALL 200 OKステータスコードと空の推薦結果配列を返す
+1. WHEN スコアリングが完了する, THEN THE 推薦システム SHALL 最もマッチ度の高い銘柄を`best_recommend`として選択する
+2. THE 推薦システム SHALL `best_recommend`に銘柄、銘柄説明、期待される体験、マッチ度を含める
+3. THE 推薦システム SHALL 残りの銘柄から上位2件を`recommendations`配列として選択する
+4. THE 推薦システム SHALL `recommendations`の各要素に銘柄、銘柄説明、期待される体験、カテゴリー、マッチ度を含める
+5. THE 推薦システム SHALL カテゴリーとして推薦理由や特徴を表現する動的な文言を設定する（1文字以上50文字以内）
+6. THE 推薦システム SHALL 200 OKステータスコードと推薦結果を返す
+7. THE 推薦システム SHALL 各銘柄の文字列が1文字以上64文字以内であることを保証する
+8. THE 推薦システム SHALL 銘柄説明が1文字以上200文字以内であることを保証する
+9. THE 推薦システム SHALL 期待される体験が1文字以上500文字以内であることを保証する
+10. IF 推薦結果が0件である, THEN THE 推薦システム SHALL 200 OKステータスコードと空の推薦結果を返す
 
 ### Requirement 5: エラーハンドリング
 
@@ -84,7 +91,26 @@
 
 1. THE 推薦システム SHALL POST /agent/recommendエンドポイントでリクエストを受け付ける
 2. THE 推薦システム SHALL リクエストボディとして{"menu": ["銘柄1", "銘柄2", ...]}形式のJSONを受け付ける
-3. THE 推薦システム SHALL レスポンスボディとして{"recommendations": [{"brand": "銘柄", "score": 数値, "reason": "説明"}, ...]}形式のJSONを返す
+3. THE 推薦システム SHALL レスポンスボディとして以下の形式のJSONを返す:
+   ```json
+   {
+     "best_recommend": {
+       "brand": "銘柄",
+       "brand_description": "説明",
+       "expected_experience": "体験",
+       "match_score": 数値
+     },
+     "recommendations": [
+       {
+         "brand": "銘柄",
+         "brand_description": "説明",
+         "expected_experience": "体験",
+         "category": "カテゴリー",
+         "match_score": 数値
+       }
+     ]
+   }
+   ```
 4. THE 推薦システム SHALL Content-Typeヘッダーとしてapplication/jsonを使用する
 5. THE 推薦システム SHALL すべてのリクエストでAuthorizationヘッダー（Bearer トークン）を要求する
 

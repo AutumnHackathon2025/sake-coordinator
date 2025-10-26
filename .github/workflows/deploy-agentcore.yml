@@ -1,7 +1,7 @@
 name: Deploy AgentCore to Bedrock Runtime
 
 # セキュリティ要件: 最小権限の原則に基づくIAM権限設定
-# 
+#
 # 必要なIAM権限（最小セット）:
 # ECR操作:
 #   - ecr:GetAuthorizationToken
@@ -14,14 +14,14 @@ name: Deploy AgentCore to Bedrock Runtime
 #   - ecr:CompleteLayerUpload
 #   - ecr:DescribeRepositories
 #   - ecr:BatchDeleteImage (テスト用、オプション)
-# 
+#
 # Bedrock AgentCore操作:
 #   - bedrock-agentcore-control:DescribeAgentRuntime
 #   - bedrock-agentcore-control:UpdateAgentRuntime
-# 
+#
 # STS操作:
 #   - sts:GetCallerIdentity
-# 
+#
 # セキュリティ設定:
 #   - 認証情報マスキング: 有効
 #   - ログ出力制御: 機密情報除去
@@ -30,1012 +30,1060 @@ name: Deploy AgentCore to Bedrock Runtime
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 env:
   AWS_REGION: ap-northeast-1
   ECR_REPOSITORY: sake-recommendation-prod-agentcore
   AGENTCORE_RUNTIME_NAME: sake-recommendation_prod_agent_runtime
   WORKING_DIRECTORY: agentcore
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: "3.11"
 
 jobs:
   build-and-deploy:
     name: Build and Deploy AgentCore
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-#     - name: Setup Python 3.11 Environment
-#       uses: actions/setup-python@v4
-#       with:
-#         python-version: ${{ env.PYTHON_VERSION }}
-#         cache: 'pip'  # Pythonパッケージキャッシュを有効化
-#       id: setup-python
-    
-#     - name: Verify Python Environment
-#       run: |
-#         echo "🐍 Python environment verification:"
-#         echo "   - Python version: $(python --version)"
-#         echo "   - Python executable: $(which python)"
-#         echo "   - Pip version: $(pip --version)"
-#         echo "   - Python path: $PYTHONPATH"
-#         echo "   - Working directory: $(pwd)"
-        
-#         # Python 3.11の確認
-#         PYTHON_VERSION_CHECK=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-#         if [ "$PYTHON_VERSION_CHECK" != "3.11" ]; then
-#           echo "❌ Expected Python 3.11, but got $PYTHON_VERSION_CHECK"
-#           exit 1
-#         fi
-#         echo "✅ Python 3.11 environment verified successfully"
-    
-#     - name: Install and Configure uv Package Manager
-#       run: |
-#         echo "📦 Installing uv package manager..."
-        
-#         # uvの最新版をインストール
-#         curl -LsSf https://astral.sh/uv/install.sh | sh
-#         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-        
-#         # uvのインストール確認
-#         export PATH="$HOME/.cargo/bin:$PATH"
-        
-#         if ! command -v uv &> /dev/null; then
-#           echo "❌ uv installation failed"
-#           exit 1
-#         fi
-        
-#         echo "✅ uv installed successfully"
-#         echo "   - uv version: $(uv --version)"
-#         echo "   - uv executable: $(which uv)"
-        
-#         # uvキャッシュディレクトリの設定と最適化
-#         echo "🗂️  Configuring uv cache optimization..."
-        
-#         # GitHub Actionsでのuvキャッシュディレクトリを設定
-#         UV_CACHE_DIR="$HOME/.cache/uv"
-#         echo "UV_CACHE_DIR=$UV_CACHE_DIR" >> $GITHUB_ENV
-        
-#         # キャッシュディレクトリを作成
-#         mkdir -p "$UV_CACHE_DIR"
-        
-#         echo "   - Cache directory: $UV_CACHE_DIR"
-#         echo "   - Cache size limit: 2GB (default)"
-        
-#         # uvの設定を最適化
-#         echo "⚙️  Optimizing uv configuration..."
-        
-#         # 並列ダウンロードを有効化（パフォーマンス向上）
-#         export UV_CONCURRENT_DOWNLOADS=10
-#         echo "UV_CONCURRENT_DOWNLOADS=10" >> $GITHUB_ENV
-        
-#         # ネットワークタイムアウトを設定
-#         export UV_HTTP_TIMEOUT=60
-#         echo "UV_HTTP_TIMEOUT=60" >> $GITHUB_ENV
-        
-#         # プリコンパイル済みホイールを優先（ビルド時間短縮）
-#         export UV_PRERELEASE=disallow
-#         echo "UV_PRERELEASE=disallow" >> $GITHUB_ENV
-        
-#         echo "✅ uv configuration optimized for CI/CD performance"
-    
-#     - name: Cache uv Dependencies
-#       uses: actions/cache@v3
-#       with:
-#         path: |
-#           ~/.cache/uv
-#           ${{ env.WORKING_DIRECTORY }}/.venv
-#         key: uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-${{ hashFiles('agentcore/pyproject.toml', 'agentcore/uv.lock') }}
-#         restore-keys: |
-#           uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-
-#           uv-${{ runner.os }}-
-#       id: cache-uv
-    
-#     - name: Install AgentCore Dependencies with uv
-#       run: |
-#         echo "📦 Installing AgentCore dependencies using uv..."
-#         echo "📁 Working directory: $WORKING_DIRECTORY"
-        
-#         # agentcoreディレクトリに移動
-#         cd $WORKING_DIRECTORY
-        
-#         # pyproject.tomlの存在確認
-#         if [ ! -f "pyproject.toml" ]; then
-#           echo "❌ pyproject.toml not found in $WORKING_DIRECTORY"
-#           echo "📋 Available files:"
-#           ls -la
-#           exit 1
-#         fi
-        
-#         echo "📋 Project configuration:"
-#         echo "   - Project file: $(pwd)/pyproject.toml"
-        
-#         # uv.lockファイルの確認
-#         if [ -f "uv.lock" ]; then
-#           echo "   - Lock file: $(pwd)/uv.lock (found)"
-#           LOCK_FILE_EXISTS=true
-#         else
-#           echo "   - Lock file: $(pwd)/uv.lock (not found, will be generated)"
-#           LOCK_FILE_EXISTS=false
-#         fi
-        
-#         # 依存関係インストール開始時刻を記録
-#         DEPS_START_TIME=$(date +%s)
-        
-#         # キャッシュヒット状況を確認
-#         if [ "${{ steps.cache-uv.outputs.cache-hit }}" = "true" ]; then
-#           echo "🎯 Cache hit: Using cached dependencies"
-#         else
-#           echo "📥 Cache miss: Installing fresh dependencies"
-#         fi
-        
-#         # uvを使用した依存関係の同期インストール
-#         echo "⏳ Synchronizing dependencies with uv..."
-        
-#         if [ "$LOCK_FILE_EXISTS" = "true" ]; then
-#           # ロックファイルが存在する場合は--frozenオプションを使用
-#           echo "🔒 Installing from lock file (frozen dependencies)..."
-#           if ! uv sync --frozen --no-dev --verbose; then
-#             echo "❌ Failed to install dependencies from lock file"
-#             echo "🔍 Detailed troubleshooting:"
-#             echo "   - Lock file compatibility check:"
-#             uv lock --check 2>&1 || echo "   Lock file validation failed"
-#             echo "   - Available Python version:"
-#             python --version
-#             echo "   - uv environment info:"
-#             uv --version
-#             echo "   - Network connectivity test:"
-#             curl -s --connect-timeout 5 https://pypi.org/simple/ > /dev/null && echo "   PyPI accessible" || echo "   PyPI connection failed"
-#             exit 1
-#           fi
-#         else
-#           # ロックファイルが存在しない場合は通常の同期
-#           echo "🔄 Installing and generating lock file..."
-#           if ! uv sync --no-dev --verbose; then
-#             echo "❌ Failed to install dependencies"
-#             echo "🔍 Detailed troubleshooting:"
-#             echo "   - pyproject.toml validation:"
-#             python -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))" 2>&1 || echo "   pyproject.toml syntax error"
-#             echo "   - Python version compatibility:"
-#             python --version
-#             echo "   - Available disk space:"
-#             df -h . | tail -1
-#             echo "   - uv cache status:"
-#             ls -la ~/.cache/uv/ 2>/dev/null || echo "   No uv cache found"
-#             exit 1
-#           fi
-#         fi
-        
-#         # インストール後の詳細確認
-#         echo "📊 Post-installation verification:"
-#         echo "   - Virtual environment location: $(pwd)/.venv"
-#         echo "   - Python executable: $(pwd)/.venv/bin/python"
-#         echo "   - Installed packages count: $(uv pip list | wc -l)"
-#         echo "   - Virtual environment size: $(du -sh .venv 2>/dev/null | cut -f1 || echo 'unknown')"
-        
-#         # 仮想環境の詳細確認
-#         if [ -d ".venv" ]; then
-#           echo "✅ Virtual environment created successfully"
-#           echo "   - Virtual env path: $(pwd)/.venv"
-#           echo "   - Python executable: $(pwd)/.venv/bin/python"
-          
-#           # 仮想環境内のPythonバージョン確認
-#           VENV_PYTHON_VERSION=$(.venv/bin/python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-#           echo "   - Virtual env Python version: $VENV_PYTHON_VERSION"
-          
-#           # Python環境の詳細情報
-#           echo "   - Python sys.path:"
-#           .venv/bin/python -c "import sys; [print(f'     {p}') for p in sys.path[:3]]"
-          
-#           # site-packages の確認
-#           SITE_PACKAGES=$(.venv/bin/python -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "unknown")
-#           echo "   - Site packages: $SITE_PACKAGES"
-          
-#           if [ "$SITE_PACKAGES" != "unknown" ] && [ -d "$SITE_PACKAGES" ]; then
-#             echo "   - Site packages contents (first 10):"
-#             ls "$SITE_PACKAGES" | head -10 | sed 's/^/     /'
-#           fi
-          
-#           if [ "$VENV_PYTHON_VERSION" != "3.11" ]; then
-#             echo "⚠️  Warning: Virtual environment Python version mismatch"
-#             echo "   Expected: 3.11, Got: $VENV_PYTHON_VERSION"
-#           fi
-#         else
-#           echo "❌ Virtual environment not found"
-#           echo "🔍 Directory contents:"
-#           ls -la
-#           echo "🔍 uv sync output should have created .venv directory"
-#           exit 1
-#         fi
-        
-#         # インストールされた依存関係の確認
-#         echo "📋 Installed dependencies verification:"
-        
-#         # 主要な依存関係の確認（パッケージ名とインポート名のマッピング）
-#         declare -A PACKAGE_IMPORTS=(
-#           ["boto3"]="boto3"
-#           ["pydantic"]="pydantic"
-#           ["strands-agents"]="strands"
-#           ["bedrock-agentcore"]="bedrock_agentcore"
-#           ["python-dotenv"]="dotenv"
-#           ["httpx"]="httpx"
-#         )
-        
-#         # uvで実際にインストールされたパッケージ一覧を確認
-#         echo "   📦 Installed packages:"
-#         uv pip list --format=freeze | head -10
-        
-#         # 各パッケージのインポートテスト
-#         for package_name in "${!PACKAGE_IMPORTS[@]}"; do
-#           import_name="${PACKAGE_IMPORTS[$package_name]}"
-          
-#           if uv run python -c "import $import_name" 2>/dev/null; then
-#             # バージョン取得を試行（複数の方法で）
-#             VERSION=$(uv run python -c "
-# import $import_name
-# try:
-#     print(getattr($import_name, '__version__', 'unknown'))
-# except:
-#     try:
-#         import importlib.metadata
-#         print(importlib.metadata.version('$package_name'))
-#     except:
-#         print('unknown')
-# " 2>/dev/null || echo "unknown")
-#             echo "   ✅ $package_name ($import_name): $VERSION"
-#           else
-#             echo "   ❌ $package_name ($import_name): import failed"
-            
-#             # デバッグ情報を追加
-#             echo "      🔍 Debugging import failure for $import_name:"
-#             uv run python -c "import $import_name" 2>&1 | head -3 || true
-            
-#             # パッケージがインストールされているか確認
-#             if uv pip show "$package_name" > /dev/null 2>&1; then
-#               echo "      📦 Package $package_name is installed but import failed"
-#               uv pip show "$package_name" | grep -E "^(Name|Version|Location):" || true
-#             else
-#               echo "      📦 Package $package_name is not installed"
-#               echo "      🔍 Available packages matching pattern:"
-#               uv pip list | grep -i "$package_name" || echo "      No matching packages found"
-#             fi
-            
-#             exit 1
-#           fi
-#         done
-        
-#         # 依存関係インストール時間を計算
-#         DEPS_END_TIME=$(date +%s)
-#         DEPS_DURATION=$((DEPS_END_TIME - DEPS_START_TIME))
-#         echo "DEPS_DURATION=${DEPS_DURATION}" >> $GITHUB_ENV
-        
-#         echo "✅ AgentCore dependencies installed successfully"
-#         echo "⏱️  Installation time: ${DEPS_DURATION} seconds"
-        
-#         # uv環境情報の出力
-#         echo "📊 uv environment summary:"
-#         echo "   - Project Python: $(uv run python -c 'import sys; print(sys.executable)' 2>/dev/null || echo 'failed to get executable')"
-#         echo "   - Packages installed: $(uv pip list | wc -l)"
-#         echo "   - Cache size: $(du -sh ~/.cache/uv 2>/dev/null | cut -f1 || echo 'unknown')"
-        
-#         # 最終的な環境検証
-#         echo "🔍 Final environment validation:"
-#         echo "   - uv run python works: $(uv run python -c 'print("OK")' 2>/dev/null || echo 'FAILED')"
-#         echo "   - Basic imports work: $(uv run python -c 'import sys, os; print("OK")' 2>/dev/null || echo 'FAILED')"
-        
-#         # 問題が発生した場合のデバッグ情報
-#         if ! uv run python -c 'import sys, os; print("OK")' >/dev/null 2>&1; then
-#           echo "❌ Critical: Basic Python imports are failing"
-#           echo "🔍 Emergency debugging:"
-#           echo "   - Current directory: $(pwd)"
-#           echo "   - .venv exists: $([ -d .venv ] && echo 'YES' || echo 'NO')"
-#           echo "   - .venv/bin/python exists: $([ -f .venv/bin/python ] && echo 'YES' || echo 'NO')"
-#           echo "   - Direct .venv/bin/python test:"
-#           .venv/bin/python -c 'import sys; print("Direct Python OK")' 2>&1 || echo "   Direct Python failed"
-#           exit 1
-#         fi
-#       working-directory: .
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-        # セキュリティ強化: 認証情報マスキングとログ出力制御
-        mask-aws-account-id: true
-        output-credentials: false
-        # 最小権限の原則: 必要最小限のセッション時間を設定
-        role-duration-seconds: 3600  # 1時間
-        # セキュリティ監査用のセッション名
-        role-session-name: "GitHubActions-AgentCore-Deploy-${{ github.run_id }}"
-      id: configure-aws
-    
-    - name: Verify AWS Authentication
-      run: |
-        # セキュリティ設定: 機密情報のログ出力を防止
-        set +x  # デバッグ出力を無効化
-        
-        echo "🔐 Verifying AWS authentication and permissions..."
-        
-        # AWS認証状態の確認（機密情報は表示しない）
-        if ! aws sts get-caller-identity --query 'Account' --output text > /dev/null 2>&1; then
-          echo "❌ AWS authentication failed"
-          echo "🔍 Authentication troubleshooting:"
-          echo "   - Check if AWS_ACCESS_KEY_ID secret is set correctly"
-          echo "   - Check if AWS_SECRET_ACCESS_KEY secret is set correctly"
-          echo "   - Verify AWS credentials have not expired"
-          echo "   - Check if the IAM user/role exists and is active"
-          exit 1
-        fi
-        
-        # AWS Account IDを取得（マスクされた形式で表示）
-        AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-        MASKED_ACCOUNT_ID="***${AWS_ACCOUNT_ID: -4}"
-        echo "✅ AWS authentication successful"
-        echo "   - Account ID: $MASKED_ACCOUNT_ID"
-        echo "   - Region: $AWS_REGION"
-        
-        # 必要な権限の確認（最小権限の原則）
-        echo "🔍 Verifying required AWS permissions..."
-        
-        # # ECR権限の確認
-        # echo "   - Checking ECR permissions..."
-        # if ! aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION > /dev/null 2>&1; then
-        #   echo "❌ ECR repository access failed"
-        #   echo "🔍 ECR troubleshooting:"
-        #   echo "   - Check if ECR repository '$ECR_REPOSITORY' exists"
-        #   echo "   - Verify IAM permissions for ECR operations"
-        #   echo "   - Required permissions: ecr:DescribeRepositories, ecr:GetAuthorizationToken"
-        #   exit 1
-        # fi
-        # echo "   ✅ ECR repository access verified"
-        
-        # # Bedrock AgentCore権限の確認
-        # echo "   - Checking Bedrock AgentCore permissions..."
-        # if ! aws bedrock-agentcore-control describe-agent-runtime --agent-runtime-name $AGENTCORE_RUNTIME_NAME --region $AWS_REGION > /dev/null 2>&1; then
-        #   echo "❌ Bedrock AgentCore Runtime access failed"
-        #   echo "🔍 AgentCore troubleshooting:"
-        #   echo "   - Check if AgentCore Runtime '$AGENTCORE_RUNTIME_NAME' exists"
-        #   echo "   - Verify IAM permissions for AgentCore operations"
-        #   echo "   - Required permissions: bedrock-agentcore-control:DescribeAgentRuntime, bedrock-agentcore-control:UpdateAgentRuntime"
-        #   exit 1
-        # fi
-        echo "   ✅ Bedrock AgentCore Runtime access verified"
-        
-        echo "✅ All required AWS permissions verified successfully"
-        echo "🔒 Security check: Authentication configured with minimal required permissions"
-    
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-      with:
-        # セキュリティ強化: 認証情報マスキング
-        mask-password: true
-        # ECRログイン時のレジストリ指定（セキュリティ向上）
-        registries: ${{ steps.configure-aws.outputs.aws-account-id }}
-    
-    - name: Verify ECR Login
-      run: |
-        # セキュリティ設定: 機密情報のログ出力を防止
-        set +x  # デバッグ出力を無効化
-        
-        echo "🔐 Verifying ECR login and repository access..."
-        
-        # ECRレジストリ情報の確認（機密情報は表示しない）
-        ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
-        if [ -z "$ECR_REGISTRY" ]; then
-          echo "❌ ECR registry information not available"
-          exit 1
-        fi
-        
-        # ECRレジストリのマスク表示
-        MASKED_REGISTRY=$(echo $ECR_REGISTRY | sed 's/[0-9]/*/g')
-        echo "✅ ECR login successful"
-        echo "   - Registry: $MASKED_REGISTRY"
-        echo "   - Repository: $ECR_REPOSITORY"
-        
-        # ECRリポジトリの詳細確認
-        echo "🔍 Verifying ECR repository configuration..."
-        
-        REPO_INFO=$(aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION 2>/dev/null)
-        if [ $? -eq 0 ]; then
-          REPO_URI=$(echo $REPO_INFO | jq -r '.repositories[0].repositoryUri // "N/A"')
-          IMAGE_SCAN_CONFIG=$(echo $REPO_INFO | jq -r '.repositories[0].imageScanningConfiguration.scanOnPush // false')
-          ENCRYPTION_TYPE=$(echo $REPO_INFO | jq -r '.repositories[0].encryptionConfiguration.encryptionType // "AES256"')
-          
-          echo "   ✅ Repository configuration verified"
-          echo "   - Image scanning: $IMAGE_SCAN_CONFIG"
-          echo "   - Encryption: $ENCRYPTION_TYPE"
-          
-          # セキュリティ推奨設定の確認
-          if [ "$IMAGE_SCAN_CONFIG" = "false" ]; then
-            echo "   ⚠️  Recommendation: Enable image scanning for security"
-          fi
-        else
-          echo "   ❌ Could not retrieve repository configuration"
-          exit 1
-        fi
-        
-        # ECRプッシュ権限の最終確認
-        echo "🔍 Testing ECR push permissions..."
-        
-        # 軽量なテストイメージでプッシュ権限を確認
-        TEST_TAG="permission-test-$(date +%s)"
-        
-        # 小さなテストイメージを作成してプッシュテスト
-        echo "FROM alpine:latest" > Dockerfile.test
-        echo "RUN echo 'ECR permission test'" >> Dockerfile.test
-        
-        if docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TEST_TAG -f Dockerfile.test . > /dev/null 2>&1; then
-          if docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TEST_TAG > /dev/null 2>&1; then
-            echo "   ✅ ECR push permissions verified"
-            
-            # テストイメージを削除
-            aws ecr batch-delete-image --repository-name $ECR_REPOSITORY --image-ids imageTag=$TEST_TAG --region $AWS_REGION > /dev/null 2>&1
-          else
-            echo "   ❌ ECR push permission test failed"
-            echo "🔍 Push troubleshooting:"
-            echo "   - Check IAM permissions for ECR push operations"
-            echo "   - Required permissions: ecr:PutImage, ecr:InitiateLayerUpload, ecr:UploadLayerPart, ecr:CompleteLayerUpload"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      #     - name: Setup Python 3.11 Environment
+      #       uses: actions/setup-python@v4
+      #       with:
+      #         python-version: ${{ env.PYTHON_VERSION }}
+      #         cache: 'pip'  # Pythonパッケージキャッシュを有効化
+      #       id: setup-python
+
+      #     - name: Verify Python Environment
+      #       run: |
+      #         echo "🐍 Python environment verification:"
+      #         echo "   - Python version: $(python --version)"
+      #         echo "   - Python executable: $(which python)"
+      #         echo "   - Pip version: $(pip --version)"
+      #         echo "   - Python path: $PYTHONPATH"
+      #         echo "   - Working directory: $(pwd)"
+
+      #         # Python 3.11の確認
+      #         PYTHON_VERSION_CHECK=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+      #         if [ "$PYTHON_VERSION_CHECK" != "3.11" ]; then
+      #           echo "❌ Expected Python 3.11, but got $PYTHON_VERSION_CHECK"
+      #           exit 1
+      #         fi
+      #         echo "✅ Python 3.11 environment verified successfully"
+
+      #     - name: Install and Configure uv Package Manager
+      #       run: |
+      #         echo "📦 Installing uv package manager..."
+
+      #         # uvの最新版をインストール
+      #         curl -LsSf https://astral.sh/uv/install.sh | sh
+      #         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      #         # uvのインストール確認
+      #         export PATH="$HOME/.cargo/bin:$PATH"
+
+      #         if ! command -v uv &> /dev/null; then
+      #           echo "❌ uv installation failed"
+      #           exit 1
+      #         fi
+
+      #         echo "✅ uv installed successfully"
+      #         echo "   - uv version: $(uv --version)"
+      #         echo "   - uv executable: $(which uv)"
+
+      #         # uvキャッシュディレクトリの設定と最適化
+      #         echo "🗂️  Configuring uv cache optimization..."
+
+      #         # GitHub Actionsでのuvキャッシュディレクトリを設定
+      #         UV_CACHE_DIR="$HOME/.cache/uv"
+      #         echo "UV_CACHE_DIR=$UV_CACHE_DIR" >> $GITHUB_ENV
+
+      #         # キャッシュディレクトリを作成
+      #         mkdir -p "$UV_CACHE_DIR"
+
+      #         echo "   - Cache directory: $UV_CACHE_DIR"
+      #         echo "   - Cache size limit: 2GB (default)"
+
+      #         # uvの設定を最適化
+      #         echo "⚙️  Optimizing uv configuration..."
+
+      #         # 並列ダウンロードを有効化（パフォーマンス向上）
+      #         export UV_CONCURRENT_DOWNLOADS=10
+      #         echo "UV_CONCURRENT_DOWNLOADS=10" >> $GITHUB_ENV
+
+      #         # ネットワークタイムアウトを設定
+      #         export UV_HTTP_TIMEOUT=60
+      #         echo "UV_HTTP_TIMEOUT=60" >> $GITHUB_ENV
+
+      #         # プリコンパイル済みホイールを優先（ビルド時間短縮）
+      #         export UV_PRERELEASE=disallow
+      #         echo "UV_PRERELEASE=disallow" >> $GITHUB_ENV
+
+      #         echo "✅ uv configuration optimized for CI/CD performance"
+
+      #     - name: Cache uv Dependencies
+      #       uses: actions/cache@v3
+      #       with:
+      #         path: |
+      #           ~/.cache/uv
+      #           ${{ env.WORKING_DIRECTORY }}/.venv
+      #         key: uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-${{ hashFiles('agentcore/pyproject.toml', 'agentcore/uv.lock') }}
+      #         restore-keys: |
+      #           uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-
+      #           uv-${{ runner.os }}-
+      #       id: cache-uv
+
+      #     - name: Install AgentCore Dependencies with uv
+      #       run: |
+      #         echo "📦 Installing AgentCore dependencies using uv..."
+      #         echo "📁 Working directory: $WORKING_DIRECTORY"
+
+      #         # agentcoreディレクトリに移動
+      #         cd $WORKING_DIRECTORY
+
+      #         # pyproject.tomlの存在確認
+      #         if [ ! -f "pyproject.toml" ]; then
+      #           echo "❌ pyproject.toml not found in $WORKING_DIRECTORY"
+      #           echo "📋 Available files:"
+      #           ls -la
+      #           exit 1
+      #         fi
+
+      #         echo "📋 Project configuration:"
+      #         echo "   - Project file: $(pwd)/pyproject.toml"
+
+      #         # uv.lockファイルの確認
+      #         if [ -f "uv.lock" ]; then
+      #           echo "   - Lock file: $(pwd)/uv.lock (found)"
+      #           LOCK_FILE_EXISTS=true
+      #         else
+      #           echo "   - Lock file: $(pwd)/uv.lock (not found, will be generated)"
+      #           LOCK_FILE_EXISTS=false
+      #         fi
+
+      #         # 依存関係インストール開始時刻を記録
+      #         DEPS_START_TIME=$(date +%s)
+
+      #         # キャッシュヒット状況を確認
+      #         if [ "${{ steps.cache-uv.outputs.cache-hit }}" = "true" ]; then
+      #           echo "🎯 Cache hit: Using cached dependencies"
+      #         else
+      #           echo "📥 Cache miss: Installing fresh dependencies"
+      #         fi
+
+      #         # uvを使用した依存関係の同期インストール
+      #         echo "⏳ Synchronizing dependencies with uv..."
+
+      #         if [ "$LOCK_FILE_EXISTS" = "true" ]; then
+      #           # ロックファイルが存在する場合は--frozenオプションを使用
+      #           echo "🔒 Installing from lock file (frozen dependencies)..."
+      #           if ! uv sync --frozen --no-dev --verbose; then
+      #             echo "❌ Failed to install dependencies from lock file"
+      #             echo "🔍 Detailed troubleshooting:"
+      #             echo "   - Lock file compatibility check:"
+      #             uv lock --check 2>&1 || echo "   Lock file validation failed"
+      #             echo "   - Available Python version:"
+      #             python --version
+      #             echo "   - uv environment info:"
+      #             uv --version
+      #             echo "   - Network connectivity test:"
+      #             curl -s --connect-timeout 5 https://pypi.org/simple/ > /dev/null && echo "   PyPI accessible" || echo "   PyPI connection failed"
+      #             exit 1
+      #           fi
+      #         else
+      #           # ロックファイルが存在しない場合は通常の同期
+      #           echo "🔄 Installing and generating lock file..."
+      #           if ! uv sync --no-dev --verbose; then
+      #             echo "❌ Failed to install dependencies"
+      #             echo "🔍 Detailed troubleshooting:"
+      #             echo "   - pyproject.toml validation:"
+      #             python -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))" 2>&1 || echo "   pyproject.toml syntax error"
+      #             echo "   - Python version compatibility:"
+      #             python --version
+      #             echo "   - Available disk space:"
+      #             df -h . | tail -1
+      #             echo "   - uv cache status:"
+      #             ls -la ~/.cache/uv/ 2>/dev/null || echo "   No uv cache found"
+      #             exit 1
+      #           fi
+      #         fi
+
+      #         # インストール後の詳細確認
+      #         echo "📊 Post-installation verification:"
+      #         echo "   - Virtual environment location: $(pwd)/.venv"
+      #         echo "   - Python executable: $(pwd)/.venv/bin/python"
+      #         echo "   - Installed packages count: $(uv pip list | wc -l)"
+      #         echo "   - Virtual environment size: $(du -sh .venv 2>/dev/null | cut -f1 || echo 'unknown')"
+
+      #         # 仮想環境の詳細確認
+      #         if [ -d ".venv" ]; then
+      #           echo "✅ Virtual environment created successfully"
+      #           echo "   - Virtual env path: $(pwd)/.venv"
+      #           echo "   - Python executable: $(pwd)/.venv/bin/python"
+
+      #           # 仮想環境内のPythonバージョン確認
+      #           VENV_PYTHON_VERSION=$(.venv/bin/python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+      #           echo "   - Virtual env Python version: $VENV_PYTHON_VERSION"
+
+      #           # Python環境の詳細情報
+      #           echo "   - Python sys.path:"
+      #           .venv/bin/python -c "import sys; [print(f'     {p}') for p in sys.path[:3]]"
+
+      #           # site-packages の確認
+      #           SITE_PACKAGES=$(.venv/bin/python -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "unknown")
+      #           echo "   - Site packages: $SITE_PACKAGES"
+
+      #           if [ "$SITE_PACKAGES" != "unknown" ] && [ -d "$SITE_PACKAGES" ]; then
+      #             echo "   - Site packages contents (first 10):"
+      #             ls "$SITE_PACKAGES" | head -10 | sed 's/^/     /'
+      #           fi
+
+      #           if [ "$VENV_PYTHON_VERSION" != "3.11" ]; then
+      #             echo "⚠️  Warning: Virtual environment Python version mismatch"
+      #             echo "   Expected: 3.11, Got: $VENV_PYTHON_VERSION"
+      #           fi
+      #         else
+      #           echo "❌ Virtual environment not found"
+      #           echo "🔍 Directory contents:"
+      #           ls -la
+      #           echo "🔍 uv sync output should have created .venv directory"
+      #           exit 1
+      #         fi
+
+      #         # インストールされた依存関係の確認
+      #         echo "📋 Installed dependencies verification:"
+
+      #         # 主要な依存関係の確認（パッケージ名とインポート名のマッピング）
+      #         declare -A PACKAGE_IMPORTS=(
+      #           ["boto3"]="boto3"
+      #           ["pydantic"]="pydantic"
+      #           ["strands-agents"]="strands"
+      #           ["bedrock-agentcore"]="bedrock_agentcore"
+      #           ["python-dotenv"]="dotenv"
+      #           ["httpx"]="httpx"
+      #         )
+
+      #         # uvで実際にインストールされたパッケージ一覧を確認
+      #         echo "   📦 Installed packages:"
+      #         uv pip list --format=freeze | head -10
+
+      #         # 各パッケージのインポートテスト
+      #         for package_name in "${!PACKAGE_IMPORTS[@]}"; do
+      #           import_name="${PACKAGE_IMPORTS[$package_name]}"
+
+      #           if uv run python -c "import $import_name" 2>/dev/null; then
+      #             # バージョン取得を試行（複数の方法で）
+      #             VERSION=$(uv run python -c "
+      # import $import_name
+      # try:
+      #     print(getattr($import_name, '__version__', 'unknown'))
+      # except:
+      #     try:
+      #         import importlib.metadata
+      #         print(importlib.metadata.version('$package_name'))
+      #     except:
+      #         print('unknown')
+      # " 2>/dev/null || echo "unknown")
+      #             echo "   ✅ $package_name ($import_name): $VERSION"
+      #           else
+      #             echo "   ❌ $package_name ($import_name): import failed"
+
+      #             # デバッグ情報を追加
+      #             echo "      🔍 Debugging import failure for $import_name:"
+      #             uv run python -c "import $import_name" 2>&1 | head -3 || true
+
+      #             # パッケージがインストールされているか確認
+      #             if uv pip show "$package_name" > /dev/null 2>&1; then
+      #               echo "      📦 Package $package_name is installed but import failed"
+      #               uv pip show "$package_name" | grep -E "^(Name|Version|Location):" || true
+      #             else
+      #               echo "      📦 Package $package_name is not installed"
+      #               echo "      🔍 Available packages matching pattern:"
+      #               uv pip list | grep -i "$package_name" || echo "      No matching packages found"
+      #             fi
+
+      #             exit 1
+      #           fi
+      #         done
+
+      #         # 依存関係インストール時間を計算
+      #         DEPS_END_TIME=$(date +%s)
+      #         DEPS_DURATION=$((DEPS_END_TIME - DEPS_START_TIME))
+      #         echo "DEPS_DURATION=${DEPS_DURATION}" >> $GITHUB_ENV
+
+      #         echo "✅ AgentCore dependencies installed successfully"
+      #         echo "⏱️  Installation time: ${DEPS_DURATION} seconds"
+
+      #         # uv環境情報の出力
+      #         echo "📊 uv environment summary:"
+      #         echo "   - Project Python: $(uv run python -c 'import sys; print(sys.executable)' 2>/dev/null || echo 'failed to get executable')"
+      #         echo "   - Packages installed: $(uv pip list | wc -l)"
+      #         echo "   - Cache size: $(du -sh ~/.cache/uv 2>/dev/null | cut -f1 || echo 'unknown')"
+
+      #         # 最終的な環境検証
+      #         echo "🔍 Final environment validation:"
+      #         echo "   - uv run python works: $(uv run python -c 'print("OK")' 2>/dev/null || echo 'FAILED')"
+      #         echo "   - Basic imports work: $(uv run python -c 'import sys, os; print("OK")' 2>/dev/null || echo 'FAILED')"
+
+      #         # 問題が発生した場合のデバッグ情報
+      #         if ! uv run python -c 'import sys, os; print("OK")' >/dev/null 2>&1; then
+      #           echo "❌ Critical: Basic Python imports are failing"
+      #           echo "🔍 Emergency debugging:"
+      #           echo "   - Current directory: $(pwd)"
+      #           echo "   - .venv exists: $([ -d .venv ] && echo 'YES' || echo 'NO')"
+      #           echo "   - .venv/bin/python exists: $([ -f .venv/bin/python ] && echo 'YES' || echo 'NO')"
+      #           echo "   - Direct .venv/bin/python test:"
+      #           .venv/bin/python -c 'import sys; print("Direct Python OK")' 2>&1 || echo "   Direct Python failed"
+      #           exit 1
+      #         fi
+      #       working-directory: .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+          # セキュリティ強化: 認証情報マスキングとログ出力制御
+          mask-aws-account-id: true
+          output-credentials: false
+          # 最小権限の原則: 必要最小限のセッション時間を設定
+          role-duration-seconds: 3600 # 1時間
+          # セキュリティ監査用のセッション名
+          role-session-name: "GitHubActions-AgentCore-Deploy-${{ github.run_id }}"
+        id: configure-aws
+
+      - name: Verify AWS Authentication
+        run: |
+          # セキュリティ設定: 機密情報のログ出力を防止
+          set +x  # デバッグ出力を無効化
+
+          echo "🔐 Verifying AWS authentication and permissions..."
+
+          # AWS認証状態の確認（機密情報は表示しない）
+          if ! aws sts get-caller-identity --query 'Account' --output text > /dev/null 2>&1; then
+            echo "❌ AWS authentication failed"
+            echo "🔍 Authentication troubleshooting:"
+            echo "   - Check if AWS_ACCESS_KEY_ID secret is set correctly"
+            echo "   - Check if AWS_SECRET_ACCESS_KEY secret is set correctly"
+            echo "   - Verify AWS credentials have not expired"
+            echo "   - Check if the IAM user/role exists and is active"
             exit 1
           fi
-        else
-          echo "   ⚠️  Could not create test image for push verification"
-        fi
-        
-        # テストファイルをクリーンアップ
-        rm -f Dockerfile.test
-        
-        echo "✅ ECR authentication and permissions fully verified"
-        echo "🔒 Security status: All authentication checks passed with masked credentials"
-    
-    - name: Build and push Docker image
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        GIT_SHA: ${{ github.sha }}
-      run: |
-        # セキュリティ設定: 機密情報のログ出力を防止
-        set +x  # デバッグ出力を無効化
-        
-        echo "🔒 Starting secure Docker build process..."
-        
-        # 環境変数の検証（機密情報は表示しない）
-        if [ -z "$ECR_REGISTRY" ]; then
-          echo "❌ ECR_REGISTRY is not set"
-          echo "🔍 Registry troubleshooting:"
-          echo "   - Check ECR login step completion"
-          echo "   - Verify AWS authentication is successful"
-          exit 1
-        fi
-        
-        if [ -z "$ECR_REPOSITORY" ]; then
-          echo "❌ ECR_REPOSITORY is not set"
-          echo "🔍 Repository troubleshooting:"
-          echo "   - Check environment variable configuration"
-          echo "   - Verify repository name in workflow file"
-          exit 1
-        fi
-        
-        if [ -z "$GIT_SHA" ]; then
-          echo "❌ GIT_SHA is not set"
-          echo "🔍 Git SHA troubleshooting:"
-          echo "   - Check GitHub context availability"
-          exit 1
-        fi
-        
-        # セキュリティ検証: レジストリとリポジトリの形式確認
-        if [[ ! "$ECR_REGISTRY" =~ ^[0-9]+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
-          echo "❌ Invalid ECR registry format detected"
-          echo "🔒 Security check failed: Registry format validation"
-          exit 1
-        fi
-        
-        if [[ ! "$ECR_REPOSITORY" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
-          echo "❌ Invalid ECR repository name format detected"
-          echo "🔒 Security check failed: Repository name validation"
-          exit 1
-        fi
-        
-        # セキュリティ確認完了
-        MASKED_REGISTRY=$(echo $ECR_REGISTRY | sed 's/[0-9]/*/g')
-        echo "✅ Security validation passed"
-        echo "   - Registry format: Valid ($MASKED_REGISTRY)"
-        echo "   - Repository name: Valid ($ECR_REPOSITORY)"
-        echo "   - Git SHA: Valid (${GIT_SHA:0:8}...)"
-        
-        # ワークフロー全体の開始時刻を記録
-        echo "WORKFLOW_START_TIME=$(date +%s)" >> $GITHUB_ENV
-        
-        # ビルド開始時刻を記録
-        echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
-        
-        # 詳細ログ出力の開始
-        echo "🚀 Starting AgentCore Docker build and push process..."
-        echo "📊 Build environment information:"
-        echo "   - Python version: $(python --version)"
-        echo "   - uv version: $(uv --version)"
-        echo "   - Docker version: $(docker --version)"
-        echo "   - Available disk space: $(df -h . | tail -1 | awk '{print $4}')"
-        echo "   - Available memory: $(free -h | grep '^Mem:' | awk '{print $7}' || echo 'N/A')"
-        echo "   - Working directory: $WORKING_DIRECTORY"
-        echo "   - Dependencies installation time: ${DEPS_DURATION}s"
-        echo "   - uv cache directory: $UV_CACHE_DIR"
-        echo "   - uv cache size: $(du -sh $UV_CACHE_DIR 2>/dev/null | cut -f1 || echo 'unknown')"
-        
-        # イメージタグ戦略の実装
-        TIMESTAMP_TAG="v$(date +%Y%m%d-%H%M%S)"
-        GIT_SHA_SHORT="${GIT_SHA:0:8}"
-        
-        echo "🏷️  Image tagging strategy:"
-        echo "   - latest: 最新のmainブランチビルド"
-        echo "   - ${GIT_SHA_SHORT}: Gitコミットハッシュベース"
-        echo "   - ${TIMESTAMP_TAG}: タイムスタンプベース"
-        
-        # Dockerイメージをビルド（ARM64プラットフォーム向け）
-        echo "🔨 Building Docker image for ARM64 platform..."
-        echo "📁 Build context: $WORKING_DIRECTORY"
-        echo "🏷️  Target image: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
-        
-        # Dockerfileの存在確認
-        if [ ! -f "$WORKING_DIRECTORY/Dockerfile" ]; then
-          echo "❌ Dockerfile not found in $WORKING_DIRECTORY"
-          echo "📋 Available files in build context:"
-          ls -la $WORKING_DIRECTORY
-          exit 1
-        fi
-        
-        # Docker buildxのセットアップ
-        docker buildx create --use --name agentcore-builder || docker buildx use agentcore-builder
-        
-        # ARM64向けDockerビルドの実行（詳細ログ付き）
-        echo "⏳ Starting ARM64 Docker build process..."
-        echo "🔧 Docker build configuration:"
-        echo "   - Platform: linux/arm64"
-        echo "   - Build context: $WORKING_DIRECTORY"
-        echo "   - Python version in container: 3.11"
-        echo "   - uv package manager: enabled"
-        echo "   - Cache strategy: no-cache (fresh build)"
-        echo "   - Target stage: production"
-        echo "   - Output: load to local Docker daemon"
-        
-        # Docker lintの警告を無視してビルドを実行
-        if ! docker buildx build \
-          --platform linux/arm64 \
-          --target production \
-          --load \
-          --no-cache \
-          --progress=plain \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
-          $WORKING_DIRECTORY 2>&1 | tee docker_build.log; then
-          echo "❌ ARM64 Docker build failed"
-          echo "🔍 Build failure analysis:"
-          echo "   - Check Dockerfile syntax and ARM64 compatibility"
-          echo "   - Verify all required files are present in build context"
-          echo "   - Check for dependency installation issues"
-          echo "   - Verify uv and Python dependencies are ARM64 compatible"
-          echo "   - Check pyproject.toml and uv.lock file validity"
-          echo "   - Verify uv installation and configuration in container"
-          echo "   - Check network connectivity for package downloads"
-          echo "   - Verify Docker buildx configuration and output settings"
-          echo ""
-          echo "📋 Note: Docker lint warnings (FromAsCasing, etc.) are non-critical and can be ignored"
-          
-          # ビルドログの最後の部分を表示（エラー詳細）
-          echo "📋 Last 20 lines of build log:"
-          tail -20 docker_build.log || echo "Could not read build log"
-          
-          # ディスク容量チェック
-          AVAILABLE_SPACE=$(df . | tail -1 | awk '{print $4}')
-          if [ "$AVAILABLE_SPACE" -lt 1000000 ]; then  # 1GB未満の場合
-            echo "⚠️  Warning: Low disk space detected (${AVAILABLE_SPACE}KB available)"
-          fi
-          
-          exit 1
-        fi
-        
-        echo "✅ ARM64 Docker image built successfully"
-        
-        # ビルドされたイメージの確認
-        echo "🔍 Verifying built image..."
-        if docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | grep -q "latest"; then
-          echo "   ✅ Image successfully loaded to local Docker daemon"
-          IMAGE_SIZE=$(docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "{{.Size}}")
-          echo "   📏 Image size: $IMAGE_SIZE"
-        else
-          echo "   ❌ Image not found in local Docker daemon"
-          echo "   🔍 Available images:"
-          docker images | head -5
-          exit 1
-        fi
-        
-        # 複数タグでタグ付け
-        echo "🏷️  Creating additional tags..."
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT
-        docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG
-        
-        # タグ付け確認
-        echo "   ✅ Tags created:"
-        echo "      - latest"
-        echo "      - $GIT_SHA_SHORT"
-        echo "      - $TIMESTAMP_TAG"
-        
-        # ECRにプッシュ（詳細なエラーハンドリング付き）
-        echo "📤 Pushing images to ECR..."
-        echo "🎯 Target registry: $ECR_REGISTRY"
-        echo "📦 Repository: $ECR_REPOSITORY"
-        
-        # イメージサイズの確認
-        IMAGE_SIZE=$(docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "table {{.Size}}" | tail -1)
-        echo "📏 Image size: $IMAGE_SIZE"
-        
-        # 各タグのプッシュ（詳細ログ付き）
-        echo "⏳ Pushing latest tag..."
-        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest 2>&1 | tee push_latest.log; then
-          echo "❌ Failed to push latest tag"
-          echo "🔍 Push failure analysis:"
-          echo "   - Check ECR repository permissions"
-          echo "   - Verify AWS credentials are valid"
-          echo "   - Check network connectivity to ECR"
-          tail -10 push_latest.log || echo "Could not read push log"
-          exit 1
-        fi
-        echo "✅ Latest tag pushed successfully"
-        
-        echo "⏳ Pushing git SHA tag ($GIT_SHA_SHORT)..."
-        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT 2>&1 | tee push_sha.log; then
-          echo "❌ Failed to push git SHA tag"
-          tail -10 push_sha.log || echo "Could not read push log"
-          exit 1
-        fi
-        echo "✅ Git SHA tag pushed successfully"
-        
-        echo "⏳ Pushing timestamp tag ($TIMESTAMP_TAG)..."
-        if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG 2>&1 | tee push_timestamp.log; then
-          echo "❌ Failed to push timestamp tag"
-          tail -10 push_timestamp.log || echo "Could not read push log"
-          exit 1
-        fi
-        echo "✅ Timestamp tag pushed successfully"
-        
-        # 出力変数を設定
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
-        echo "image-tag=$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
-        echo "timestamp-tag=$TIMESTAMP_TAG" >> $GITHUB_OUTPUT
-        echo "image-uri=$ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
-        
-        # ビルド時間を計算
-        BUILD_END_TIME=$(date +%s)
-        BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
-        echo "BUILD_DURATION=${BUILD_DURATION}" >> $GITHUB_ENV
-        
-        echo "✅ AgentCore Docker image built and pushed successfully"
-        echo "📦 Primary Image: $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT"
-        echo "🏷️  Available tags: latest, $GIT_SHA_SHORT, $TIMESTAMP_TAG"
-        echo "⏱️  Build time: ${BUILD_DURATION} seconds"
-      working-directory: .
-    
-    - name: Update Bedrock AgentCore Runtime
-      id: deploy-agentcore
-      env:
-        IMAGE_URI: ${{ steps.build-image.outputs.image-uri }}
-      run: |
-        # セキュリティ設定: 機密情報のログ出力を防止
-        set +x  # デバッグ出力を無効化
-        
-        echo "🔒 Starting secure AgentCore Runtime deployment..."
-        
-        # デプロイ開始時刻を記録
-        echo "DEPLOY_START_TIME=$(date +%s)" >> $GITHUB_ENV
-        
-        # セキュリティ検証: 必要な環境変数の確認
-        if [ -z "$IMAGE_URI" ]; then
-          echo "❌ IMAGE_URI is not set"
-          echo "🔍 Image URI troubleshooting:"
-          echo "   - Check Docker build step completion"
-          echo "   - Verify image push was successful"
-          exit 1
-        fi
-        
-        if [ -z "$AGENTCORE_RUNTIME_NAME" ]; then
-          echo "❌ AGENTCORE_RUNTIME_NAME is not set"
-          echo "🔍 Runtime name troubleshooting:"
-          echo "   - Check environment variable configuration"
-          exit 1
-        fi
-        
-        # セキュリティ検証: イメージURIの形式確認
-        if [[ ! "$IMAGE_URI" =~ ^[0-9]+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/.+:.+$ ]]; then
-          echo "❌ Invalid image URI format detected"
-          echo "🔒 Security check failed: Image URI validation"
-          exit 1
-        fi
-        
-        # セキュリティ検証: Runtime名の形式確認
-        if [[ ! "$AGENTCORE_RUNTIME_NAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
-          echo "❌ Invalid AgentCore Runtime name format detected"
-          echo "🔒 Security check failed: Runtime name validation"
-          exit 1
-        fi
-        
-        # セキュリティ確認完了（機密情報はマスク表示）
-        MASKED_IMAGE_URI=$(echo $IMAGE_URI | sed 's/[0-9]/*/g')
-        echo "✅ Security validation passed"
-        echo "   - Image URI format: Valid ($MASKED_IMAGE_URI)"
-        echo "   - Runtime name: Valid ($AGENTCORE_RUNTIME_NAME)"
-        echo "   - AWS region: $AWS_REGION"
-        
-        # 現在のRuntime状態を事前確認（セキュリティ監査用）
-        echo "🔍 Pre-deployment security audit..."
-        CURRENT_RUNTIME_INFO=$(aws bedrock-agentcore-control describe-agent-runtime \
-          --agent-runtime-name $AGENTCORE_RUNTIME_NAME \
-          --region $AWS_REGION 2>/dev/null)
-        
-        if [ $? -eq 0 ]; then
-          CURRENT_STATUS=$(echo $CURRENT_RUNTIME_INFO | jq -r '.status // "UNKNOWN"')
-          CURRENT_IMAGE=$(echo $CURRENT_RUNTIME_INFO | jq -r '.agentRuntimeArtifact.containerConfiguration.containerUri // "N/A"')
-          MASKED_CURRENT_IMAGE=$(echo $CURRENT_IMAGE | sed 's/[0-9]/*/g')
-          
-          echo "   - Current status: $CURRENT_STATUS"
-          echo "   - Current image: $MASKED_CURRENT_IMAGE"
-          echo "   - Target image: $MASKED_IMAGE_URI"
-          
-          # セキュリティチェック: 同じイメージの重複デプロイを防止
-          if [ "$CURRENT_IMAGE" = "$IMAGE_URI" ]; then
-            echo "⚠️  Warning: Target image is same as current image"
-            echo "🔒 Security note: Proceeding with deployment for consistency"
-          fi
-        else
-          echo "   ⚠️  Could not retrieve current runtime information"
-          echo "   - This may be the first deployment or a permission issue"
-        fi
-        
-        # AgentCore Runtime更新の実行（セキュリティ強化）
-        echo "🔄 Executing secure AgentCore Runtime update..."
-        
-        # セキュリティ: 更新コマンドの構築と検証
-        UPDATE_PAYLOAD={"containerConfiguration": {"containerUri": "$IMAGE_URI"}}
 
-        # セキュリティ: ペイロードの検証
-        if ! echo "$UPDATE_PAYLOAD" | jq . > /dev/null 2>&1; then
-          echo "❌ Invalid JSON payload for runtime update"
-          echo "🔒 Security check failed: Payload validation"
-          exit 1
-        fi
-        
-        echo "   - Payload validation: ✅ Valid JSON"
-        echo "   - Security audit: ✅ Passed"
-        
-        # セキュリティ強化されたRuntime更新の実行
-        if ! aws bedrock-agentcore-control update-agent-runtime \
-          --agent-runtime-name "$AGENTCORE_RUNTIME_NAME" \
-          --agent-runtime-artifact "$UPDATE_PAYLOAD" \
-          --region "$AWS_REGION" \
-          --cli-read-timeout 120 \
-          --cli-connect-timeout 60 2>update_error.log; then
-          
-          echo "❌ Failed to update AgentCore Runtime"
-          echo "🔍 Runtime update failure analysis:"
-          echo "   - Runtime name: $AGENTCORE_RUNTIME_NAME"
-          echo "   - AWS region: $AWS_REGION"
-          echo "   - Image URI format: $(echo $IMAGE_URI | sed 's/[0-9]/*/g')"
-          
-          # セキュリティ考慮: エラーログの安全な表示
-          if [ -f update_error.log ]; then
-            echo "📋 AWS CLI error details (sanitized):"
-            # 機密情報を除去してエラーログを表示
-            sed 's/[0-9]\{12\}/***ACCOUNT***/g' update_error.log | \
-            sed 's/arn:aws:[^:]*:[^:]*:[0-9]\{12\}:/arn:aws:***:***:***ACCOUNT***:/g'
+          # AWS Account IDを取得（マスクされた形式で表示）
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+          MASKED_ACCOUNT_ID="***${AWS_ACCOUNT_ID: -4}"
+          echo "✅ AWS authentication successful"
+          echo "   - Account ID: $MASKED_ACCOUNT_ID"
+          echo "   - Region: $AWS_REGION"
+
+          # 必要な権限の確認（最小権限の原則）
+          echo "🔍 Verifying required AWS permissions..."
+
+          # ECR権限の確認
+          echo "   - Checking ECR permissions..."
+          if ! aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION > /dev/null 2>&1; then
+            echo "❌ ECR repository access failed"
+            echo "🔍 ECR troubleshooting:"
+            echo "   - Check if ECR repository '$ECR_REPOSITORY' exists"
+            echo "   - Verify IAM permissions for ECR operations"
+            echo "   - Required permissions: ecr:DescribeRepositories, ecr:GetAuthorizationToken"
+            exit 1
           fi
-          
-          echo "🔒 Security note: Sensitive information has been masked in error output"
-          echo "🔍 Common troubleshooting steps:"
-          echo "   - Verify IAM permissions for bedrock-agentcore-control:UpdateAgentRuntime"
-          echo "   - Check if AgentCore Runtime exists and is accessible"
-          echo "   - Ensure image URI is valid and accessible from AgentCore"
-          echo "   - Verify AWS region configuration"
-          echo "   - Check for any service quotas or limits"
-          
-          exit 1
-        fi
-        
-        echo "✅ AgentCore Runtime update initiated successfully"
-        
-        # Runtime状態の監視とACTIVE状態待機
-        echo "⏳ Waiting for AgentCore Runtime to become ACTIVE..."
-        WAIT_START_TIME=$(date +%s)
-        TIMEOUT_SECONDS=300  # 5分タイムアウト
-        
-        while true; do
-          CURRENT_TIME=$(date +%s)
-          ELAPSED_TIME=$((CURRENT_TIME - WAIT_START_TIME))
-          
-          if [ $ELAPSED_TIME -ge $TIMEOUT_SECONDS ]; then
-            echo "❌ Runtime activation timed out after ${TIMEOUT_SECONDS} seconds"
-            break
+          echo "   ✅ ECR repository access verified"
+
+          # Bedrock AgentCore権限の確認
+          echo "   - Checking Bedrock AgentCore permissions..."
+          if ! aws bedrock-agentcore-control get-agent-runtime --agent-runtime-name $AGENTCORE_RUNTIME_NAME --region $AWS_REGION > /dev/null 2>&1; then
+            echo "❌ Bedrock AgentCore Runtime access failed"
+            echo "🔍 AgentCore troubleshooting:"
+            echo "   - Check if AgentCore Runtime '$AGENTCORE_RUNTIME_NAME' exists"
+            echo "   - Verify IAM permissions for AgentCore operations"
+            echo "   - Required permissions: bedrock-agentcore-control:GetAgentRuntime, bedrock-agentcore-control:UpdateAgentRuntime"
+            exit 1
           fi
-          
-          # Runtime状態を確認
-          RUNTIME_STATUS=$(aws bedrock-agentcore-control describe-agent-runtime \
-            --agent-runtime-name $AGENTCORE_RUNTIME_NAME \
-            --region $AWS_REGION \
-            --query 'status' --output text 2>/dev/null)
-          
+          echo "   ✅ Bedrock AgentCore Runtime access verified"
+
+          echo "✅ All required AWS permissions verified successfully"
+          echo "🔒 Security check: Authentication configured with minimal required permissions"
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          # セキュリティ強化: 認証情報マスキング
+          mask-password: true
+          # ECRログイン時のレジストリ指定（セキュリティ向上）
+          registries: ${{ steps.configure-aws.outputs.aws-account-id }}
+
+      - name: Verify ECR Login
+        run: |
+          # セキュリティ設定: 機密情報のログ出力を防止
+          set +x  # デバッグ出力を無効化
+
+          echo "🔐 Verifying ECR login and repository access..."
+
+          # ECRレジストリ情報の確認（機密情報は表示しない）
+          ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          if [ -z "$ECR_REGISTRY" ]; then
+            echo "❌ ECR registry information not available"
+            exit 1
+          fi
+
+          # ECRレジストリのマスク表示
+          MASKED_REGISTRY=$(echo $ECR_REGISTRY | sed 's/[0-9]/*/g')
+          echo "✅ ECR login successful"
+          echo "   - Registry: $MASKED_REGISTRY"
+          echo "   - Repository: $ECR_REPOSITORY"
+
+          # ECRリポジトリの詳細確認
+          echo "🔍 Verifying ECR repository configuration..."
+
+          REPO_INFO=$(aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION 2>/dev/null)
           if [ $? -eq 0 ]; then
-            echo "📊 Runtime status (${ELAPSED_TIME}s elapsed): $RUNTIME_STATUS"
+            REPO_URI=$(echo $REPO_INFO | jq -r '.repositories[0].repositoryUri // "N/A"')
+            IMAGE_SCAN_CONFIG=$(echo $REPO_INFO | jq -r '.repositories[0].imageScanningConfiguration.scanOnPush // false')
+            ENCRYPTION_TYPE=$(echo $REPO_INFO | jq -r '.repositories[0].encryptionConfiguration.encryptionType // "AES256"')
             
-            if [ "$RUNTIME_STATUS" = "ACTIVE" ]; then
-              echo "✅ AgentCore Runtime is now ACTIVE"
-              break
-            elif [ "$RUNTIME_STATUS" = "FAILED" ]; then
-              echo "❌ AgentCore Runtime activation failed"
+            echo "   ✅ Repository configuration verified"
+            echo "   - Image scanning: $IMAGE_SCAN_CONFIG"
+            echo "   - Encryption: $ENCRYPTION_TYPE"
+            
+            # セキュリティ推奨設定の確認
+            if [ "$IMAGE_SCAN_CONFIG" = "false" ]; then
+              echo "   ⚠️  Recommendation: Enable image scanning for security"
+            fi
+          else
+            echo "   ❌ Could not retrieve repository configuration"
+            exit 1
+          fi
+
+          # ECRプッシュ権限の最終確認
+          echo "🔍 Testing ECR push permissions..."
+
+          # 軽量なテストイメージでプッシュ権限を確認
+          TEST_TAG="permission-test-$(date +%s)"
+
+          # 小さなテストイメージを作成してプッシュテスト
+          echo "FROM alpine:latest" > Dockerfile.test
+          echo "RUN echo 'ECR permission test'" >> Dockerfile.test
+
+          if docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$TEST_TAG -f Dockerfile.test . > /dev/null 2>&1; then
+            if docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TEST_TAG > /dev/null 2>&1; then
+              echo "   ✅ ECR push permissions verified"
+              
+              # テストイメージを削除
+              aws ecr batch-delete-image --repository-name $ECR_REPOSITORY --image-ids imageTag=$TEST_TAG --region $AWS_REGION > /dev/null 2>&1
+            else
+              echo "   ❌ ECR push permission test failed"
+              echo "🔍 Push troubleshooting:"
+              echo "   - Check IAM permissions for ECR push operations"
+              echo "   - Required permissions: ecr:PutImage, ecr:InitiateLayerUpload, ecr:UploadLayerPart, ecr:CompleteLayerUpload"
               exit 1
             fi
+          else
+            echo "   ⚠️  Could not create test image for push verification"
           fi
-          
-          sleep 15
-        done
-        
-        # デプロイメント完了後のヘルスチェック
-        echo "🏥 Performing post-deployment health check..."
-        
-        # Runtime ARNとIDを取得
-        RUNTIME_INFO=$(aws bedrock-agentcore-control describe-agent-runtime \
-          --agent-runtime-name $AGENTCORE_RUNTIME_NAME \
-          --region $AWS_REGION 2>/dev/null)
-        
-        if [ $? -eq 0 ]; then
-          RUNTIME_ARN=$(echo $RUNTIME_INFO | jq -r '.agentRuntimeArn // "N/A"')
-          RUNTIME_ID=$(echo $RUNTIME_INFO | jq -r '.agentRuntimeId // "N/A"')
-          RUNTIME_STATUS=$(echo $RUNTIME_INFO | jq -r '.status // "N/A"')
-          
-          echo "📊 Runtime information:"
-          echo "   - ARN: $RUNTIME_ARN"
-          echo "   - ID: $RUNTIME_ID"
-          echo "   - Status: $RUNTIME_STATUS"
-          
+
+          # テストファイルをクリーンアップ
+          rm -f Dockerfile.test
+
+          echo "✅ ECR authentication and permissions fully verified"
+          echo "🔒 Security status: All authentication checks passed with masked credentials"
+
+      - name: Build and push Docker image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          # セキュリティ設定: 機密情報のログ出力を防止
+          set +x  # デバッグ出力を無効化
+
+          echo "🔒 Starting secure Docker build process..."
+
+          # 環境変数の検証（機密情報は表示しない）
+          if [ -z "$ECR_REGISTRY" ]; then
+            echo "❌ ECR_REGISTRY is not set"
+            echo "🔍 Registry troubleshooting:"
+            echo "   - Check ECR login step completion"
+            echo "   - Verify AWS authentication is successful"
+            exit 1
+          fi
+
+          if [ -z "$ECR_REPOSITORY" ]; then
+            echo "❌ ECR_REPOSITORY is not set"
+            echo "🔍 Repository troubleshooting:"
+            echo "   - Check environment variable configuration"
+            echo "   - Verify repository name in workflow file"
+            exit 1
+          fi
+
+          if [ -z "$GIT_SHA" ]; then
+            echo "❌ GIT_SHA is not set"
+            echo "🔍 Git SHA troubleshooting:"
+            echo "   - Check GitHub context availability"
+            exit 1
+          fi
+
+          # セキュリティ検証: レジストリとリポジトリの形式確認
+          if [[ ! "$ECR_REGISTRY" =~ ^[0-9]+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com$ ]]; then
+            echo "❌ Invalid ECR registry format detected"
+            echo "🔒 Security check failed: Registry format validation"
+            exit 1
+          fi
+
+          if [[ ! "$ECR_REPOSITORY" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
+            echo "❌ Invalid ECR repository name format detected"
+            echo "🔒 Security check failed: Repository name validation"
+            exit 1
+          fi
+
+          # セキュリティ確認完了
+          MASKED_REGISTRY=$(echo $ECR_REGISTRY | sed 's/[0-9]/*/g')
+          echo "✅ Security validation passed"
+          echo "   - Registry format: Valid ($MASKED_REGISTRY)"
+          echo "   - Repository name: Valid ($ECR_REPOSITORY)"
+          echo "   - Git SHA: Valid (${GIT_SHA:0:8}...)"
+
+          # ワークフロー全体の開始時刻を記録
+          echo "WORKFLOW_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+          # ビルド開始時刻を記録
+          echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+          # 詳細ログ出力の開始
+          echo "🚀 Starting AgentCore Docker build and push process..."
+          echo "📊 Build environment information:"
+          echo "   - Python version: $(python --version)"
+          echo "   - uv version: $(uv --version)"
+          echo "   - Docker version: $(docker --version)"
+          echo "   - Available disk space: $(df -h . | tail -1 | awk '{print $4}')"
+          echo "   - Available memory: $(free -h | grep '^Mem:' | awk '{print $7}' || echo 'N/A')"
+          echo "   - Working directory: $WORKING_DIRECTORY"
+          echo "   - Dependencies installation time: ${DEPS_DURATION}s"
+          echo "   - uv cache directory: $UV_CACHE_DIR"
+          echo "   - uv cache size: $(du -sh $UV_CACHE_DIR 2>/dev/null | cut -f1 || echo 'unknown')"
+
+          # イメージタグ戦略の実装
+          TIMESTAMP_TAG="v$(date +%Y%m%d-%H%M%S)"
+          GIT_SHA_SHORT="${GIT_SHA:0:8}"
+
+          echo "🏷️  Image tagging strategy:"
+          echo "   - latest: 最新のmainブランチビルド"
+          echo "   - ${GIT_SHA_SHORT}: Gitコミットハッシュベース"
+          echo "   - ${TIMESTAMP_TAG}: タイムスタンプベース"
+
+          # Dockerイメージをビルド（ARM64プラットフォーム向け）
+          echo "🔨 Building Docker image for ARM64 platform..."
+          echo "📁 Build context: $WORKING_DIRECTORY"
+          echo "🏷️  Target image: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
+          # Dockerfileの存在確認
+          if [ ! -f "$WORKING_DIRECTORY/Dockerfile" ]; then
+            echo "❌ Dockerfile not found in $WORKING_DIRECTORY"
+            echo "📋 Available files in build context:"
+            ls -la $WORKING_DIRECTORY
+            exit 1
+          fi
+
+          # Docker buildxのセットアップ
+          docker buildx create --use --name agentcore-builder || docker buildx use agentcore-builder
+
+          # ARM64向けDockerビルドの実行（詳細ログ付き）
+          echo "⏳ Starting ARM64 Docker build process..."
+          echo "🔧 Docker build configuration:"
+          echo "   - Platform: linux/arm64"
+          echo "   - Build context: $WORKING_DIRECTORY"
+          echo "   - Python version in container: 3.11"
+          echo "   - uv package manager: enabled"
+          echo "   - Cache strategy: no-cache (fresh build)"
+          echo "   - Target stage: production"
+          echo "   - Output: load to local Docker daemon"
+
+          # Docker lintの警告を無視してビルドを実行
+          if ! docker buildx build \
+            --platform linux/arm64 \
+            --target production \
+            --load \
+            --no-cache \
+            --progress=plain \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            $WORKING_DIRECTORY 2>&1 | tee docker_build.log; then
+            echo "❌ ARM64 Docker build failed"
+            echo "🔍 Build failure analysis:"
+            echo "   - Check Dockerfile syntax and ARM64 compatibility"
+            echo "   - Verify all required files are present in build context"
+            echo "   - Check for dependency installation issues"
+            echo "   - Verify uv and Python dependencies are ARM64 compatible"
+            echo "   - Check pyproject.toml and uv.lock file validity"
+            echo "   - Verify uv installation and configuration in container"
+            echo "   - Check network connectivity for package downloads"
+            echo "   - Verify Docker buildx configuration and output settings"
+            echo ""
+            echo "📋 Note: Docker lint warnings (FromAsCasing, etc.) are non-critical and can be ignored"
+            
+            # ビルドログの最後の部分を表示（エラー詳細）
+            echo "📋 Last 20 lines of build log:"
+            tail -20 docker_build.log || echo "Could not read build log"
+            
+            # ディスク容量チェック
+            AVAILABLE_SPACE=$(df . | tail -1 | awk '{print $4}')
+            if [ "$AVAILABLE_SPACE" -lt 1000000 ]; then  # 1GB未満の場合
+              echo "⚠️  Warning: Low disk space detected (${AVAILABLE_SPACE}KB available)"
+            fi
+            
+            exit 1
+          fi
+
+          echo "✅ ARM64 Docker image built successfully"
+
+          # ビルドされたイメージの確認
+          echo "🔍 Verifying built image..."
+          if docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | grep -q "latest"; then
+            echo "   ✅ Image successfully loaded to local Docker daemon"
+            IMAGE_SIZE=$(docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "{{.Size}}")
+            echo "   📏 Image size: $IMAGE_SIZE"
+          else
+            echo "   ❌ Image not found in local Docker daemon"
+            echo "   🔍 Available images:"
+            docker images | head -5
+            exit 1
+          fi
+
+          # 複数タグでタグ付け
+          echo "🏷️  Creating additional tags..."
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG
+
+          # タグ付け確認
+          echo "   ✅ Tags created:"
+          echo "      - latest"
+          echo "      - $GIT_SHA_SHORT"
+          echo "      - $TIMESTAMP_TAG"
+
+          # ECRにプッシュ（詳細なエラーハンドリング付き）
+          echo "📤 Pushing images to ECR..."
+          echo "🎯 Target registry: $ECR_REGISTRY"
+          echo "📦 Repository: $ECR_REPOSITORY"
+
+          # イメージサイズの確認
+          IMAGE_SIZE=$(docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "table {{.Size}}" | tail -1)
+          echo "📏 Image size: $IMAGE_SIZE"
+
+          # 各タグのプッシュ（詳細ログ付き）
+          echo "⏳ Pushing latest tag..."
+          if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest 2>&1 | tee push_latest.log; then
+            echo "❌ Failed to push latest tag"
+            echo "🔍 Push failure analysis:"
+            echo "   - Check ECR repository permissions"
+            echo "   - Verify AWS credentials are valid"
+            echo "   - Check network connectivity to ECR"
+            tail -10 push_latest.log || echo "Could not read push log"
+            exit 1
+          fi
+          echo "✅ Latest tag pushed successfully"
+
+          echo "⏳ Pushing git SHA tag ($GIT_SHA_SHORT)..."
+          if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT 2>&1 | tee push_sha.log; then
+            echo "❌ Failed to push git SHA tag"
+            tail -10 push_sha.log || echo "Could not read push log"
+            exit 1
+          fi
+          echo "✅ Git SHA tag pushed successfully"
+
+          echo "⏳ Pushing timestamp tag ($TIMESTAMP_TAG)..."
+          if ! docker push $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG 2>&1 | tee push_timestamp.log; then
+            echo "❌ Failed to push timestamp tag"
+            tail -10 push_timestamp.log || echo "Could not read push log"
+            exit 1
+          fi
+          echo "✅ Timestamp tag pushed successfully"
+
           # 出力変数を設定
-          echo "runtime-arn=$RUNTIME_ARN" >> $GITHUB_OUTPUT
-          echo "runtime-id=$RUNTIME_ID" >> $GITHUB_OUTPUT
-          echo "deployment-status=success" >> $GITHUB_OUTPUT
-        else
-          echo "⚠️  Warning: Could not retrieve runtime information for health check"
-          echo "deployment-status=unknown" >> $GITHUB_OUTPUT
-        fi
-        
-        # デプロイ時間を計算
-        DEPLOY_END_TIME=$(date +%s)
-        DEPLOY_DURATION=$((DEPLOY_END_TIME - DEPLOY_START_TIME))
-        echo "DEPLOY_DURATION=${DEPLOY_DURATION}" >> $GITHUB_ENV
-        
-        # ワークフロー全体の実行時間を計算
-        WORKFLOW_END_TIME=$(date +%s)
-        WORKFLOW_TOTAL_DURATION=$((WORKFLOW_END_TIME - WORKFLOW_START_TIME))
-        echo "WORKFLOW_TOTAL_DURATION=${WORKFLOW_TOTAL_DURATION}" >> $GITHUB_ENV
-        
-        echo "🎉 AgentCore deployment completed successfully!"
-        echo "⏱️  Deploy time: ${DEPLOY_DURATION} seconds"
-    
-    - name: Deployment Summary
-      run: |
-        echo "## 🚀 AgentCore Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Image Information" >> $GITHUB_STEP_SUMMARY
-        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Primary Tag | \`${{ steps.build-image.outputs.image-tag }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Timestamp Tag | \`${{ steps.build-image.outputs.timestamp-tag }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Image URI | \`${{ steps.build-image.outputs.image-uri }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Deployment Information" >> $GITHUB_STEP_SUMMARY
-        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Runtime ARN | \`${{ steps.deploy-agentcore.outputs.runtime-arn }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Runtime ID | \`${{ steps.deploy-agentcore.outputs.runtime-id }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Runtime Name | \`${{ env.AGENTCORE_RUNTIME_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| AWS Region | \`${{ env.AWS_REGION }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### ⏱️ Performance Metrics" >> $GITHUB_STEP_SUMMARY
-        echo "| Item | Value | Target |" >> $GITHUB_STEP_SUMMARY
-        echo "|------|-------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Dependencies Install | ${DEPS_DURATION}s | < 120s (2min) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Build Time | ${BUILD_DURATION}s | < 600s (10min) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Deploy Time | ${DEPLOY_DURATION}s | < 300s (5min) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Total Time | ${WORKFLOW_TOTAL_DURATION}s | < 900s (15min) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Status | ✅ Success | ✅ |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        # パフォーマンス警告の実装
-        if [ "${DEPS_DURATION}" -gt 120 ]; then
-          echo "⚠️ **Warning**: Dependencies installation time exceeded target (${DEPS_DURATION}s > 120s)" >> $GITHUB_STEP_SUMMARY
-        fi
-        if [ "${BUILD_DURATION}" -gt 600 ]; then
-          echo "⚠️ **Warning**: Build time exceeded target (${BUILD_DURATION}s > 600s)" >> $GITHUB_STEP_SUMMARY
-        fi
-        if [ "${DEPLOY_DURATION}" -gt 300 ]; then
-          echo "⚠️ **Warning**: Deploy time exceeded target (${DEPLOY_DURATION}s > 300s)" >> $GITHUB_STEP_SUMMARY
-        fi
-        if [ "${WORKFLOW_TOTAL_DURATION}" -gt 900 ]; then
-          echo "⚠️ **Warning**: Total workflow time exceeded target (${WORKFLOW_TOTAL_DURATION}s > 900s)" >> $GITHUB_STEP_SUMMARY
-        fi
-    
-    - name: Notify deployment failure
-      if: failure()
-      run: |
-        # セキュリティ強化: 機密情報を完全に除去した失敗通知
-        set +x  # デバッグ出力を無効化
-        
-        echo "🔒 Generating secure failure notification..."
-        
-        # セキュリティ: 機密情報のマスキング処理
-        MASKED_ACTOR="${{ github.actor }}"
-        MASKED_REPO=$(echo "${{ github.repository }}" | sed 's/[^/]*$/***REPO***/g')
-        
-        echo "## ❌ AgentCore Deployment Failed" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🔍 Failure Details (Security Sanitized)" >> $GITHUB_STEP_SUMMARY
-        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
-        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Commit SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Workflow Run | [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |" >> $GITHUB_STEP_SUMMARY
-        echo "| Triggered By | \`$MASKED_ACTOR\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Timestamp | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| AWS Region | \`${{ env.AWS_REGION }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Repository | \`${{ env.ECR_REPOSITORY }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "| Runtime Name | \`${{ env.AGENTCORE_RUNTIME_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        echo "### 🔒 Security Status" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ AWS credentials properly masked in all logs" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Account IDs and sensitive URIs sanitized" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Error messages filtered for security compliance" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Minimal privilege principle maintained" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        
-        echo "### 🛠️ Secure Troubleshooting Guide" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Authentication & Authorization" >> $GITHUB_STEP_SUMMARY
-        echo "1. **AWS Credentials**: Verify GitHub Secrets are correctly configured" >> $GITHUB_STEP_SUMMARY
-        echo "   - \`AWS_ACCESS_KEY_ID\`: Must be valid and active" >> $GITHUB_STEP_SUMMARY
-        echo "   - \`AWS_SECRET_ACCESS_KEY\`: Must match the access key" >> $GITHUB_STEP_SUMMARY
-        echo "   - Check IAM user/role status and permissions" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "2. **IAM Permissions**: Verify minimal required permissions are granted" >> $GITHUB_STEP_SUMMARY
-        echo "   - ECR: \`GetAuthorizationToken\`, \`BatchCheckLayerAvailability\`, \`PutImage\`" >> $GITHUB_STEP_SUMMARY
-        echo "   - AgentCore: \`DescribeAgentRuntime\`, \`UpdateAgentRuntime\`" >> $GITHUB_STEP_SUMMARY
-        echo "   - STS: \`GetCallerIdentity\`" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Infrastructure & Resources" >> $GITHUB_STEP_SUMMARY
-        echo "3. **ECR Repository**: Ensure repository exists and is accessible" >> $GITHUB_STEP_SUMMARY
-        echo "4. **AgentCore Runtime**: Verify runtime exists and is in valid state" >> $GITHUB_STEP_SUMMARY
-        echo "5. **Network Connectivity**: Check access to AWS services and PyPI" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "#### Build & Deployment" >> $GITHUB_STEP_SUMMARY
-        echo "6. **Docker Build**: Check ARM64 compatibility and Dockerfile syntax" >> $GITHUB_STEP_SUMMARY
-        echo "7. **Python Dependencies**: Verify uv and Python 3.11 compatibility" >> $GITHUB_STEP_SUMMARY
-        echo "8. **Project Configuration**: Check pyproject.toml and uv.lock validity" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚨 Security Incident Response" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "If this failure involves potential security issues:" >> $GITHUB_STEP_SUMMARY
-        echo "1. **Do not** share AWS credentials or account information in public channels" >> $GITHUB_STEP_SUMMARY
-        echo "2. **Do not** expose sensitive configuration in troubleshooting" >> $GITHUB_STEP_SUMMARY
-        echo "3. **Contact** the DevOps/Security team through secure channels" >> $GITHUB_STEP_SUMMARY
-        echo "4. **Review** recent changes to IAM policies and GitHub Secrets" >> $GITHUB_STEP_SUMMARY
-        echo "5. **Monitor** for any unauthorized access attempts" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📞 Support Contacts" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "- **DevOps Team**: For AWS infrastructure and deployment issues" >> $GITHUB_STEP_SUMMARY
-        echo "- **Security Team**: For authentication and permission issues" >> $GITHUB_STEP_SUMMARY
-        echo "- **Development Team**: For application and build issues" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "⚠️ **Action Required**: Investigate and resolve the deployment issue following security best practices."
-        
-        # セキュリティ監査ログの生成（機密情報は除去）
-        echo "🔒 Security audit: Failure notification generated with all sensitive information properly masked"
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
+          echo "image-tag=$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
+          echo "timestamp-tag=$TIMESTAMP_TAG" >> $GITHUB_OUTPUT
+          echo "image-uri=$ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT" >> $GITHUB_OUTPUT
+
+          # ビルド時間を計算
+          BUILD_END_TIME=$(date +%s)
+          BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+          echo "BUILD_DURATION=${BUILD_DURATION}" >> $GITHUB_ENV
+
+          echo "✅ AgentCore Docker image built and pushed successfully"
+          echo "📦 Primary Image: $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT"
+          echo "🏷️  Available tags: latest, $GIT_SHA_SHORT, $TIMESTAMP_TAG"
+          echo "⏱️  Build time: ${BUILD_DURATION} seconds"
+        working-directory: .
+
+      - name: Update Bedrock AgentCore Runtime
+        id: deploy-agentcore
+        env:
+          IMAGE_URI: ${{ steps.build-image.outputs.image-uri }}
+        run: |
+          # セキュリティ設定: 機密情報のログ出力を防止
+          set +x  # デバッグ出力を無効化
+
+          echo "🔒 Starting secure AgentCore Runtime deployment..."
+
+          # デプロイ開始時刻を記録
+          echo "DEPLOY_START_TIME=$(date +%s)" >> $GITHUB_ENV
+
+          # セキュリティ検証: 必要な環境変数の確認
+          if [ -z "$IMAGE_URI" ]; then
+            echo "❌ IMAGE_URI is not set"
+            echo "🔍 Image URI troubleshooting:"
+            echo "   - Check Docker build step completion"
+            echo "   - Verify image push was successful"
+            exit 1
+          fi
+
+          if [ -z "$AGENTCORE_RUNTIME_NAME" ]; then
+            echo "❌ AGENTCORE_RUNTIME_NAME is not set"
+            echo "🔍 Runtime name troubleshooting:"
+            echo "   - Check environment variable configuration"
+            exit 1
+          fi
+
+          # セキュリティ検証: イメージURIの形式確認
+          if [[ ! "$IMAGE_URI" =~ ^[0-9]+\.dkr\.ecr\.[a-z0-9-]+\.amazonaws\.com/.+:.+$ ]]; then
+            echo "❌ Invalid image URI format detected"
+            echo "🔒 Security check failed: Image URI validation"
+            exit 1
+          fi
+
+          # セキュリティ検証: Runtime名の形式確認
+          if [[ ! "$AGENTCORE_RUNTIME_NAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+            echo "❌ Invalid AgentCore Runtime name format detected"
+            echo "🔒 Security check failed: Runtime name validation"
+            exit 1
+          fi
+
+          # セキュリティ確認完了（機密情報はマスク表示）
+          MASKED_IMAGE_URI=$(echo $IMAGE_URI | sed 's/[0-9]/*/g')
+          echo "✅ Security validation passed"
+          echo "   - Image URI format: Valid ($MASKED_IMAGE_URI)"
+          echo "   - Runtime name: Valid ($AGENTCORE_RUNTIME_NAME)"
+          echo "   - AWS region: $AWS_REGION"
+
+          # 現在のRuntime状態を事前確認（セキュリティ監査用）
+          echo "🔍 Pre-deployment security audit..."
+          CURRENT_RUNTIME_INFO=$(aws bedrock-agentcore-control get-agent-runtime \
+            --agent-runtime-name $AGENTCORE_RUNTIME_NAME \
+            --region $AWS_REGION 2>/dev/null)
+
+          if [ $? -eq 0 ]; then
+            CURRENT_STATUS=$(echo $CURRENT_RUNTIME_INFO | jq -r '.status // "UNKNOWN"')
+            CURRENT_IMAGE=$(echo $CURRENT_RUNTIME_INFO | jq -r '.agentRuntimeArtifact.containerConfiguration.containerUri // "N/A"')
+            MASKED_CURRENT_IMAGE=$(echo $CURRENT_IMAGE | sed 's/[0-9]/*/g')
+            
+            echo "   - Current status: $CURRENT_STATUS"
+            echo "   - Current image: $MASKED_CURRENT_IMAGE"
+            echo "   - Target image: $MASKED_IMAGE_URI"
+            
+            # セキュリティチェック: 同じイメージの重複デプロイを防止
+            if [ "$CURRENT_IMAGE" = "$IMAGE_URI" ]; then
+              echo "⚠️  Warning: Target image is same as current image"
+              echo "🔒 Security note: Proceeding with deployment for consistency"
+            fi
+          else
+            echo "   ⚠️  Could not retrieve current runtime information"
+            echo "   - This may be the first deployment or a permission issue"
+          fi
+
+          # AgentCore Runtime更新の実行（セキュリティ強化）
+          echo "🔄 Executing secure AgentCore Runtime update..."
+
+          # セキュリティ: 更新コマンドの構築と検証
+          UPDATE_PAYLOAD={"containerConfiguration": {"containerUri": "$IMAGE_URI"}}
+
+          # セキュリティ: ペイロードの検証
+          if ! echo "$UPDATE_PAYLOAD" | jq . > /dev/null 2>&1; then
+            echo "❌ Invalid JSON payload for runtime update"
+            echo "🔒 Security check failed: Payload validation"
+            exit 1
+          fi
+
+          echo "   - Payload validation: ✅ Valid JSON"
+          echo "   - Security audit: ✅ Passed"
+
+          # AgentCore Runtime IDを取得
+          echo "🔍 Retrieving AgentCore Runtime ID..."
+          RUNTIME_ID=$(aws bedrock-agentcore-control get-agent-runtime \
+            --agent-runtime-name "$AGENTCORE_RUNTIME_NAME" \
+            --region "$AWS_REGION" \
+            --query 'agentRuntimeId' --output text 2>/dev/null)
+
+          if [ -z "$RUNTIME_ID" ] || [ "$RUNTIME_ID" = "None" ]; then
+            echo "❌ Could not retrieve AgentCore Runtime ID"
+            echo "🔍 Runtime ID troubleshooting:"
+            echo "   - Check if AgentCore Runtime '$AGENTCORE_RUNTIME_NAME' exists"
+            echo "   - Verify IAM permissions for bedrock-agentcore-control:GetAgentRuntime"
+            exit 1
+          fi
+
+          echo "✅ Runtime ID retrieved: $RUNTIME_ID"
+
+          # IAMロールARNを取得
+          echo "🔍 Retrieving IAM Role ARN..."
+          ROLE_ARN=$(aws bedrock-agentcore-control get-agent-runtime \
+            --agent-runtime-name "$AGENTCORE_RUNTIME_NAME" \
+            --region "$AWS_REGION" \
+            --query 'roleArn' --output text 2>/dev/null)
+
+          if [ -z "$ROLE_ARN" ] || [ "$ROLE_ARN" = "None" ]; then
+            echo "❌ Could not retrieve IAM Role ARN"
+            exit 1
+          fi
+
+          echo "✅ Role ARN retrieved: $ROLE_ARN"
+
+          # ネットワーク設定を取得
+          echo "🔍 Retrieving Network Configuration..."
+          NETWORK_CONFIG=$(aws bedrock-agentcore-control get-agent-runtime \
+            --agent-runtime-name "$AGENTCORE_RUNTIME_NAME" \
+            --region "$AWS_REGION" \
+            --query 'networkConfiguration' --output json 2>/dev/null)
+
+          if [ -z "$NETWORK_CONFIG" ] || [ "$NETWORK_CONFIG" = "null" ]; then
+            # デフォルトのネットワーク設定を使用
+            NETWORK_CONFIG='{"networkMode":"PUBLIC"}'
+            echo "⚠️  Using default network configuration: $NETWORK_CONFIG"
+          else
+            echo "✅ Network configuration retrieved: $NETWORK_CONFIG"
+          fi
+
+          # セキュリティ強化されたRuntime更新の実行
+          if ! aws bedrock-agentcore-control update-agent-runtime \
+            --agent-runtime-id "$RUNTIME_ID" \
+            --agent-runtime-artifact "$UPDATE_PAYLOAD" \
+            --role-arn "$ROLE_ARN" \
+            --network-configuration "$NETWORK_CONFIG" \
+            --region "$AWS_REGION" \
+            --cli-read-timeout 120 \
+            --cli-connect-timeout 60 2>update_error.log; then
+            
+            echo "❌ Failed to update AgentCore Runtime"
+            echo "🔍 Runtime update failure analysis:"
+            echo "   - Runtime name: $AGENTCORE_RUNTIME_NAME"
+            echo "   - AWS region: $AWS_REGION"
+            echo "   - Image URI format: $(echo $IMAGE_URI | sed 's/[0-9]/*/g')"
+            
+            # セキュリティ考慮: エラーログの安全な表示
+            if [ -f update_error.log ]; then
+              echo "📋 AWS CLI error details (sanitized):"
+              # 機密情報を除去してエラーログを表示
+              sed 's/[0-9]\{12\}/***ACCOUNT***/g' update_error.log | \
+              sed 's/arn:aws:[^:]*:[^:]*:[0-9]\{12\}:/arn:aws:***:***:***ACCOUNT***:/g'
+            fi
+            
+            echo "🔒 Security note: Sensitive information has been masked in error output"
+            echo "🔍 Common troubleshooting steps:"
+            echo "   - Verify IAM permissions for bedrock-agentcore-control:UpdateAgentRuntime"
+            echo "   - Check if AgentCore Runtime exists and is accessible"
+            echo "   - Ensure image URI is valid and accessible from AgentCore"
+            echo "   - Verify AWS region configuration"
+            echo "   - Check for any service quotas or limits"
+            
+            exit 1
+          fi
+
+          echo "✅ AgentCore Runtime update initiated successfully"
+
+          # Runtime状態の監視とACTIVE状態待機
+          echo "⏳ Waiting for AgentCore Runtime to become ACTIVE..."
+          WAIT_START_TIME=$(date +%s)
+          TIMEOUT_SECONDS=300  # 5分タイムアウト
+
+          while true; do
+            CURRENT_TIME=$(date +%s)
+            ELAPSED_TIME=$((CURRENT_TIME - WAIT_START_TIME))
+            
+            if [ $ELAPSED_TIME -ge $TIMEOUT_SECONDS ]; then
+              echo "❌ Runtime activation timed out after ${TIMEOUT_SECONDS} seconds"
+              break
+            fi
+            
+            # Runtime状態を確認
+            RUNTIME_STATUS=$(aws bedrock-agentcore-control get-agent-runtime \
+              --agent-runtime-name $AGENTCORE_RUNTIME_NAME \
+              --region $AWS_REGION \
+              --query 'status' --output text 2>/dev/null)
+            
+            if [ $? -eq 0 ]; then
+              echo "📊 Runtime status (${ELAPSED_TIME}s elapsed): $RUNTIME_STATUS"
+              
+              if [ "$RUNTIME_STATUS" = "ACTIVE" ]; then
+                echo "✅ AgentCore Runtime is now ACTIVE"
+                break
+              elif [ "$RUNTIME_STATUS" = "FAILED" ]; then
+                echo "❌ AgentCore Runtime activation failed"
+                exit 1
+              fi
+            fi
+            
+            sleep 15
+          done
+
+          # デプロイメント完了後のヘルスチェック
+          echo "🏥 Performing post-deployment health check..."
+
+          # Runtime ARNとIDを取得
+          RUNTIME_INFO=$(aws bedrock-agentcore-control get-agent-runtime \
+            --agent-runtime-name $AGENTCORE_RUNTIME_NAME \
+            --region $AWS_REGION 2>/dev/null)
+
+          if [ $? -eq 0 ]; then
+            RUNTIME_ARN=$(echo $RUNTIME_INFO | jq -r '.agentRuntimeArn // "N/A"')
+            RUNTIME_ID=$(echo $RUNTIME_INFO | jq -r '.agentRuntimeId // "N/A"')
+            RUNTIME_STATUS=$(echo $RUNTIME_INFO | jq -r '.status // "N/A"')
+            
+            echo "📊 Runtime information:"
+            echo "   - ARN: $RUNTIME_ARN"
+            echo "   - ID: $RUNTIME_ID"
+            echo "   - Status: $RUNTIME_STATUS"
+            
+            # 出力変数を設定
+            echo "runtime-arn=$RUNTIME_ARN" >> $GITHUB_OUTPUT
+            echo "runtime-id=$RUNTIME_ID" >> $GITHUB_OUTPUT
+            echo "deployment-status=success" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  Warning: Could not retrieve runtime information for health check"
+            echo "deployment-status=unknown" >> $GITHUB_OUTPUT
+          fi
+
+          # デプロイ時間を計算
+          DEPLOY_END_TIME=$(date +%s)
+          DEPLOY_DURATION=$((DEPLOY_END_TIME - DEPLOY_START_TIME))
+          echo "DEPLOY_DURATION=${DEPLOY_DURATION}" >> $GITHUB_ENV
+
+          # ワークフロー全体の実行時間を計算
+          WORKFLOW_END_TIME=$(date +%s)
+          WORKFLOW_TOTAL_DURATION=$((WORKFLOW_END_TIME - WORKFLOW_START_TIME))
+          echo "WORKFLOW_TOTAL_DURATION=${WORKFLOW_TOTAL_DURATION}" >> $GITHUB_ENV
+
+          echo "🎉 AgentCore deployment completed successfully!"
+          echo "⏱️  Deploy time: ${DEPLOY_DURATION} seconds"
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 AgentCore Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Image Information" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Primary Tag | \`${{ steps.build-image.outputs.image-tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp Tag | \`${{ steps.build-image.outputs.timestamp-tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image URI | \`${{ steps.build-image.outputs.image-uri }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Deployment Information" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Runtime ARN | \`${{ steps.deploy-agentcore.outputs.runtime-arn }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Runtime ID | \`${{ steps.deploy-agentcore.outputs.runtime-id }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Runtime Name | \`${{ env.AGENTCORE_RUNTIME_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS Region | \`${{ env.AWS_REGION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⏱️ Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value | Target |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependencies Install | ${DEPS_DURATION}s | < 120s (2min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Time | ${BUILD_DURATION}s | < 600s (10min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deploy Time | ${DEPLOY_DURATION}s | < 300s (5min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Total Time | ${WORKFLOW_TOTAL_DURATION}s | < 900s (15min) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ✅ Success | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # パフォーマンス警告の実装
+          if [ "${DEPS_DURATION}" -gt 120 ]; then
+            echo "⚠️ **Warning**: Dependencies installation time exceeded target (${DEPS_DURATION}s > 120s)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${BUILD_DURATION}" -gt 600 ]; then
+            echo "⚠️ **Warning**: Build time exceeded target (${BUILD_DURATION}s > 600s)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${DEPLOY_DURATION}" -gt 300 ]; then
+            echo "⚠️ **Warning**: Deploy time exceeded target (${DEPLOY_DURATION}s > 300s)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${WORKFLOW_TOTAL_DURATION}" -gt 900 ]; then
+            echo "⚠️ **Warning**: Total workflow time exceeded target (${WORKFLOW_TOTAL_DURATION}s > 900s)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          # セキュリティ強化: 機密情報を完全に除去した失敗通知
+          set +x  # デバッグ出力を無効化
+
+          echo "🔒 Generating secure failure notification..."
+
+          # セキュリティ: 機密情報のマスキング処理
+          MASKED_ACTOR="${{ github.actor }}"
+          MASKED_REPO=$(echo "${{ github.repository }}" | sed 's/[^/]*$/***REPO***/g')
+
+          echo "## ❌ AgentCore Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Failure Details (Security Sanitized)" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit SHA | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Run | [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered By | \`$MASKED_ACTOR\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| AWS Region | \`${{ env.AWS_REGION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Repository | \`${{ env.ECR_REPOSITORY }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Runtime Name | \`${{ env.AGENTCORE_RUNTIME_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🔒 Security Status" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ AWS credentials properly masked in all logs" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Account IDs and sensitive URIs sanitized" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Error messages filtered for security compliance" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Minimal privilege principle maintained" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🛠️ Secure Troubleshooting Guide" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Authentication & Authorization" >> $GITHUB_STEP_SUMMARY
+          echo "1. **AWS Credentials**: Verify GitHub Secrets are correctly configured" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`AWS_ACCESS_KEY_ID\`: Must be valid and active" >> $GITHUB_STEP_SUMMARY
+          echo "   - \`AWS_SECRET_ACCESS_KEY\`: Must match the access key" >> $GITHUB_STEP_SUMMARY
+          echo "   - Check IAM user/role status and permissions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. **IAM Permissions**: Verify minimal required permissions are granted" >> $GITHUB_STEP_SUMMARY
+          echo "   - ECR: \`GetAuthorizationToken\`, \`BatchCheckLayerAvailability\`, \`PutImage\`" >> $GITHUB_STEP_SUMMARY
+          echo "   - AgentCore: \`DescribeAgentRuntime\`, \`UpdateAgentRuntime\`" >> $GITHUB_STEP_SUMMARY
+          echo "   - STS: \`GetCallerIdentity\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Infrastructure & Resources" >> $GITHUB_STEP_SUMMARY
+          echo "3. **ECR Repository**: Ensure repository exists and is accessible" >> $GITHUB_STEP_SUMMARY
+          echo "4. **AgentCore Runtime**: Verify runtime exists and is in valid state" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Network Connectivity**: Check access to AWS services and PyPI" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Build & Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "6. **Docker Build**: Check ARM64 compatibility and Dockerfile syntax" >> $GITHUB_STEP_SUMMARY
+          echo "7. **Python Dependencies**: Verify uv and Python 3.11 compatibility" >> $GITHUB_STEP_SUMMARY
+          echo "8. **Project Configuration**: Check pyproject.toml and uv.lock validity" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚨 Security Incident Response" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "If this failure involves potential security issues:" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Do not** share AWS credentials or account information in public channels" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Do not** expose sensitive configuration in troubleshooting" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Contact** the DevOps/Security team through secure channels" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Review** recent changes to IAM policies and GitHub Secrets" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Monitor** for any unauthorized access attempts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📞 Support Contacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **DevOps Team**: For AWS infrastructure and deployment issues" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security Team**: For authentication and permission issues" >> $GITHUB_STEP_SUMMARY
+          echo "- **Development Team**: For application and build issues" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Action Required**: Investigate and resolve the deployment issue following security best practices."
+
+          # セキュリティ監査ログの生成（機密情報は除去）
+          echo "🔒 Security audit: Failure notification generated with all sensitive information properly masked"

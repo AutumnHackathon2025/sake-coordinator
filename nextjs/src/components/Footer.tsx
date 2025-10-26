@@ -7,8 +7,7 @@ import { ReactNode } from "react";
 interface FooterItem {
   icon: ReactNode;
   label: string;
-  onClick?: () => void;
-  href?: string;
+  href: string;
 }
 
 interface FooterProps {
@@ -24,7 +23,7 @@ export function Footer({ items }: FooterProps) {
       style={{ height: 'var(--footer-height)' }}
     >
       {items.map((item, index) => {
-        const isActive = item.href && pathname === item.href;
+        const isActive = pathname === item.href;
         
         const content = (
           <>
@@ -37,26 +36,14 @@ export function Footer({ items }: FooterProps) {
           ? "text-primary bg-bg-subtle"
           : "text-secondary hover:bg-bg-page";
 
-        if (item.href) {
-          return (
-            <Link
-              key={index}
-              href={item.href}
-              className={`flex flex-row items-center justify-center gap-2 py-3 transition-colors ${activeStyles}`}
-            >
-              {content}
-            </Link>
-          );
-        }
-
         return (
-          <button
+          <Link
             key={index}
-            onClick={item.onClick}
-            className={`flex flex-row items-center justify-center gap-2 py-3 transition-colors ${activeStyles}`}
+            href={item.href}
+            className={`flex flex-row items-center justify-center gap-2 transition-colors ${activeStyles}`}
           >
             {content}
-          </button>
+          </Link>
         );
       })}
     </footer>

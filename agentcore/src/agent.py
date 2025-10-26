@@ -56,7 +56,7 @@ class SakeRecommendationAgent:
             user_id: ユーザーID
             drinking_records_data: 飲酒記録データのリスト
             menu_brands: メニューの銘柄リスト（任意）
-            max_recommendations: 最大推薦数
+            max_recommendations: 最大推薦数（互換性のため保持、実際は使用されない）
 
         Returns:
             推薦結果の辞書
@@ -79,27 +79,21 @@ class SakeRecommendationAgent:
                 "飲酒履歴をパース", user_id=user_id, record_count=len(drinking_records)
             )
 
-            # 推薦を生成
-            recommendations = await recommendation_service.generate_recommendations(
+            # 推薦を生成（RecommendationResponseを直接取得）
+            recommendation_response = await recommendation_service.generate_recommendations(
                 user_id=user_id,
                 drinking_records=drinking_records,
                 menu=menu,
                 max_recommendations=max_recommendations,
             )
 
-            # レスポンスを整形
-            response = RecommendationResponse(
-                user_id=user_id,
-                recommendations=recommendations,
-                total_count=len(recommendations),
-            )
-
             logger.info(
                 "日本酒推薦を完了",
                 user_id=user_id,
-                recommendation_count=len(recommendations),
+                has_best_recommend=recommendation_response.best_recommend is not None,
+                recommendation_count=len(recommendation_response.recommendations),
             )
-            return response.dict()
+            return recommendation_response.dict()
 
         except Exception as e:
             logger.error(

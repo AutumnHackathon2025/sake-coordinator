@@ -89,10 +89,15 @@ module "compute" {
 
   ssl_certificate_arn = var.ssl_certificate_arn
 
+  # AgentCore関連の環境変数
+  agentcore_runtime_arn = var.agentcore_runtime_arn
+  dynamodb_endpoint     = "https://dynamodb.${var.aws_region}.amazonaws.com"
+  dynamodb_table_name   = module.storage.dynamodb_table_name
+
   tags = local.common_tags
 
-  # ネットワーキングとセキュリティモジュールに依存
-  depends_on = [module.networking, module.security]
+  # ネットワーキング、セキュリティ、AgentCore、ストレージモジュールに依存
+  depends_on = [module.networking, module.security, module.agentcore, module.storage]
 }
 
 # 認証モジュール
