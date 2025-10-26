@@ -600,8 +600,18 @@ jobs:
         echo "   - Python version in container: 3.11"
         echo "   - uv package manager: enabled"
         echo "   - Cache strategy: no-cache (fresh build)"
+        echo "   - Target stage: production"
+        echo "   - Output: load to local Docker daemon"
         
-        if ! docker buildx build --platform linux/arm64 --no-cache --progress=plain -t $ECR_REGISTRY/$ECR_REPOSITORY:latest $WORKING_DIRECTORY 2>&1 | tee docker_build.log; then
+        # Docker lintの警告を無視してビルドを実行
+        if ! docker buildx build \
+          --platform linux/arm64 \
+          --target production \
+          --load \
+          --no-cache \
+          --progress=plain \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+          $WORKING_DIRECTORY 2>&1 | tee docker_build.log; then
           echo "❌ ARM64 Docker build failed"
           echo "🔍 Build failure analysis:"
           echo "   - Check Dockerfile syntax and ARM64 compatibility"
@@ -611,6 +621,9 @@ jobs:
           echo "   - Check pyproject.toml and uv.lock file validity"
           echo "   - Verify uv installation and configuration in container"
           echo "   - Check network connectivity for package downloads"
+          echo "   - Verify Docker buildx configuration and output settings"
+          echo ""
+          echo "📋 Note: Docker lint warnings (FromAsCasing, etc.) are non-critical and can be ignored"
           
           # ビルドログの最後の部分を表示（エラー詳細）
           echo "📋 Last 20 lines of build log:"
@@ -627,9 +640,29 @@ jobs:
         
         echo "✅ ARM64 Docker image built successfully"
         
+        # ビルドされたイメージの確認
+        echo "🔍 Verifying built image..."
+        if docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | grep -q "latest"; then
+          echo "   ✅ Image successfully loaded to local Docker daemon"
+          IMAGE_SIZE=$(docker images $ECR_REGISTRY/$ECR_REPOSITORY:latest --format "{{.Size}}")
+          echo "   📏 Image size: $IMAGE_SIZE"
+        else
+          echo "   ❌ Image not found in local Docker daemon"
+          echo "   🔍 Available images:"
+          docker images | head -5
+          exit 1
+        fi
+        
         # 複数タグでタグ付け
+        echo "🏷️  Creating additional tags..."
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$GIT_SHA_SHORT
         docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$TIMESTAMP_TAG
+        
+        # タグ付け確認
+        echo "   ✅ Tags created:"
+        echo "      - latest"
+        echo "      - $GIT_SHA_SHORT"
+        echo "      - $TIMESTAMP_TAG"
         
         # ECRにプッシュ（詳細なエラーハンドリング付き）
         echo "📤 Pushing images to ECR..."
