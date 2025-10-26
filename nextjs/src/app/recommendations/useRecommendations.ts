@@ -6,8 +6,20 @@ import { useState, useEffect } from "react";
 import { RecommendationResult } from "@/types/api";
 import { ApiRecommendationResponse } from "@/utils/transform";
 
+const STORAGE_KEY = 'sake-coordinator-menu';
+
 export function useRecommendations(initialMenu: string[]) {
-  const [menuItems, setMenuItems] = useState<string[]>(initialMenu);
+  // ローカルストレージからメニューを読み込む、なければ初期値を使用
+  const [menuItems, setMenuItems] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return initialMenu;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : initialMenu;
+    } catch (error) {
+      console.error('Failed to load menu from localStorage:', error);
+      return initialMenu;
+    }
+  });
   const [recommendations, setRecommendations] = useState<RecommendationResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -77,6 +89,14 @@ export function useRecommendations(initialMenu: string[]) {
 
   const updateMenu = (items: string[]) => {
     setMenuItems(items);
+    // ローカルストレージに保存
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch (error) {
+        console.error('Failed to save menu to localStorage:', error);
+      }
+    }
     // メニュー更新後、推薦を再取得
     fetchRecommendations(items);
   };
