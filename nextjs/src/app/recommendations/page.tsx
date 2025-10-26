@@ -53,7 +53,7 @@ export default function RecommendationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-page">
+    <div className="min-h-screen max-w-[100vw] max-h-[100vh] overflow-hidden bg-bg-page">
       <Header />
 
       {/* メインコンテンツ */}
@@ -86,18 +86,18 @@ export default function RecommendationsPage() {
           ) : (
             <>
               {/* カルーセル */}
-              <div className="w-full overflow-hidden">
+              {/* 余白マイナス10vw */}
+              <div className="w-[100vw] overflow-hidden ml-[-5vw]">
                 <div 
                   className="flex transition-transform duration-300 ease-out"
                   style={{
-                    transform: `translateX(calc(50vw - 40vw - ${currentIndex * 80 + 5}vw))`,
+                    transform: `translateX(calc(50vw - 40vw - ${currentIndex * 80 }vw))`,
                   }}
                 >
                   {recommendations.map((sake, index) => (
                     <div
                       key={index}
-                      className="flex-shrink-0 px-2"
-                      style={{ width: "80vw" }}
+                      className="flex-shrink-0 w-[80vw] px-2"
                     >
                       <RecommendationCard sake={sake} rank={index} />
                     </div>

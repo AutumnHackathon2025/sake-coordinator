@@ -13,9 +13,9 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
       {/* ラッパー: バッジ用のoverflow対策 */}
       <div className="relative">
         {/* 順位バッジ（左上） */}
-        <div className="absolute -left-2 -top-2 z-20">
+        {/* <div className="absolute -left-2 -top-2 z-20">
           <RankBadge rank={rank} />
-        </div>
+        </div> */}
 
         <div className="wood-texture relative p-4 shadow-md">
           {/* 四隅の組み込み装飾 */}
