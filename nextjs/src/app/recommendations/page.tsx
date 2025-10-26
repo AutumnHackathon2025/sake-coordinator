@@ -90,7 +90,7 @@ export default function RecommendationsPage() {
                 <div 
                   className="flex transition-transform duration-300 ease-out"
                   style={{
-                    transform: `translateX(calc(10vw - ${currentIndex * 80}vw))`,
+                    transform: `translateX(calc(50vw - 40vw - ${currentIndex * 80 + 5}vw))`,
                   }}
                 >
                   {recommendations.map((sake, index) => (
