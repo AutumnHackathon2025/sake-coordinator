@@ -55,3 +55,21 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "agentcore_runtime_arn" {
+  description = "Bedrock Agent Core Runtime ARN"
+  type        = string
+  default     = ""
+}
+
+variable "dynamodb_endpoint" {
+  description = "DynamoDB エンドポイント URL"
+  type        = string
+  default     = ""
+}
+
+variable "dynamodb_table_name" {
+  description = "DynamoDB テーブル名"
+  type        = string
+  default     = ""
+}
