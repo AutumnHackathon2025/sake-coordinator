@@ -10,13 +10,13 @@ import { unmarshall } from '@aws-sdk/util-dynamodb';
  */
 interface DynamoDBRecordRaw {
   userId: string;
-  recordId: string;
-  sake_name: string;
+  id: string;
+  brand: string;
   impression: string;
-  rating: 'VERY_GOOD' | 'GOOD' | 'BAD' | 'VERY_BAD';
-  label_image_key?: string;
-  created_at: string;
-  updated_at: string;
+  rating: 'VERY_GOOD' | 'GOOD' | 'BAD' | 'VERY_BAD' | string; // 既に日本語の可能性もある
+  labelImageKey?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -30,7 +30,7 @@ interface PythonDrinkingRecord {
   rating: string;
   labelImageUrl?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -146,6 +146,12 @@ export class AgentCoreService {
       const rawRecords = response.Items.map((item) => unmarshall(item) as DynamoDBRecordRaw);
       console.log('  ✅ unmarshall完了:', rawRecords.length, '件');
       
+      // 🔍 デバッグ: 実際のDynamoDBフィールド名を確認
+      if (rawRecords.length > 0) {
+        console.log('  🔍 DynamoDB実際のフィールド名:', Object.keys(rawRecords[0]));
+        console.log('  🔍 DynamoDB生データサンプル:', JSON.stringify(rawRecords[0], null, 2));
+      }
+      
       // Python側が期待する形式に変換（DynamoDBスキーマ → Python DrinkingRecordモデル）
       const records = rawRecords.map((record) => this.convertToPythonFormat(record));
       console.log('  ✅ Python形式への変換完了:', records.length, '件');
@@ -178,15 +184,18 @@ export class AgentCoreService {
       'VERY_BAD': '非常に合わない',
     };
 
+    // DynamoDBのratingが既に日本語の場合もあるのでチェック
+    const rating = ratingMap[record.rating] || record.rating;
+
     return {
-      id: record.recordId,           // recordId → id
+      id: record.id,                 // そのまま
       userId: record.userId,         // そのまま
-      brand: record.sake_name,       // sake_name → brand (重要な変換!)
+      brand: record.brand,           // そのまま
       impression: record.impression, // そのまま
-      rating: ratingMap[record.rating] || record.rating, // 英語 → 日本語
-      labelImageUrl: record.label_image_key, // label_image_key → labelImageUrl
-      createdAt: record.created_at,  // created_at → createdAt
-      updatedAt: record.updated_at,  // updated_at → updatedAt
+      rating: rating,                // 英語定数の場合のみ日本語に変換
+      labelImageUrl: record.labelImageKey, // labelImageKey → labelImageUrl
+      createdAt: record.createdAt,   // そのまま
+      updatedAt: record.updatedAt,   // そのまま（オプション）
     };
   }
 
