@@ -110,24 +110,27 @@ export default function RecommendationsPage() {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-bg-page">
-      <Header />
+      <Header 
+        title="今夜のおすすめ日本酒"
+        enableHomeLink={false}
+        showHelpLink={false}
+      />
+
+      {/* メニュー編集ボタン */}
+      <div className="fixed left-0 right-0 top-[52px] z-30 bg-bg-page px-6 py-2">
+        <button
+          onClick={() => setIsMenuModalOpen(true)}
+          className="ml-auto flex items-center gap-1 rounded-lg bg-bg-subtle px-3 py-1.5 text-primary transition-colors hover:bg-border-subtle"
+          aria-label="メニューを編集"
+        >
+          <EditIcon className="text-lg" />
+          <span className="text-body font-medium">メニュー編集</span>
+        </button>
+      </div>
 
       {/* メインコンテンツ */}
-      <main className="h-[calc(100vh-56px)] overflow-hidden pb-32 pt-14">
-        <div className="px-6 py-6">
-          <div className="mb-6 flex flex-col gap-3">
-            <h2 className="text-title text-primary">
-              今夜のおすすめ日本酒
-            </h2>
-            <button
-              onClick={() => setIsMenuModalOpen(true)}
-              className="flex w-fit items-center gap-1 self-end rounded-lg bg-bg-subtle px-3 py-2 text-primary transition-colors hover:bg-border-subtle"
-              aria-label="メニューを編集"
-            >
-              <EditIcon className="text-lg" />
-              <span className="text-body font-medium">メニューを編集</span>
-            </button>
-          </div>
+      <main className="h-[calc(100vh-56px)] overflow-hidden pb-32 pt-24">
+        <div className="px-6 pt-2">
 
           {/* スワイプカードUI */}
           {isLoading ? (
@@ -168,24 +171,26 @@ export default function RecommendationsPage() {
               </div>
 
               {/* ナビゲーションボタン */}
-              <div className="mt-6 flex items-center justify-center gap-4">
+              <div className="mt-6 flex items-center justify-center gap-6">
                 <button
                   onClick={handlePrev}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-3 border-primary bg-white text-primary shadow-lg transition-all hover:scale-110 hover:bg-primary hover:text-white active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-primary bg-white text-primary shadow-lg transition-all hover:scale-110 hover:bg-primary hover:text-white active:scale-95"
                   aria-label="前へ"
                 >
                   <ChevronLeftIcon className="text-3xl" />
                 </button>
                 <button
                   onClick={handleSelect}
-                  className="flex h-16 w-16 items-center justify-center rounded-full bg-action-record text-white shadow-xl transition-all hover:scale-110 hover:bg-action-record-hover active:scale-95"
-                  aria-label="これを選ぶ"
+                  className="flex items-center justify-center rounded-full bg-action-record text-white shadow-xl transition-all hover:scale-110 hover:bg-action-record-hover active:scale-95 py-2 px-4"
+                  aria-label="記録する"
                 >
-                  <CheckCircleIcon className="text-4xl" />
+                  <span className="text-body-lg font-medium">
+                    記録する
+                  </span>
                 </button>
                 <button
                   onClick={handleNext}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-3 border-primary bg-white text-primary shadow-lg transition-all hover:scale-110 hover:bg-primary hover:text-white active:scale-95"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-primary bg-white text-primary shadow-lg transition-all hover:scale-110 hover:bg-primary hover:text-white active:scale-95"
                   aria-label="次へ"
                 >
                   <ChevronRightIcon className="text-3xl" />
@@ -193,7 +198,7 @@ export default function RecommendationsPage() {
               </div>
 
               {/* 進捗インジケーター */}
-              <div className="mt-4 text-center">
+              <div className="mt-1 text-center">
                 <p className="text-body text-gray-500">
                   {currentIndex + 1} / {recommendations.length}
                 </p>
