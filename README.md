@@ -11,6 +11,54 @@ Next.jsフルスタックアプリケーションとAmazon Bedrock AgentCoreを�
 - **認証**: Amazon Cognito
 - **ストレージ**: Amazon S3
 
+## DynamoDBスキーマ
+
+### テーブル名
+- **開発環境**: `sake-recommendation-dev-drinking-records`
+- **本番環境**: `sake-recommendation-prod-drinking-records`
+
+### スキーマ設計
+
+#### パーティションキー・ソートキー
+- **PK (Partition Key)**: `userId` (String) - ユーザーID
+- **SK (Sort Key)**: `recordId` (String) - 記録ID（UUID v4形式）
+
+#### 属性
+| 属性名 | 型 | 必須 | 説明 |
+|--------|-----|------|------|
+| userId | String | ✓ | ユーザーID（Cognito Sub） |
+| recordId | String | ✓ | 記録ID（UUID v4） |
+| sakeName | String | ✓ | 日本酒の銘柄名（1-64文字） |
+| impression | String | ✓ | 味の感想（1-1000文字） |
+| rating | String | ✓ | 評価（LOVE/LIKE/DISLIKE/HATE） |
+| imageUrl | String | - | ラベル画像URL（S3） |
+| createdAt | String | ✓ | 作成日時（ISO 8601形式） |
+| updatedAt | String | ✓ | 更新日時（ISO 8601形式） |
+
+#### 評価値の定義
+- `LOVE`: 非常に好き
+- `LIKE`: 好き
+- `DISLIKE`: 合わない
+- `HATE`: 非常に合わない
+
+### API仕様との整合性
+
+このDynamoDBスキーマは`docs/api-doc.md`で定義されているAPI仕様と完全に整合しています：
+
+- **POST /api/records**: 新規記録作成時に`recordId`（UUID）を自動生成
+- **GET /api/records**: `userId`でクエリし、全記録を取得
+- **GET /api/records/:recordId**: `userId`と`recordId`で特定の記録を取得
+- **PUT /api/records/:recordId**: `userId`と`recordId`で記録を更新
+- **DELETE /api/records/:recordId**: `userId`と`recordId`で記録を削除
+
+### データアクセスパターン
+
+1. **ユーザーの全記録取得**: Query操作で`userId`を指定
+2. **特定記録の取得**: GetItem操作で`userId`と`recordId`を指定
+3. **記録の作成**: PutItem操作で新規UUID生成
+4. **記録の更新**: UpdateItem操作で既存レコードを更新
+5. **記録の削除**: DeleteItem操作で指定レコードを削除
+
 ## プロジェクト構造
 
 ```
@@ -33,10 +81,24 @@ Next.jsフルスタックアプリケーションとAmazon Bedrock AgentCoreを�
 ### 1. 環境変数の設定
 
 ```bash
-# プロジェクトルートで実行
+# Next.js環境変数の設定
+cd nextjs
+cp .env.example .env.local
+# .env.localファイルを編集して必要な環境変数を設定
+
+# AgentCore環境変数の設定
+cd ../agentcore
 cp .env.example .env
 # .envファイルを編集して必要な環境変数を設定
 ```
+
+#### 必須環境変数（Next.js）
+
+- `DYNAMODB_TABLE_NAME`: DynamoDBテーブル名
+- `AWS_REGION`: AWSリージョン
+- `DYNAMODB_ENDPOINT`: DynamoDB Localのエンドポイント（開発時のみ）
+- `COGNITO_USER_POOL_ID`: CognitoユーザープールID
+- `COGNITO_CLIENT_ID`: CognitoクライアントID
 
 ### 2. 開発環境の起動
 
