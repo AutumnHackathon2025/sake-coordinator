@@ -71,6 +71,12 @@ export class AgentCoreService {
    */
   private async getDrinkingRecords(userId: string): Promise<any[]> {
     try {
+      console.log('  🔍 DynamoDB Query実行中...');
+      console.log('  クエリパラメータ:', {
+        TableName: this.tableName,
+        userId: userId,
+      });
+
       const command = new QueryCommand({
         TableName: this.tableName,
         KeyConditionExpression: 'userId = :userId',
@@ -82,15 +88,32 @@ export class AgentCoreService {
       });
 
       const response = await this.dynamoClient.send(command);
+      console.log('  ✅ DynamoDBレスポンス受信');
+      console.log('  レスポンス詳細:', {
+        itemCount: response.Items?.length || 0,
+        consumedCapacity: response.ConsumedCapacity,
+        scannedCount: response.ScannedCount,
+      });
       
       if (!response.Items || response.Items.length === 0) {
+        console.warn('  ⚠️ DynamoDBにデータなし（Items配列が空）');
         return [];
       }
 
       // DynamoDB形式からJavaScriptオブジェクトに変換
-      return response.Items.map((item) => unmarshall(item));
+      const records = response.Items.map((item) => unmarshall(item));
+      console.log('  ✅ unmarshall完了:', records.length, '件');
+      
+      return records;
     } catch (error) {
-      console.error('DynamoDB飲酒履歴取得エラー:', error);
+      console.error('  ❌ DynamoDB飲酒履歴取得エラー:', error);
+      if (error instanceof Error) {
+        console.error('  エラー詳細:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack?.split('\n').slice(0, 5).join('\n'),
+        });
+      }
       throw new Error('飲酒履歴の取得に失敗しました');
     }
   }
@@ -99,7 +122,7 @@ export class AgentCoreService {
    * 日本酒推薦を実行
    * @param userId ユーザーID
    * @param menu メニューリスト
-   * @param maxRecommendations 最大推薦件数（デフォルト: 10）
+   * @param maxRecommendations 最大推薦件数(デフォルト: 10)
    * @returns 推薦結果
    */
   async recommendSake(
@@ -108,11 +131,25 @@ export class AgentCoreService {
     maxRecommendations: number = 10
   ): Promise<RecommendationResponse> {
     try {
-      console.log('📊 推薦処理開始:', { userId, menuCount: menu.length });
+      console.log('=====================================');
+      console.log('📊 推薦処理開始');
+      console.log('=====================================');
+      console.log('入力パラメータ:', {
+        userId,
+        menuCount: menu.length,
+        menu: menu,
+        maxRecommendations,
+      });
 
       // 1. DynamoDBから飲酒履歴を取得
+      console.log('\n[STEP 1] DynamoDB飲酒履歴取得開始...');
       const drinkingRecords = await this.getDrinkingRecords(userId);
-      console.log(`📚 飲酒履歴取得: ${drinkingRecords.length}件`);
+      console.log(`✅ 飲酒履歴取得完了: ${drinkingRecords.length}件`);
+      if (drinkingRecords.length > 0) {
+        console.log('飲酒履歴サンプル（最新3件）:', drinkingRecords.slice(0, 3));
+      } else {
+        console.warn('⚠️ 飲酒履歴が0件です');
+      }
 
       // 2. AgentCore Runtimeへのリクエストペイロード
       const payload = {
@@ -122,40 +159,70 @@ export class AgentCoreService {
         menu_brands: menu.length > 0 ? menu : undefined,
         max_recommendations: maxRecommendations,
       };
+      console.log('\n[STEP 2] リクエストペイロード構築完了');
+      console.log('ペイロード詳細:', JSON.stringify(payload, null, 2));
 
       // ローカル開発モードの判定
       const isLocalDev = process.env.USE_LOCAL_AGENT === 'true';
+      console.log('\n[STEP 3] 実行モード判定:', isLocalDev ? 'ローカル開発' : 'AWS AgentCore');
 
+      let result: RecommendationResponse;
       if (isLocalDev) {
         // ローカルエージェントにHTTPリクエスト
-        return await this.callLocalAgent(payload);
+        console.log('→ ローカルエージェント呼び出しへ');
+        result = await this.callLocalAgent(payload);
       } else {
         // AgentCore Runtimeを呼び出し
-        return await this.callAgentCoreRuntime(payload, userId);
+        console.log('→ AWS AgentCore Runtime呼び出しへ');
+        result = await this.callAgentCoreRuntime(payload, userId);
       }
+
+      console.log('\n[STEP 4] レスポンス受信完了');
+      console.log('レスポンス詳細:', JSON.stringify(result, null, 2));
+      console.log('推薦結果サマリー:', {
+        hasBestRecommend: !!result.best_recommend,
+        recommendationsCount: result.recommendations?.length || 0,
+        hasMetadata: !!result.metadata,
+      });
+      
+      if (!result.best_recommend && (!result.recommendations || result.recommendations.length === 0)) {
+        console.warn('⚠️⚠️⚠️ 推薦結果が空です！ ⚠️⚠️⚠️');
+      } else {
+        console.log('✅ 推薦結果あり');
+      }
+      
+      console.log('=====================================');
+      console.log('📊 推薦処理完了');
+      console.log('=====================================\n');
+
+      return result;
     } catch (error) {
-      console.error('❌ AgentCore推薦処理エラー:', error);
+      console.error('\n❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
+      console.error('❌ AgentCore推薦処理エラー');
+      console.error('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
+      console.error('エラーオブジェクト:', error);
       
       if (error instanceof Error) {
         // エラーの詳細をログに出力
         console.error('エラー詳細:', {
           name: error.name,
           message: error.message,
-          stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+          stack: error.stack,
         });
         throw new AgentCoreError(`${error.name}: ${error.message}`);
       }
       throw new AgentCoreError('推薦処理に失敗しました（不明なエラー）');
     }
-  }
-
-  /**
+  }  /**
    * ローカルエージェントにHTTPリクエストを送信
    */
   private async callLocalAgent(payload: any): Promise<RecommendationResponse> {
     const localAgentUrl = process.env.LOCAL_AGENT_URL || 'http://localhost:8080';
-    console.log('🏠 ローカルエージェント呼び出し:', localAgentUrl);
+    console.log('  🏠 ローカルエージェント呼び出し');
+    console.log('  エンドポイント:', `${localAgentUrl}/invocations`);
+    console.log('  リクエストボディ:', JSON.stringify(payload, null, 2));
 
+    const startTime = Date.now();
     const response = await fetch(`${localAgentUrl}/invocations`, {
       method: 'POST',
       headers: {
@@ -163,26 +230,44 @@ export class AgentCoreService {
       },
       body: JSON.stringify(payload),
     });
+    const elapsed = Date.now() - startTime;
+
+    console.log('  ✅ HTTPレスポンス受信');
+    console.log('  ステータス:', response.status, response.statusText);
+    console.log('  処理時間:', elapsed, 'ms');
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('  ❌ HTTPエラーレスポンス:', errorBody);
       throw new Error(`ローカルエージェントエラー: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
-    console.log('✅ ローカルエージェントからレスポンス受信');
+    console.log('  ✅ JSONパース完了');
+    console.log('  生レスポンス:', JSON.stringify(result, null, 2));
 
     // エラーチェック
     if (result.error) {
+      console.error('  ❌ レスポンスにerrorフィールドあり:', result.error);
       throw new Error(result.error);
     }
 
     // 結果を抽出（agentcoreは{"result": {...}}の形式で返す）
     const data = result.result || result;
-    return {
+    console.log('  📦 抽出データ:', {
+      hasBestRecommend: !!data.best_recommend,
+      recommendationsCount: data.recommendations?.length || 0,
+      hasMetadata: !!data.metadata,
+    });
+
+    const finalResult = {
       best_recommend: data.best_recommend || null,
       recommendations: data.recommendations || [],
       metadata: data.metadata,
     };
+    
+    console.log('  ✅ ローカルエージェント処理完了');
+    return finalResult;
   }
 
   /**
@@ -190,26 +275,37 @@ export class AgentCoreService {
    */
   private async callAgentCoreRuntime(payload: any, userId: string): Promise<RecommendationResponse> {
     if (!this.agentCoreClient) {
+      console.error('  ❌ AgentCore Clientが未初期化');
       throw new Error('AgentCore Clientが初期化されていません（USE_LOCAL_AGENT=trueの場合は使用できません）');
     }
 
     // 3. セッションIDを生成（33文字以上必要）
     const sessionId = `session-${userId}-${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    console.log('🔑 セッションID生成:', sessionId);
+    console.log('  🔑 セッションID生成:', sessionId);
+    console.log('  セッションID長:', sessionId.length, '文字');
 
     // 4. InvokeAgentRuntimeCommandを実行
-    console.log('🚀 AgentCore Runtime呼び出し開始...');
+    console.log('  🚀 AgentCore Runtime呼び出し開始...');
+    console.log('  Runtime ARN:', this.runtimeArn);
+    console.log('  リクエストペイロード:', JSON.stringify(payload, null, 2));
+
     const command = new InvokeAgentRuntimeCommand({
       agentRuntimeArn: this.runtimeArn,
       runtimeSessionId: sessionId,
       payload: JSON.stringify(payload),
     });
 
+    const startTime = Date.now();
     const response = await this.agentCoreClient.send(command);
-    console.log('✅ AgentCore Runtimeからレスポンス受信');
+    const elapsed = Date.now() - startTime;
+
+    console.log('  ✅ AgentCore Runtimeからレスポンス受信');
+    console.log('  処理時間:', elapsed, 'ms');
+    console.log('  レスポンスオブジェクト型:', typeof response.response);
 
     // 5. レスポンスを処理
     if (!response.response) {
+      console.error('  ❌ レスポンスが空（nullまたはundefined）');
       throw new Error('AgentCore Runtimeからのレスポンスが空です');
     }
 
@@ -217,34 +313,53 @@ export class AgentCoreService {
     let responseBody: string;
     if (response.response instanceof Uint8Array) {
       // Uint8Arrayの場合
+      console.log('  📦 レスポンス形式: Uint8Array');
       responseBody = new TextDecoder().decode(response.response);
     } else if (typeof response.response === 'string') {
       // 文字列の場合
+      console.log('  📦 レスポンス形式: string');
       responseBody = response.response;
     } else {
       // ストリームの場合（Readable）
+      console.log('  📦 レスポンス形式: Stream');
       const chunks: Uint8Array[] = [];
       for await (const chunk of response.response as any) {
+        console.log('    チャンク受信:', chunk.length, 'bytes');
         chunks.push(chunk);
       }
       const buffer = Buffer.concat(chunks);
       responseBody = buffer.toString('utf-8');
+      console.log('  ✅ ストリーム読み取り完了:', buffer.length, 'bytes');
     }
 
+    console.log('  📄 生レスポンスボディ:', responseBody);
+
     const result = JSON.parse(responseBody);
+    console.log('  ✅ JSONパース完了');
+    console.log('  パース結果:', JSON.stringify(result, null, 2));
 
     // エラーチェック
     if (result.error) {
+      console.error('  ❌ レスポンスにerrorフィールドあり:', result.error);
       throw new Error(result.error);
     }
 
     // 結果を抽出（agentcoreは{"result": {...}}の形式で返す）
     const data = result.result || result;
-    return {
+    console.log('  📦 抽出データ:', {
+      hasBestRecommend: !!data.best_recommend,
+      recommendationsCount: data.recommendations?.length || 0,
+      hasMetadata: !!data.metadata,
+    });
+
+    const finalResult = {
       best_recommend: data.best_recommend || null,
       recommendations: data.recommendations || [],
       metadata: data.metadata,
     };
+
+    console.log('  ✅ AgentCore Runtime処理完了');
+    return finalResult;
   }
 }
 
