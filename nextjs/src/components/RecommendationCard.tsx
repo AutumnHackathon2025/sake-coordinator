@@ -1,5 +1,6 @@
 import { RecommendationResult } from "@/types/api";
 import { RankBadge } from "./RankBadge";
+import { MatchBadge } from "./MatchBadge";
 
 interface RecommendationCardProps {
   sake: RecommendationResult;
@@ -41,10 +42,11 @@ export function RecommendationCard({ sake, rank, onClick }: RecommendationCardPr
     >
       {/* ラッパー: バッジ用のoverflow対策 */}
       <div className="relative">
-        {/* 順位バッジ（左上） */}
-        {/* <div className="absolute -left-2 -top-2 z-20">
-          <RankBadge rank={rank} />
-        </div> */}
+
+        {/* マッチ度バッジ（右上） */}
+        <div className="absolute -right-2 -top-2 z-20">
+          <MatchBadge matchScore={sake.match_score} />
+        </div>
 
         <div className="wood-texture relative p-6 shadow-md">
           {/* 四隅の組み込み装飾 */}
@@ -57,23 +59,14 @@ export function RecommendationCard({ sake, rank, onClick }: RecommendationCardPr
 
           {/* コンテンツ */}
           <div className="relative z-10 space-y-4">
-            {/* ヘッダー: 銘柄とマッチスコア */}
-            <div className="flex items-start justify-between gap-3">
+            {/* ヘッダー: 銘柄 */}
+            <div>
               <h3 
-                className="flex-1 text-title font-bold text-primary-dark"
+                className="text-title font-bold text-primary-dark"
                 style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
               >
                 {sake.brand}
               </h3>
-              <div className="flex-shrink-0 text-center">
-                <div className="text-caption text-primary opacity-80">
-                  マッチ度
-                </div>
-                <div className="text-display font-bold text-action-record">
-                  {sake.match_score}
-                  <span className="text-subtitle">%</span>
-                </div>
-              </div>
             </div>
 
             {/* カテゴリバッジ（リボン風） */}

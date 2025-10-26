@@ -164,7 +164,8 @@ export default function RecommendationsPage() {
               {/* カルーセル */}
               {/* 余白マイナス10vw */}
               <div 
-                className="w-[100vw] overflow-hidden ml-[-5vw]"
+                className="w-[100vw] ml-[-5vw]"
+                style={{ overflowX: "hidden", overflowY: "visible" }}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -179,7 +180,7 @@ export default function RecommendationsPage() {
                   {recommendations.map((sake, index) => (
                     <div
                       key={index}
-                      className="flex-shrink-0 w-[80vw] px-2"
+                      className="flex-shrink-0 w-[80vw] px-2 py-8 -mt-4"
                     >
                       <RecommendationCard 
                         sake={sake} 
