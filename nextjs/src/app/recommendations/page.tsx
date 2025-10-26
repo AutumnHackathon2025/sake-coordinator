@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
@@ -24,6 +24,11 @@ export default function RecommendationsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const { menuItems, recommendations, isLoading, updateMenu } = useRecommendations(getDefaultMenu());
+  
+  // recommendationsが更新されたらcurrentIndexをリセット
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [recommendations]);
 
   const handleSubmitMenu = (items: string[]) => {
     updateMenu(items);
@@ -70,13 +75,12 @@ export default function RecommendationsPage() {
   };
 
   const handlePass = () => {
-    if (currentIndex < recommendations.length - 1) {
-      setSwipeDirection("left");
-      setTimeout(() => {
-        setSwipeDirection(null);
-        setCurrentIndex(currentIndex + 1);
-      }, 150);
-    }
+    setSwipeDirection("left");
+    setTimeout(() => {
+      setSwipeDirection(null);
+      // currentIndexを次に進める（最後に達したら0に戻る）
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % recommendations.length);
+    }, 150);
   };
 
   const handleLike = () => {
@@ -120,25 +124,46 @@ export default function RecommendationsPage() {
               <p className="text-body-lg">おすすめが見つかりませんでした</p>
               <p className="mt-2 text-body">メニューを編集して、もう一度お試しください</p>
             </div>
-          ) : currentIndex >= recommendations.length ? (
-            <div className="py-12 text-center text-gray-500">
-              <p className="text-body-lg">すべてのおすすめを確認しました！</p>
-              <p className="mt-2 text-body">メニューを編集して新しいおすすめを探しましょう</p>
-            </div>
           ) : (
             <>
               {/* カードスタック */}
               <div className="relative mx-auto max-w-lg">
-                {/* 次のカード（背景） - スワイプ中は前面に出てくる */}
-                {currentIndex + 1 < recommendations.length && (
+                {/* 3枚目のカード（一番下） */}
+                {recommendations.length > 2 && (
                   <div 
-                    className={`absolute left-0 right-0 top-3 pointer-events-none transition-all duration-150 ${
-                      swipeDirection ? "scale-100 opacity-100 top-0" : "scale-95 opacity-50"
-                    }`}
+                    className="absolute inset-x-2 pointer-events-none"
+                    style={{
+                      top: "24px",
+                      transform: "scale(0.88) rotate(-1deg)",
+                      opacity: 0.4,
+                      zIndex: 1,
+                      filter: "brightness(0.95)",
+                    }}
                   >
                     <RecommendationCard 
-                      sake={recommendations[currentIndex + 1]}
-                      rank={currentIndex + 1}
+                      sake={recommendations[(currentIndex + 2) % recommendations.length]}
+                      rank={(currentIndex + 2) % recommendations.length}
+                    />
+                  </div>
+                )}
+                
+                {/* 2枚目のカード（真ん中） */}
+                {recommendations.length > 1 && (
+                  <div 
+                    className={`absolute pointer-events-none transition-all duration-200 ${
+                      swipeDirection ? "inset-x-0" : "inset-x-1"
+                    }`}
+                    style={{
+                      top: swipeDirection ? "0px" : "12px",
+                      transform: swipeDirection ? "scale(1) rotate(0deg)" : "scale(0.94) rotate(-0.5deg)",
+                      opacity: swipeDirection ? 1 : 0.7,
+                      zIndex: 2,
+                      filter: swipeDirection ? "brightness(1)" : "brightness(0.97)",
+                    }}
+                  >
+                    <RecommendationCard 
+                      sake={recommendations[(currentIndex + 1) % recommendations.length]}
+                      rank={(currentIndex + 1) % recommendations.length}
                     />
                   </div>
                 )}
@@ -151,6 +176,8 @@ export default function RecommendationsPage() {
                       transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${dragOffset.x * 0.1}deg)`,
                       transition: isDragging ? "none" : "transform 0.3s ease-out",
                       touchAction: "none",
+                      zIndex: 10,
+                      filter: isDragging ? "brightness(1.05) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3))" : "none",
                     }}
                     onMouseDown={(e) => handleDragStart(e.clientX, e.clientY, e)}
                     onMouseMove={(e) => handleDragMove(e.clientX, e.clientY, e)}
@@ -190,6 +217,7 @@ export default function RecommendationsPage() {
                       swipeDirection === "left" ? "-translate-x-full rotate-[-15deg] opacity-0" :
                       "translate-x-full rotate-[15deg] opacity-0"
                     }`}
+                    style={{ zIndex: 10 }}
                   >
                     <RecommendationCard 
                       sake={recommendations[currentIndex]}
