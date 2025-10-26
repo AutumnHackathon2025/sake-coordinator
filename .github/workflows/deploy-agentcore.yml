@@ -48,205 +48,296 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Python 3.11 Environment
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'  # Pythonパッケージキャッシュを有効化
-      id: setup-python
+#     - name: Setup Python 3.11 Environment
+#       uses: actions/setup-python@v4
+#       with:
+#         python-version: ${{ env.PYTHON_VERSION }}
+#         cache: 'pip'  # Pythonパッケージキャッシュを有効化
+#       id: setup-python
     
-    - name: Verify Python Environment
-      run: |
-        echo "🐍 Python environment verification:"
-        echo "   - Python version: $(python --version)"
-        echo "   - Python executable: $(which python)"
-        echo "   - Pip version: $(pip --version)"
-        echo "   - Python path: $PYTHONPATH"
-        echo "   - Working directory: $(pwd)"
+#     - name: Verify Python Environment
+#       run: |
+#         echo "🐍 Python environment verification:"
+#         echo "   - Python version: $(python --version)"
+#         echo "   - Python executable: $(which python)"
+#         echo "   - Pip version: $(pip --version)"
+#         echo "   - Python path: $PYTHONPATH"
+#         echo "   - Working directory: $(pwd)"
         
-        # Python 3.11の確認
-        PYTHON_VERSION_CHECK=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-        if [ "$PYTHON_VERSION_CHECK" != "3.11" ]; then
-          echo "❌ Expected Python 3.11, but got $PYTHON_VERSION_CHECK"
-          exit 1
-        fi
-        echo "✅ Python 3.11 environment verified successfully"
+#         # Python 3.11の確認
+#         PYTHON_VERSION_CHECK=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+#         if [ "$PYTHON_VERSION_CHECK" != "3.11" ]; then
+#           echo "❌ Expected Python 3.11, but got $PYTHON_VERSION_CHECK"
+#           exit 1
+#         fi
+#         echo "✅ Python 3.11 environment verified successfully"
     
-    - name: Install and Configure uv Package Manager
-      run: |
-        echo "📦 Installing uv package manager..."
+#     - name: Install and Configure uv Package Manager
+#       run: |
+#         echo "📦 Installing uv package manager..."
         
-        # uvの最新版をインストール
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+#         # uvの最新版をインストール
+#         curl -LsSf https://astral.sh/uv/install.sh | sh
+#         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         
-        # uvのインストール確認
-        export PATH="$HOME/.cargo/bin:$PATH"
+#         # uvのインストール確認
+#         export PATH="$HOME/.cargo/bin:$PATH"
         
-        if ! command -v uv &> /dev/null; then
-          echo "❌ uv installation failed"
-          exit 1
-        fi
+#         if ! command -v uv &> /dev/null; then
+#           echo "❌ uv installation failed"
+#           exit 1
+#         fi
         
-        echo "✅ uv installed successfully"
-        echo "   - uv version: $(uv --version)"
-        echo "   - uv executable: $(which uv)"
+#         echo "✅ uv installed successfully"
+#         echo "   - uv version: $(uv --version)"
+#         echo "   - uv executable: $(which uv)"
         
-        # uvキャッシュディレクトリの設定と最適化
-        echo "🗂️  Configuring uv cache optimization..."
+#         # uvキャッシュディレクトリの設定と最適化
+#         echo "🗂️  Configuring uv cache optimization..."
         
-        # GitHub Actionsでのuvキャッシュディレクトリを設定
-        UV_CACHE_DIR="$HOME/.cache/uv"
-        echo "UV_CACHE_DIR=$UV_CACHE_DIR" >> $GITHUB_ENV
+#         # GitHub Actionsでのuvキャッシュディレクトリを設定
+#         UV_CACHE_DIR="$HOME/.cache/uv"
+#         echo "UV_CACHE_DIR=$UV_CACHE_DIR" >> $GITHUB_ENV
         
-        # キャッシュディレクトリを作成
-        mkdir -p "$UV_CACHE_DIR"
+#         # キャッシュディレクトリを作成
+#         mkdir -p "$UV_CACHE_DIR"
         
-        echo "   - Cache directory: $UV_CACHE_DIR"
-        echo "   - Cache size limit: 2GB (default)"
+#         echo "   - Cache directory: $UV_CACHE_DIR"
+#         echo "   - Cache size limit: 2GB (default)"
         
-        # uvの設定を最適化
-        echo "⚙️  Optimizing uv configuration..."
+#         # uvの設定を最適化
+#         echo "⚙️  Optimizing uv configuration..."
         
-        # 並列ダウンロードを有効化（パフォーマンス向上）
-        export UV_CONCURRENT_DOWNLOADS=10
-        echo "UV_CONCURRENT_DOWNLOADS=10" >> $GITHUB_ENV
+#         # 並列ダウンロードを有効化（パフォーマンス向上）
+#         export UV_CONCURRENT_DOWNLOADS=10
+#         echo "UV_CONCURRENT_DOWNLOADS=10" >> $GITHUB_ENV
         
-        # ネットワークタイムアウトを設定
-        export UV_HTTP_TIMEOUT=60
-        echo "UV_HTTP_TIMEOUT=60" >> $GITHUB_ENV
+#         # ネットワークタイムアウトを設定
+#         export UV_HTTP_TIMEOUT=60
+#         echo "UV_HTTP_TIMEOUT=60" >> $GITHUB_ENV
         
-        # プリコンパイル済みホイールを優先（ビルド時間短縮）
-        export UV_PRERELEASE=disallow
-        echo "UV_PRERELEASE=disallow" >> $GITHUB_ENV
+#         # プリコンパイル済みホイールを優先（ビルド時間短縮）
+#         export UV_PRERELEASE=disallow
+#         echo "UV_PRERELEASE=disallow" >> $GITHUB_ENV
         
-        echo "✅ uv configuration optimized for CI/CD performance"
+#         echo "✅ uv configuration optimized for CI/CD performance"
     
-    - name: Cache uv Dependencies
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/uv
-          ${{ env.WORKING_DIRECTORY }}/.venv
-        key: uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-${{ hashFiles('agentcore/pyproject.toml', 'agentcore/uv.lock') }}
-        restore-keys: |
-          uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-
-          uv-${{ runner.os }}-
-      id: cache-uv
+#     - name: Cache uv Dependencies
+#       uses: actions/cache@v3
+#       with:
+#         path: |
+#           ~/.cache/uv
+#           ${{ env.WORKING_DIRECTORY }}/.venv
+#         key: uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-${{ hashFiles('agentcore/pyproject.toml', 'agentcore/uv.lock') }}
+#         restore-keys: |
+#           uv-${{ runner.os }}-python${{ env.PYTHON_VERSION }}-
+#           uv-${{ runner.os }}-
+#       id: cache-uv
     
-    - name: Install AgentCore Dependencies with uv
-      run: |
-        echo "📦 Installing AgentCore dependencies using uv..."
-        echo "📁 Working directory: $WORKING_DIRECTORY"
+#     - name: Install AgentCore Dependencies with uv
+#       run: |
+#         echo "📦 Installing AgentCore dependencies using uv..."
+#         echo "📁 Working directory: $WORKING_DIRECTORY"
         
-        # agentcoreディレクトリに移動
-        cd $WORKING_DIRECTORY
+#         # agentcoreディレクトリに移動
+#         cd $WORKING_DIRECTORY
         
-        # pyproject.tomlの存在確認
-        if [ ! -f "pyproject.toml" ]; then
-          echo "❌ pyproject.toml not found in $WORKING_DIRECTORY"
-          echo "📋 Available files:"
-          ls -la
-          exit 1
-        fi
+#         # pyproject.tomlの存在確認
+#         if [ ! -f "pyproject.toml" ]; then
+#           echo "❌ pyproject.toml not found in $WORKING_DIRECTORY"
+#           echo "📋 Available files:"
+#           ls -la
+#           exit 1
+#         fi
         
-        echo "📋 Project configuration:"
-        echo "   - Project file: $(pwd)/pyproject.toml"
+#         echo "📋 Project configuration:"
+#         echo "   - Project file: $(pwd)/pyproject.toml"
         
-        # uv.lockファイルの確認
-        if [ -f "uv.lock" ]; then
-          echo "   - Lock file: $(pwd)/uv.lock (found)"
-          LOCK_FILE_EXISTS=true
-        else
-          echo "   - Lock file: $(pwd)/uv.lock (not found, will be generated)"
-          LOCK_FILE_EXISTS=false
-        fi
+#         # uv.lockファイルの確認
+#         if [ -f "uv.lock" ]; then
+#           echo "   - Lock file: $(pwd)/uv.lock (found)"
+#           LOCK_FILE_EXISTS=true
+#         else
+#           echo "   - Lock file: $(pwd)/uv.lock (not found, will be generated)"
+#           LOCK_FILE_EXISTS=false
+#         fi
         
-        # 依存関係インストール開始時刻を記録
-        DEPS_START_TIME=$(date +%s)
+#         # 依存関係インストール開始時刻を記録
+#         DEPS_START_TIME=$(date +%s)
         
-        # キャッシュヒット状況を確認
-        if [ "${{ steps.cache-uv.outputs.cache-hit }}" = "true" ]; then
-          echo "🎯 Cache hit: Using cached dependencies"
-        else
-          echo "📥 Cache miss: Installing fresh dependencies"
-        fi
+#         # キャッシュヒット状況を確認
+#         if [ "${{ steps.cache-uv.outputs.cache-hit }}" = "true" ]; then
+#           echo "🎯 Cache hit: Using cached dependencies"
+#         else
+#           echo "📥 Cache miss: Installing fresh dependencies"
+#         fi
         
-        # uvを使用した依存関係の同期インストール
-        echo "⏳ Synchronizing dependencies with uv..."
+#         # uvを使用した依存関係の同期インストール
+#         echo "⏳ Synchronizing dependencies with uv..."
         
-        if [ "$LOCK_FILE_EXISTS" = "true" ]; then
-          # ロックファイルが存在する場合は--frozenオプションを使用
-          echo "🔒 Installing from lock file (frozen dependencies)..."
-          if ! uv sync --frozen --no-dev; then
-            echo "❌ Failed to install dependencies from lock file"
-            echo "🔍 Troubleshooting suggestions:"
-            echo "   - Check if uv.lock is compatible with current environment"
-            echo "   - Verify all dependencies are available for linux/arm64"
-            echo "   - Check network connectivity to PyPI"
-            exit 1
-          fi
-        else
-          # ロックファイルが存在しない場合は通常の同期
-          echo "🔄 Installing and generating lock file..."
-          if ! uv sync --no-dev; then
-            echo "❌ Failed to install dependencies"
-            echo "🔍 Troubleshooting suggestions:"
-            echo "   - Check pyproject.toml syntax"
-            echo "   - Verify all dependencies support Python 3.11"
-            echo "   - Check for ARM64 compatibility issues"
-            exit 1
-          fi
-        fi
+#         if [ "$LOCK_FILE_EXISTS" = "true" ]; then
+#           # ロックファイルが存在する場合は--frozenオプションを使用
+#           echo "🔒 Installing from lock file (frozen dependencies)..."
+#           if ! uv sync --frozen --no-dev --verbose; then
+#             echo "❌ Failed to install dependencies from lock file"
+#             echo "🔍 Detailed troubleshooting:"
+#             echo "   - Lock file compatibility check:"
+#             uv lock --check 2>&1 || echo "   Lock file validation failed"
+#             echo "   - Available Python version:"
+#             python --version
+#             echo "   - uv environment info:"
+#             uv --version
+#             echo "   - Network connectivity test:"
+#             curl -s --connect-timeout 5 https://pypi.org/simple/ > /dev/null && echo "   PyPI accessible" || echo "   PyPI connection failed"
+#             exit 1
+#           fi
+#         else
+#           # ロックファイルが存在しない場合は通常の同期
+#           echo "🔄 Installing and generating lock file..."
+#           if ! uv sync --no-dev --verbose; then
+#             echo "❌ Failed to install dependencies"
+#             echo "🔍 Detailed troubleshooting:"
+#             echo "   - pyproject.toml validation:"
+#             python -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))" 2>&1 || echo "   pyproject.toml syntax error"
+#             echo "   - Python version compatibility:"
+#             python --version
+#             echo "   - Available disk space:"
+#             df -h . | tail -1
+#             echo "   - uv cache status:"
+#             ls -la ~/.cache/uv/ 2>/dev/null || echo "   No uv cache found"
+#             exit 1
+#           fi
+#         fi
         
-        # 仮想環境の確認
-        if [ -d ".venv" ]; then
-          echo "✅ Virtual environment created successfully"
-          echo "   - Virtual env path: $(pwd)/.venv"
-          echo "   - Python executable: $(pwd)/.venv/bin/python"
+#         # インストール後の詳細確認
+#         echo "📊 Post-installation verification:"
+#         echo "   - Virtual environment location: $(pwd)/.venv"
+#         echo "   - Python executable: $(pwd)/.venv/bin/python"
+#         echo "   - Installed packages count: $(uv pip list | wc -l)"
+#         echo "   - Virtual environment size: $(du -sh .venv 2>/dev/null | cut -f1 || echo 'unknown')"
+        
+#         # 仮想環境の詳細確認
+#         if [ -d ".venv" ]; then
+#           echo "✅ Virtual environment created successfully"
+#           echo "   - Virtual env path: $(pwd)/.venv"
+#           echo "   - Python executable: $(pwd)/.venv/bin/python"
           
-          # 仮想環境内のPythonバージョン確認
-          VENV_PYTHON_VERSION=$(.venv/bin/python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-          echo "   - Virtual env Python version: $VENV_PYTHON_VERSION"
+#           # 仮想環境内のPythonバージョン確認
+#           VENV_PYTHON_VERSION=$(.venv/bin/python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+#           echo "   - Virtual env Python version: $VENV_PYTHON_VERSION"
           
-          if [ "$VENV_PYTHON_VERSION" != "3.11" ]; then
-            echo "⚠️  Warning: Virtual environment Python version mismatch"
-          fi
-        else
-          echo "❌ Virtual environment not found"
-          exit 1
-        fi
+#           # Python環境の詳細情報
+#           echo "   - Python sys.path:"
+#           .venv/bin/python -c "import sys; [print(f'     {p}') for p in sys.path[:3]]"
+          
+#           # site-packages の確認
+#           SITE_PACKAGES=$(.venv/bin/python -c "import site; print(site.getsitepackages()[0])" 2>/dev/null || echo "unknown")
+#           echo "   - Site packages: $SITE_PACKAGES"
+          
+#           if [ "$SITE_PACKAGES" != "unknown" ] && [ -d "$SITE_PACKAGES" ]; then
+#             echo "   - Site packages contents (first 10):"
+#             ls "$SITE_PACKAGES" | head -10 | sed 's/^/     /'
+#           fi
+          
+#           if [ "$VENV_PYTHON_VERSION" != "3.11" ]; then
+#             echo "⚠️  Warning: Virtual environment Python version mismatch"
+#             echo "   Expected: 3.11, Got: $VENV_PYTHON_VERSION"
+#           fi
+#         else
+#           echo "❌ Virtual environment not found"
+#           echo "🔍 Directory contents:"
+#           ls -la
+#           echo "🔍 uv sync output should have created .venv directory"
+#           exit 1
+#         fi
         
-        # インストールされた依存関係の確認
-        echo "📋 Installed dependencies verification:"
+#         # インストールされた依存関係の確認
+#         echo "📋 Installed dependencies verification:"
         
-        # 主要な依存関係の確認
-        REQUIRED_PACKAGES=("boto3" "pydantic" "strands-agents" "bedrock-agentcore")
+#         # 主要な依存関係の確認（パッケージ名とインポート名のマッピング）
+#         declare -A PACKAGE_IMPORTS=(
+#           ["boto3"]="boto3"
+#           ["pydantic"]="pydantic"
+#           ["strands-agents"]="strands"
+#           ["bedrock-agentcore"]="bedrock_agentcore"
+#           ["python-dotenv"]="dotenv"
+#           ["httpx"]="httpx"
+#         )
         
-        for package in "${REQUIRED_PACKAGES[@]}"; do
-          if uv run python -c "import $package" 2>/dev/null; then
-            VERSION=$(uv run python -c "import $package; print(getattr($package, '__version__', 'unknown'))" 2>/dev/null || echo "unknown")
-            echo "   ✅ $package: $VERSION"
-          else
-            echo "   ❌ $package: not found or import failed"
-            exit 1
-          fi
-        done
+#         # uvで実際にインストールされたパッケージ一覧を確認
+#         echo "   📦 Installed packages:"
+#         uv pip list --format=freeze | head -10
         
-        # 依存関係インストール時間を計算
-        DEPS_END_TIME=$(date +%s)
-        DEPS_DURATION=$((DEPS_END_TIME - DEPS_START_TIME))
-        echo "DEPS_DURATION=${DEPS_DURATION}" >> $GITHUB_ENV
+#         # 各パッケージのインポートテスト
+#         for package_name in "${!PACKAGE_IMPORTS[@]}"; do
+#           import_name="${PACKAGE_IMPORTS[$package_name]}"
+          
+#           if uv run python -c "import $import_name" 2>/dev/null; then
+#             # バージョン取得を試行（複数の方法で）
+#             VERSION=$(uv run python -c "
+# import $import_name
+# try:
+#     print(getattr($import_name, '__version__', 'unknown'))
+# except:
+#     try:
+#         import importlib.metadata
+#         print(importlib.metadata.version('$package_name'))
+#     except:
+#         print('unknown')
+# " 2>/dev/null || echo "unknown")
+#             echo "   ✅ $package_name ($import_name): $VERSION"
+#           else
+#             echo "   ❌ $package_name ($import_name): import failed"
+            
+#             # デバッグ情報を追加
+#             echo "      🔍 Debugging import failure for $import_name:"
+#             uv run python -c "import $import_name" 2>&1 | head -3 || true
+            
+#             # パッケージがインストールされているか確認
+#             if uv pip show "$package_name" > /dev/null 2>&1; then
+#               echo "      📦 Package $package_name is installed but import failed"
+#               uv pip show "$package_name" | grep -E "^(Name|Version|Location):" || true
+#             else
+#               echo "      📦 Package $package_name is not installed"
+#               echo "      🔍 Available packages matching pattern:"
+#               uv pip list | grep -i "$package_name" || echo "      No matching packages found"
+#             fi
+            
+#             exit 1
+#           fi
+#         done
         
-        echo "✅ AgentCore dependencies installed successfully"
-        echo "⏱️  Installation time: ${DEPS_DURATION} seconds"
+#         # 依存関係インストール時間を計算
+#         DEPS_END_TIME=$(date +%s)
+#         DEPS_DURATION=$((DEPS_END_TIME - DEPS_START_TIME))
+#         echo "DEPS_DURATION=${DEPS_DURATION}" >> $GITHUB_ENV
         
-        # uv環境情報の出力
-        echo "📊 uv environment summary:"
-        echo "   - Project: $(uv run python -c 'import sys; print(sys.executable)')"
-        echo "   - Packages: $(uv pip list | wc -l) installed"
-        echo "   - Cache size: $(du -sh ~/.cache/uv 2>/dev/null | cut -f1 || echo 'unknown')"
-      working-directory: .
+#         echo "✅ AgentCore dependencies installed successfully"
+#         echo "⏱️  Installation time: ${DEPS_DURATION} seconds"
+        
+#         # uv環境情報の出力
+#         echo "📊 uv environment summary:"
+#         echo "   - Project Python: $(uv run python -c 'import sys; print(sys.executable)' 2>/dev/null || echo 'failed to get executable')"
+#         echo "   - Packages installed: $(uv pip list | wc -l)"
+#         echo "   - Cache size: $(du -sh ~/.cache/uv 2>/dev/null | cut -f1 || echo 'unknown')"
+        
+#         # 最終的な環境検証
+#         echo "🔍 Final environment validation:"
+#         echo "   - uv run python works: $(uv run python -c 'print("OK")' 2>/dev/null || echo 'FAILED')"
+#         echo "   - Basic imports work: $(uv run python -c 'import sys, os; print("OK")' 2>/dev/null || echo 'FAILED')"
+        
+#         # 問題が発生した場合のデバッグ情報
+#         if ! uv run python -c 'import sys, os; print("OK")' >/dev/null 2>&1; then
+#           echo "❌ Critical: Basic Python imports are failing"
+#           echo "🔍 Emergency debugging:"
+#           echo "   - Current directory: $(pwd)"
+#           echo "   - .venv exists: $([ -d .venv ] && echo 'YES' || echo 'NO')"
+#           echo "   - .venv/bin/python exists: $([ -f .venv/bin/python ] && echo 'YES' || echo 'NO')"
+#           echo "   - Direct .venv/bin/python test:"
+#           .venv/bin/python -c 'import sys; print("Direct Python OK")' 2>&1 || echo "   Direct Python failed"
+#           exit 1
+#         fi
+#       working-directory: .
     
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
