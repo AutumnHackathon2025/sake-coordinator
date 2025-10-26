@@ -76,14 +76,16 @@ export function RecommendationCard({ sake, rank, onClick }: RecommendationCardPr
               </div>
             </div>
 
-            {/* カテゴリバッジ */}
+            {/* カテゴリバッジ（リボン風） */}
             {sake.category && (
               <div className="flex justify-center">
                 <span
-                  className="inline-block rounded-full px-4 py-1 text-body-lg font-bold shadow-sm"
+                  className="relative inline-block px-6 py-2 text-body-lg font-bold"
                   style={{
                     backgroundColor: categoryColor.bg,
                     color: categoryColor.text,
+                    clipPath: "polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.2)",
                   }}
                 >
                   {sake.category}
