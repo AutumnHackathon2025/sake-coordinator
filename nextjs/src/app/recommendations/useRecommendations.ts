@@ -35,42 +35,36 @@ export function useRecommendations(initialMenu: string[]) {
       }
 
       const data: ApiRecommendationResponse = await response.json();
-      
+
       console.log('API Response:', data); // デバッグ用
-      
+
       // AgentCoreのレスポンスをRecommendationResult[]に変換
       const results: RecommendationResult[] = [];
-      
-      // match_scoreを1-5のスコアに変換する関数
-      const convertScore = (matchScore: number): number => {
-        // 0-100のスコアを1-5に変換
-        if (matchScore >= 90) return 5;
-        if (matchScore >= 70) return 4;
-        if (matchScore >= 50) return 3;
-        if (matchScore >= 30) return 2;
-        return 1;
-      };
-      
+
       // best_recommendがある場合、最初に追加
       if (data.best_recommend) {
         results.push({
           brand: data.best_recommend.brand,
-          score: convertScore(data.best_recommend.match_score),
-          reason: data.best_recommend.expected_experience,
+          brand_description: data.best_recommend.brand_description,
+          expected_experience: data.best_recommend.expected_experience,
+          match_score: data.best_recommend.match_score,
+          category: "鉄板マッチ"
         });
       }
-      
+
       // その他のrecommendationsを追加
       if (data.recommendations && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
         data.recommendations.forEach(rec => {
           results.push({
             brand: rec.brand,
-            score: convertScore(rec.match_score),
-            reason: rec.expected_experience,
+            brand_description: rec.brand_description,
+            expected_experience: rec.expected_experience,
+            category: rec.category,
+            match_score: rec.match_score,
           });
         });
       }
-      
+
       setRecommendations(results);
     } catch (err) {
       console.error("Failed to fetch recommendations:", err);
