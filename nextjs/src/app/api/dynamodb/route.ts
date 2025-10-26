@@ -3,7 +3,7 @@ import { dynamodbClient, dynamodbDoc } from "@/lib/dynamodb";
 import { CreateTableCommand, ListTablesCommand } from "@aws-sdk/client-dynamodb";
 import { PutCommand, ScanCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
-const TABLE_NAME = "SampleTable";
+const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "";
 
 // テーブル作成
 async function createTable() {
