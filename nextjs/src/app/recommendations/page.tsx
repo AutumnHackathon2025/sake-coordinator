@@ -21,6 +21,9 @@ export default function RecommendationsPage() {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchOffset, setTouchOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const { menuItems, recommendations, isLoading, updateMenu } = useRecommendations(getDefaultMenu());
   
   // recommendationsが更新されたらcurrentIndexをリセット
@@ -28,9 +31,62 @@ export default function RecommendationsPage() {
     setCurrentIndex(0);
   }, [recommendations]);
 
+  // 画面スクロールを禁止
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   const handleSubmitMenu = (items: string[]) => {
     updateMenu(items);
     setIsMenuModalOpen(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    setIsSwiping(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+
+    const deltaX = e.touches[0].clientX - touchStart.x;
+    const deltaY = e.touches[0].clientY - touchStart.y;
+
+    // 横方向のスワイプが優勢な場合
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+      setIsSwiping(true);
+      setTouchOffset(deltaX);
+      // 横スワイプ時は縦スクロールを防止
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !isSwiping) {
+      setTouchStart(null);
+      setTouchOffset(0);
+      setIsSwiping(false);
+      return;
+    }
+
+    const threshold = 50; // スワイプ判定の閾値（ピクセル）
+
+    if (Math.abs(touchOffset) > threshold) {
+      if (touchOffset < 0) {
+        // 左スワイプ（次へ）
+        handleNext();
+      } else {
+        // 右スワイプ（前へ）
+        handlePrev();
+      }
+    }
+
+    setTouchStart(null);
+    setTouchOffset(0);
+    setIsSwiping(false);
   };
 
   const handleNext = () => {
@@ -53,11 +109,11 @@ export default function RecommendationsPage() {
   };
 
   return (
-    <div className="min-h-screen max-w-[100vw] max-h-[100vh] overflow-hidden bg-bg-page">
+    <div className="h-screen w-screen overflow-hidden bg-bg-page">
       <Header />
 
       {/* メインコンテンツ */}
-      <main className="pb-32 pt-14">
+      <main className="h-[calc(100vh-56px)] overflow-hidden pb-32 pt-14">
         <div className="px-6 py-6">
           <div className="mb-6 flex flex-col gap-3">
             <h2 className="text-title text-primary">
@@ -87,11 +143,17 @@ export default function RecommendationsPage() {
             <>
               {/* カルーセル */}
               {/* 余白マイナス10vw */}
-              <div className="w-[100vw] overflow-hidden ml-[-5vw]">
+              <div 
+                className="w-[100vw] overflow-hidden ml-[-5vw]"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
                 <div 
-                  className="flex transition-transform duration-300 ease-out"
+                  className="flex ease-out"
                   style={{
-                    transform: `translateX(calc(50vw - 40vw - ${currentIndex * 80 }vw))`,
+                    transform: `translateX(calc(50vw - 40vw - ${currentIndex * 80}vw + ${touchOffset}px))`,
+                    transition: isSwiping ? "none" : "transform 0.3s",
                   }}
                 >
                   {recommendations.map((sake, index) => (
