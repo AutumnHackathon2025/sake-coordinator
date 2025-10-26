@@ -6,6 +6,45 @@ import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 /**
+ * DynamoDBから取得した生データの型
+ */
+interface DynamoDBRecordRaw {
+  userId: string;
+  recordId: string;
+  sake_name: string;
+  impression: string;
+  rating: 'VERY_GOOD' | 'GOOD' | 'BAD' | 'VERY_BAD';
+  label_image_key?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Python DrinkingRecordモデルが期待する形式
+ */
+interface PythonDrinkingRecord {
+  id: string;
+  userId: string;
+  brand: string;
+  impression: string;
+  rating: string;
+  labelImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * AgentCoreへのリクエストペイロード
+ */
+interface AgentCoreRequestPayload {
+  type: 'recommendation' | 'taste_analysis';
+  user_id: string;
+  drinking_records: PythonDrinkingRecord[];
+  menu_brands?: string[];
+  max_recommendations?: number;
+}
+
+/**
  * AgentCore Runtimeサービス
  * AWS SDKを使用してAgentCore Runtimeを呼び出す
  */
@@ -47,7 +86,10 @@ export class AgentCoreService {
       });
     }
 
-    const dynamoConfig: any = {
+    const dynamoConfig: {
+      region: string;
+      endpoint?: string;
+    } = {
       region,
       // credentials: {
       //   accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
@@ -67,9 +109,9 @@ export class AgentCoreService {
   /**
    * DynamoDBからユーザーの飲酒履歴を取得
    * @param userId ユーザーID
-   * @returns 飲酒履歴の配列
+   * @returns 飲酒履歴の配列（Python側が期待する形式に変換済み）
    */
-  private async getDrinkingRecords(userId: string): Promise<any[]> {
+  private async getDrinkingRecords(userId: string): Promise<PythonDrinkingRecord[]> {
     try {
       console.log('  🔍 DynamoDB Query実行中...');
       console.log('  クエリパラメータ:', {
@@ -101,8 +143,12 @@ export class AgentCoreService {
       }
 
       // DynamoDB形式からJavaScriptオブジェクトに変換
-      const records = response.Items.map((item) => unmarshall(item));
-      console.log('  ✅ unmarshall完了:', records.length, '件');
+      const rawRecords = response.Items.map((item) => unmarshall(item) as DynamoDBRecordRaw);
+      console.log('  ✅ unmarshall完了:', rawRecords.length, '件');
+      
+      // Python側が期待する形式に変換（DynamoDBスキーマ → Python DrinkingRecordモデル）
+      const records = rawRecords.map((record) => this.convertToPythonFormat(record));
+      console.log('  ✅ Python形式への変換完了:', records.length, '件');
       
       return records;
     } catch (error) {
@@ -116,6 +162,32 @@ export class AgentCoreService {
       }
       throw new Error('飲酒履歴の取得に失敗しました');
     }
+  }
+
+  /**
+   * DynamoDBレコードをPython側が期待する形式に変換
+   * @param record DynamoDBから取得した生データ
+   * @returns Python DrinkingRecordモデルが期待する形式
+   */
+  private convertToPythonFormat(record: DynamoDBRecordRaw): PythonDrinkingRecord {
+    // 評価値の変換マップ（DynamoDB英語定数 → Python日本語値）
+    const ratingMap: Record<string, string> = {
+      'VERY_GOOD': '非常に好き',
+      'GOOD': '好き',
+      'BAD': '合わない',
+      'VERY_BAD': '非常に合わない',
+    };
+
+    return {
+      id: record.recordId,           // recordId → id
+      userId: record.userId,         // そのまま
+      brand: record.sake_name,       // sake_name → brand (重要な変換!)
+      impression: record.impression, // そのまま
+      rating: ratingMap[record.rating] || record.rating, // 英語 → 日本語
+      labelImageUrl: record.label_image_key, // label_image_key → labelImageUrl
+      createdAt: record.created_at,  // created_at → createdAt
+      updatedAt: record.updated_at,  // updated_at → updatedAt
+    };
   }
 
   /**
@@ -152,7 +224,7 @@ export class AgentCoreService {
       }
 
       // 2. AgentCore Runtimeへのリクエストペイロード
-      const payload = {
+      const payload: AgentCoreRequestPayload = {
         type: 'recommendation',
         user_id: userId,
         drinking_records: drinkingRecords,
@@ -216,7 +288,7 @@ export class AgentCoreService {
   }  /**
    * ローカルエージェントにHTTPリクエストを送信
    */
-  private async callLocalAgent(payload: any): Promise<RecommendationResponse> {
+  private async callLocalAgent(payload: AgentCoreRequestPayload): Promise<RecommendationResponse> {
     const localAgentUrl = process.env.LOCAL_AGENT_URL || 'http://localhost:8080';
     console.log('  🏠 ローカルエージェント呼び出し');
     console.log('  エンドポイント:', `${localAgentUrl}/invocations`);
@@ -273,7 +345,7 @@ export class AgentCoreService {
   /**
    * AgentCore Runtimeを呼び出し
    */
-  private async callAgentCoreRuntime(payload: any, userId: string): Promise<RecommendationResponse> {
+  private async callAgentCoreRuntime(payload: AgentCoreRequestPayload, userId: string): Promise<RecommendationResponse> {
     if (!this.agentCoreClient) {
       console.error('  ❌ AgentCore Clientが未初期化');
       throw new Error('AgentCore Clientが初期化されていません（USE_LOCAL_AGENT=trueの場合は使用できません）');
@@ -323,6 +395,7 @@ export class AgentCoreService {
       // ストリームの場合（Readable）
       console.log('  📦 レスポンス形式: Stream');
       const chunks: Uint8Array[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for await (const chunk of response.response as any) {
         console.log('    チャンク受信:', chunk.length, 'bytes');
         chunks.push(chunk);
