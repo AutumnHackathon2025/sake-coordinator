@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
 import { Header } from "@/components/Header";
@@ -11,14 +12,81 @@ import { useRecommendations } from "./useRecommendations";
 import { getDefaultMenu } from "@/lib/mockData";
 import { FOOTER_ITEMS } from "@/constants/navigation";
 import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 export default function RecommendationsPage() {
+  const router = useRouter();
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const { menuItems, recommendations, isLoading, updateMenu } = useRecommendations(getDefaultMenu());
 
   const handleSubmitMenu = (items: string[]) => {
     updateMenu(items);
     setIsMenuModalOpen(false);
+  };
+
+  const handleDragStart = (clientX: number, clientY: number, e?: React.TouchEvent | React.MouseEvent) => {
+    setIsDragging(true);
+    setStartPos({ x: clientX, y: clientY });
+    if (e && 'touches' in e) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDragMove = (clientX: number, clientY: number, e?: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = clientX - startPos.x;
+    const deltaY = clientY - startPos.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+    
+    if (e && 'touches' in e) {
+      e.preventDefault();
+    }
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    
+    const threshold = 100; // スワイプ判定の閾値
+    
+    if (Math.abs(dragOffset.x) > threshold) {
+      if (dragOffset.x < 0) {
+        // 左スワイプ（パス）
+        handlePass();
+      } else {
+        // 右スワイプ（いいね）
+        handleLike();
+      }
+    }
+    
+    // ドラッグをリセット
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  const handlePass = () => {
+    if (currentIndex < recommendations.length - 1) {
+      setSwipeDirection("left");
+      setTimeout(() => {
+        setSwipeDirection(null);
+        setCurrentIndex(currentIndex + 1);
+      }, 150);
+    }
+  };
+
+  const handleLike = () => {
+    if (currentIndex < recommendations.length) {
+      const currentSake = recommendations[currentIndex];
+      setSwipeDirection("right");
+      setTimeout(() => {
+        router.push(`/history?openRecordModal=true&brand=${currentSake.brand}`);
+      }, 300);
+    }
   };
 
   return (
@@ -42,7 +110,7 @@ export default function RecommendationsPage() {
             </button>
           </div>
 
-          {/* おすすめリスト */}
+          {/* スワイプカードUI */}
           {isLoading ? (
             <div className="py-12 text-center text-gray-500">
               <p className="text-body-lg">おすすめを読み込んでいます...</p>
@@ -52,16 +120,110 @@ export default function RecommendationsPage() {
               <p className="text-body-lg">おすすめが見つかりませんでした</p>
               <p className="mt-2 text-body">メニューを編集して、もう一度お試しください</p>
             </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {recommendations.map((sake, index) => (
-                <RecommendationCard 
-                  key={`${sake.brand}-${index}`}
-                  sake={sake}
-                  rank={index}
-                />
-              ))}
+          ) : currentIndex >= recommendations.length ? (
+            <div className="py-12 text-center text-gray-500">
+              <p className="text-body-lg">すべてのおすすめを確認しました！</p>
+              <p className="mt-2 text-body">メニューを編集して新しいおすすめを探しましょう</p>
             </div>
+          ) : (
+            <>
+              {/* カードスタック */}
+              <div className="relative mx-auto max-w-lg">
+                {/* 次のカード（背景） - スワイプ中は前面に出てくる */}
+                {currentIndex + 1 < recommendations.length && (
+                  <div 
+                    className={`absolute left-0 right-0 top-3 pointer-events-none transition-all duration-150 ${
+                      swipeDirection ? "scale-100 opacity-100 top-0" : "scale-95 opacity-50"
+                    }`}
+                  >
+                    <RecommendationCard 
+                      sake={recommendations[currentIndex + 1]}
+                      rank={currentIndex + 1}
+                    />
+                  </div>
+                )}
+                
+                {/* 現在のカード - ドラッグ可能 */}
+                {!swipeDirection && (
+                  <div 
+                    className="relative cursor-grab active:cursor-grabbing touch-none"
+                    style={{
+                      transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${dragOffset.x * 0.1}deg)`,
+                      transition: isDragging ? "none" : "transform 0.3s ease-out",
+                      touchAction: "none",
+                    }}
+                    onMouseDown={(e) => handleDragStart(e.clientX, e.clientY, e)}
+                    onMouseMove={(e) => handleDragMove(e.clientX, e.clientY, e)}
+                    onMouseUp={handleDragEnd}
+                    onMouseLeave={handleDragEnd}
+                    onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY, e)}
+                    onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY, e)}
+                    onTouchEnd={handleDragEnd}
+                  >
+                    <RecommendationCard 
+                      sake={recommendations[currentIndex]}
+                      rank={currentIndex}
+                    />
+                    
+                    {/* スワイプヒント */}
+                    {isDragging && (
+                      <>
+                        {dragOffset.x < -50 && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded-lg pointer-events-none">
+                            <div className="text-white text-4xl font-bold">✕</div>
+                          </div>
+                        )}
+                        {dragOffset.x > 50 && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-action-record/50 rounded-lg pointer-events-none">
+                            <div className="text-white text-4xl font-bold">♥</div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+                
+                {/* スワイプアニメーション中のカード */}
+                {swipeDirection && (
+                  <div 
+                    className={`relative transition-all duration-150 ${
+                      swipeDirection === "left" ? "-translate-x-full rotate-[-15deg] opacity-0" :
+                      "translate-x-full rotate-[15deg] opacity-0"
+                    }`}
+                  >
+                    <RecommendationCard 
+                      sake={recommendations[currentIndex]}
+                      rank={currentIndex}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* アクションボタン */}
+              <div className="mt-6 flex items-center justify-center gap-6">
+                <button
+                  onClick={handlePass}
+                  className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-gray-400 bg-white text-gray-400 shadow-lg transition-all hover:scale-110 hover:border-gray-500 hover:text-gray-500 active:scale-95"
+                  aria-label="パス"
+                >
+                  <CloseIcon className="text-3xl" />
+                </button>
+                <button
+                  onClick={handleLike}
+                  className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-action-record bg-white text-action-record shadow-xl transition-all hover:scale-110 hover:bg-action-record hover:text-white active:scale-95"
+                  aria-label="気に入った"
+                >
+                  <FavoriteIcon className="text-4xl" />
+                </button>
+              </div>
+
+              {/* 進捗インジケーター */}
+              <div className="mt-4 text-center">
+                <p className="text-body text-gray-500">
+                  {currentIndex + 1} / {recommendations.length}
+                </p>
+              </div>
+            </>
           )}
         </div>
       </main>
