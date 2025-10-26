@@ -23,7 +23,7 @@ COPY README.md ./
 
 # ソースコードをコピー
 COPY src/ ./src/
-COPY config/ ./config/
+# COPY config/ ./config/
 
 # 所有権を変更
 RUN chown -R app:app /app
