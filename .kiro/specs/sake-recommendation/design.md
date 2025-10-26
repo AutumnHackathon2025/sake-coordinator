@@ -95,10 +95,18 @@ interface RecommendRequest {
 
 // レスポンス（成功）
 interface RecommendResponse {
+  best_recommend: {
+    brand: string;              // 銘柄（1-64文字）
+    brand_description: string;  // 銘柄の説明（1-200文字）
+    expected_experience: string;// 期待される体験（1-500文字）
+    match_score: number;        // マッチ度（1-100）
+  };
   recommendations: Array<{
-    brand: string;      // 銘柄（1-64文字）
-    score: number;      // おすすめ度合い（1-5）
-    reason: string;     // 推薦理由（1-500文字）
+    brand: string;              // 銘柄（1-64文字）
+    brand_description: string;  // 銘柄の説明（1-200文字）
+    expected_experience: string;// 期待される体験（1-500文字）
+    category: string;           // カテゴリー（次の一手 | 運命の出会い）
+    match_score: number;        // マッチ度（1-100）
   }>;
 }
 
@@ -173,10 +181,9 @@ async def generate_recommendations(
     self,
     user_id: str,
     drinking_records: List[DrinkingRecord],
-    menu: Optional[Menu] = None,
-    max_recommendations: int = 10
-) -> List[Recommendation]:
-    """推薦を生成"""
+    menu: Optional[Menu] = None
+) -> Tuple[Optional[BestRecommendation], List[Recommendation]]:
+    """推薦を生成（best_recommendとrecommendationsを返す）"""
 ```
 
 **アルゴリズム**:
@@ -184,12 +191,18 @@ async def generate_recommendations(
    - 飲酒履歴を評価別に分類（好き/合わない）
    - 味の感想テキストから特徴抽出（フルーティ、辛口、甘口等）
    - 好みの傾向をスコア化
+   - ユーザーの味覚パーソナリティマップを構築
 
 2. **プロンプト構築**
-   - ユーザーの好み分析結果を含める
+   - ユーザーの好み分析結果と味覚パーソナリティマップを含める
    - 最新10件の飲酒履歴を含める
    - メニューリスト（指定時）を含める
-   - 推薦要件（件数、形式）を明示
+   - 推薦要件を明示:
+     - 最もマッチ度の高い銘柄を「鉄板マッチ」として選択（best_recommend）
+     - 残りの銘柄については、AIが文脈に応じて動的にカテゴリーを生成
+     - カテゴリー名は推薦理由や特徴を表現する自由な文言（例: "新しい味わいへの挑戦", "あなたの好みに近い一本", "意外な発見"等）
+     - 各銘柄に銘柄説明と期待される体験を含める
+   - JSON形式でのレスポンスを要求
 
 3. **Bedrock呼び出し**
    - Claude 3.5 Sonnetモデルを使用
@@ -198,9 +211,10 @@ async def generate_recommendations(
 
 4. **結果パース**
    - JSONレスポンスをパース
-   - Recommendationモデルに変換
-   - バリデーション（文字数、スコア範囲）
-   - 上位N件を選択
+   - BestRecommendationとRecommendationモデルに変換
+   - バリデーション（文字数、マッチ度範囲）
+   - best_recommend（1件、最もマッチ度が高い銘柄）を抽出
+   - recommendations（最大2件）を抽出（カテゴリーはAIが動的に生成）
 
 #### analyze_taste_preference()
 ```python
@@ -297,22 +311,33 @@ class Menu(BaseModel):
 - 各銘柄名は1-64文字
 - 重複は自動除去
 
-### Recommendation (推薦結果)
+### BestRecommendation (最優先推薦)
+
+```python
+class BestRecommendation(BaseModel):
+    brand: str                  # 銘柄（1-64文字）
+    brand_description: str      # 銘柄の説明（1-200文字）
+    expected_experience: str    # 期待される体験（1-500文字）
+    match_score: int            # マッチ度（1-100）
+```
+
+### Recommendation (その他の推薦)
 
 ```python
 class Recommendation(BaseModel):
-    sake_name: str      # 銘柄（1-64文字）
-    score: int          # おすすめ度合い（1-5）
-    explanation: str    # 推薦理由（1-500文字）
+    brand: str                  # 銘柄（1-64文字）
+    brand_description: str      # 銘柄の説明（1-200文字）
+    expected_experience: str    # 期待される体験（1-500文字）
+    category: str               # カテゴリー（AIが動的に生成、1-50文字）
+    match_score: int            # マッチ度（1-100）
 ```
 
 ### RecommendationResponse (推薦レスポンス)
 
 ```python
 class RecommendationResponse(BaseModel):
-    user_id: str                          # ユーザーID
-    recommendations: List[Recommendation]  # 推薦リスト
-    total_count: int                      # 推薦総数
+    best_recommend: Optional[BestRecommendation]  # 最優先推薦
+    recommendations: List[Recommendation]          # その他の推薦リスト（最大2件）
 ```
 
 ## Error Handling
@@ -433,16 +458,19 @@ async def test_generate_recommendations_with_menu():
     # Given
     user_id = "test_user"
     drinking_records = [...]
-    menu = Menu(sake_names=["獺祭", "久保田"])
+    menu = Menu(sake_names=["獺祭", "久保田", "黒龍"])
     
     # When
-    recommendations = await service.generate_recommendations(
-        user_id, drinking_records, menu, max_recommendations=5
+    best_recommend, recommendations = await service.generate_recommendations(
+        user_id, drinking_records, menu
     )
     
     # Then
-    assert len(recommendations) <= 5
-    assert all(r.sake_name in menu.sake_names for r in recommendations)
+    assert best_recommend is not None
+    assert best_recommend.match_score >= 70
+    assert len(recommendations) <= 2
+    assert all(r.brand in menu.sake_names for r in recommendations)
+    assert all(r.category in ["次の一手", "運命の出会い"] for r in recommendations)
 ```
 
 ### 2. 統合テスト

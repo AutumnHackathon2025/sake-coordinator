@@ -1,33 +1,51 @@
-import { RecommendationResponse } from '../services/agentcore-service';
+import { RecommendationResponse, BestRecommendation, Recommendation } from '../services/agentcore-service';
 import { DrinkingRecord } from '@/types/api';
 import { DynamoDBDrinkingRecord } from '@/types/dynamodb';
 
 /**
  * API仕様書の形式に変換された推薦結果
+ * 2層構造: best_recommend（最優先推薦）とrecommendations（その他の推薦）
  */
 export interface ApiRecommendationResponse {
+  best_recommend: ApiBestRecommendation | null;
   recommendations: ApiRecommendation[];
 }
 
 /**
- * API仕様書の推薦アイテム形式
+ * API仕様書の最優先推薦形式（鉄板マッチ）
+ */
+export interface ApiBestRecommendation {
+  brand: string;
+  brand_description: string;
+  expected_experience: string;
+  match_score: number;
+}
+
+/**
+ * API仕様書の推薦アイテム形式（次の一手・運命の出会い）
  */
 export interface ApiRecommendation {
   brand: string;
-  score: number;
-  reason: string;
+  brand_description: string;
+  expected_experience: string;
+  category: string;
+  match_score: number;
 }
 
 /**
  * AgentCoreのレスポンスをAPI仕様書の形式に変換
+ * 
+ * AgentCoreからのレスポンスは既にAPI仕様書の形式と一致しているため、
+ * そのまま返却する。
+ * 
  * @param agentResponse AgentCoreからのレスポンス
  * @returns API仕様書形式のレスポンス
  */
 export function transformToApiResponse(
   agentResponse: RecommendationResponse
 ): ApiRecommendationResponse {
-  // AgentCoreのレスポンスは既にAPI仕様書の形式（brand, score, reason）
   return {
+    best_recommend: agentResponse.best_recommend,
     recommendations: agentResponse.recommendations,
   };
 }

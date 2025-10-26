@@ -2,6 +2,13 @@
 
 from .drinking_record import DrinkingRecord, Rating
 from .menu import Menu
-from .recommendation import Recommendation, RecommendationResponse
+from .recommendation import BestRecommendation, Recommendation, RecommendationResponse
 
-__all__ = ["DrinkingRecord", "Rating", "Recommendation", "RecommendationResponse", "Menu"]
+__all__ = [
+    "DrinkingRecord",
+    "Rating",
+    "BestRecommendation",
+    "Recommendation",
+    "RecommendationResponse",
+    "Menu",
+]

@@ -176,13 +176,12 @@ export class AgentCoreService {
       throw new Error(result.error);
     }
 
-    // 結果を抽出
-    const agentResult = result.result;
-    
+    // 結果を抽出（agentcoreは{"result": {...}}の形式で返す）
+    const data = result.result || result;
     return {
-      user_id: agentResult.user_id,
-      recommendations: agentResult.recommendations || [],
-      total_count: agentResult.total_count || 0,
+      best_recommend: data.best_recommend || null,
+      recommendations: data.recommendations || [],
+      metadata: data.metadata,
     };
   }
 
@@ -239,33 +238,44 @@ export class AgentCoreService {
       throw new Error(result.error);
     }
 
-    // 結果を抽出
-    const agentResult = result.result;
-    
+    // 結果を抽出（agentcoreは{"result": {...}}の形式で返す）
+    const data = result.result || result;
     return {
-      user_id: agentResult.user_id,
-      recommendations: agentResult.recommendations || [],
-      total_count: agentResult.total_count || 0,
+      best_recommend: data.best_recommend || null,
+      recommendations: data.recommendations || [],
+      metadata: data.metadata,
     };
   }
 }
 
 /**
- * 推薦結果の型定義
+ * 推薦結果の型定義（AgentCoreからのレスポンス）
  */
 export interface RecommendationResponse {
-  user_id: string;
+  best_recommend: BestRecommendation | null;
   recommendations: Recommendation[];
-  total_count: number;
+  metadata?: string;
 }
 
 /**
- * 推薦アイテムの型定義（AgentCoreのレスポンス形式）
+ * 最優先推薦の型定義（鉄板マッチ）
+ */
+export interface BestRecommendation {
+  brand: string;
+  brand_description: string;
+  expected_experience: string;
+  match_score: number;
+}
+
+/**
+ * 推薦アイテムの型定義（次の一手・運命の出会い）
  */
 export interface Recommendation {
   brand: string;
-  score: number;
-  reason: string;
+  brand_description: string;
+  expected_experience: string;
+  category: string;
+  match_score: number;
 }
 
 /**

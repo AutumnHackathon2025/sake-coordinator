@@ -4,7 +4,7 @@ from typing import Any
 
 import structlog
 
-from ..models import DrinkingRecord, Menu, Recommendation
+from ..models import DrinkingRecord, Menu, Recommendation, BestRecommendation, RecommendationResponse
 from .bedrock_service import BedrockService
 
 logger = structlog.get_logger(__name__)
@@ -22,28 +22,32 @@ class RecommendationService:
         drinking_records: list[DrinkingRecord],
         menu: Menu | None = None,
         max_recommendations: int = 5,
-    ) -> list[Recommendation]:
+    ) -> RecommendationResponse:
         """推薦を生成
 
         Args:
             user_id: ユーザーID
             drinking_records: 飲酒履歴
             menu: メニュー情報
-            max_recommendations: 最大推薦数
+            max_recommendations: 最大推薦数（未使用、互換性のため保持）
 
         Returns:
-            List[Recommendation]: 推薦リスト（飲酒履歴0件の場合は空リスト）
+            RecommendationResponse: 推薦レスポンス（best_recommend + recommendations最大9件）
         """
         logger.info(
             "推薦生成を開始", user_id=user_id, record_count=len(drinking_records)
         )
 
-        # 飲酒履歴0件の場合は空の推薦リストを返す（エラーではない）
+        # 飲酒履歴0件の場合は空の推薦レスポンスを返す（エラーではない）
         if not drinking_records:
             logger.info(
-                "飲酒履歴が0件のため、空の推薦リストを返します", user_id=user_id
+                "飲酒履歴が0件のため、空の推薦レスポンスを返します", user_id=user_id
             )
-            return []
+            return RecommendationResponse(
+                best_recommend=None,
+                recommendations=[],
+                metadata="飲酒記録がありません。まずは飲んだお酒を記録してください"
+            )
 
         # 味の好み分析
         taste_analysis = await self.analyze_taste_preference(user_id, drinking_records)
@@ -60,12 +64,15 @@ class RecommendationService:
         response = await self.bedrock_service.generate_text(prompt)
 
         # レスポンスをパース
-        recommendations = self._parse_recommendations(response)
+        recommendation_response = self._parse_recommendations(response)
 
         logger.info(
-            "推薦生成を完了", user_id=user_id, recommendation_count=len(recommendations)
+            "推薦生成を完了", 
+            user_id=user_id, 
+            has_best_recommend=recommendation_response.best_recommend is not None,
+            recommendation_count=len(recommendation_response.recommendations)
         )
-        return recommendations[:max_recommendations]
+        return recommendation_response
 
     async def analyze_taste_preference(
         self, user_id: str, drinking_records: list[DrinkingRecord]
@@ -165,24 +172,70 @@ class RecommendationService:
 
         prompt += f"""
 ## 推薦要件
-- 最大{max_recommendations}件の推薦を生成してください
+
+### 推薦の構成
+推薦は以下の構成で提供してください：
+
+1. **best_recommend**: ユーザーの好みに最も合致する1件（カテゴリーなし）
+   - マッチ度の目安: 90以上
+   - ユーザーの過去の高評価銘柄と類似した特徴を持つ
+   - 確実に満足できる安定した選択肢
+
+2. **recommendations**: 残りの推薦（最大9件、各銘柄に動的なカテゴリー）
+   - ユーザーの好みを広げる選択肢や新しい味覚体験への挑戦
+   - 各推薦には推薦理由や特徴を表現する簡潔なカテゴリー名を付与
+   - マッチ度の高い順に並べる
+
+### カテゴリー生成ルール
+recommendationsの各銘柄には、推薦理由や特徴を表現する簡潔なカテゴリー名を付けてください：
+- **文字数**: 1-10文字以内（必須）
+- **内容**: 推薦理由や特徴を簡潔に表現する日本語の文言
+- **例**: 「新しい挑戦」「好みに近い」「意外な発見」「冒険の一杯」「安定の選択」「華やかな香り」「すっきり辛口」
+- **注意**: best_recommendにはカテゴリーを含めないでください
+
+### 出力要件
+- best_recommend: 1件（カテゴリーなし）
+- recommendations: 最大9件（各銘柄に動的なカテゴリー）
 - 各推薦には以下を含めてください：
   - brand: 銘柄名（1-64文字）
-  - score: おすすめ度合い（1-5の整数、5が最高）
-  - reason: 推薦理由（1-500文字、ユーザーの過去の感想との関連性を含めて具体的に説明）
-- スコアの高い順に並べてください
-- ユーザーの好みに合わない銘柄は推薦しないでください
+  - brand_description: 銘柄の説明（1-50文字、簡潔に）
+  - expected_experience: 期待される体験（1-50文字、簡潔に）
+  - match_score: マッチ度（1-100の整数）
+  - category: カテゴリー（1-10文字、recommendationsのみ、best_recommendには不要）
 
 ## 出力形式
 以下のJSON形式で出力してください。他のテキストは含めないでください：
 
 {{
+  "best_recommend": {{
+    "brand": "銘柄名",
+    "brand_description": "銘柄の説明",
+    "expected_experience": "期待される体験",
+    "match_score": 95
+  }},
   "recommendations": [
     {{
-      "brand": "銘柄名",
-      "score": 5,
-      "reason": "推薦理由"
+      "brand": "銘柄名1",
+      "brand_description": "銘柄の説明",
+      "expected_experience": "期待される体験",
+      "category": "新しい挑戦",
+      "match_score": 88
+    }},
+    {{
+      "brand": "銘柄名2",
+      "brand_description": "銘柄の説明",
+      "expected_experience": "期待される体験",
+      "category": "好みに近い",
+      "match_score": 85
+    }},
+    {{
+      "brand": "銘柄名3",
+      "brand_description": "銘柄の説明",
+      "expected_experience": "期待される体験",
+      "category": "意外な発見",
+      "match_score": 82
     }}
+    // ... 最大9件まで
   ]
 }}
 """
@@ -226,14 +279,14 @@ class RecommendationService:
 
         return prompt
 
-    def _parse_recommendations(self, response: str) -> list[Recommendation]:
+    def _parse_recommendations(self, response: str) -> RecommendationResponse:
         """推薦レスポンスをパース
         
         Args:
             response: BedrockからのJSONレスポンス
             
         Returns:
-            List[Recommendation]: パースされた推薦リスト（スコアの高い順）
+            RecommendationResponse: パースされた推薦レスポンス（best_recommend + recommendations最大9件）
         """
         import json
         
@@ -248,45 +301,83 @@ class RecommendationService:
             
             data = json.loads(response_clean)
             
-            # recommendationsフィールドを取得
+            # best_recommendをパース
+            best_recommend = None
+            best_recommend_data = data.get("best_recommend")
+            if best_recommend_data:
+                try:
+                    best_recommend = BestRecommendation(
+                        brand=best_recommend_data.get("brand", ""),
+                        brand_description=best_recommend_data.get("brand_description", ""),
+                        expected_experience=best_recommend_data.get("expected_experience", ""),
+                        match_score=best_recommend_data.get("match_score", 0),
+                    )
+                    logger.info("best_recommendのパースに成功", brand=best_recommend.brand)
+                except Exception as e:
+                    logger.warning("best_recommendのパースに失敗", error=str(e), data=best_recommend_data)
+            
+            # recommendationsをパース
             recommendations_data = data.get("recommendations", [])
             
             if not isinstance(recommendations_data, list):
                 logger.warning("推薦データがリスト形式ではありません")
-                return []
+                recommendations_data = []
             
             recommendations = []
             for item in recommendations_data:
                 try:
                     # 必須フィールドの取得
                     brand = item.get("brand", "")
-                    score = item.get("score", 0)
-                    reason = item.get("reason", "")
+                    brand_description = item.get("brand_description", "")
+                    expected_experience = item.get("expected_experience", "")
+                    category = item.get("category", "")
+                    match_score = item.get("match_score", 0)
                     
                     # バリデーション: 銘柄名（1-64文字）
                     if not brand or len(brand) > 64:
                         logger.warning("銘柄名が不正", brand=brand)
                         continue
                     
-                    # バリデーション: スコア（1-5の範囲）
-                    if not isinstance(score, int) or score < 1 or score > 5:
-                        logger.warning("スコアが不正", score=score)
-                        continue
-                    
-                    # バリデーション: 推薦理由（1-500文字）
-                    if not reason or len(reason) > 500:
-                        logger.warning("推薦理由が不正", reason_length=len(reason))
-                        # 500文字を超える場合は切り詰める
-                        if len(reason) > 500:
-                            reason = reason[:497] + "..."
-                        elif not reason:
+                    # バリデーション: 銘柄説明（1-50文字）
+                    if not brand_description or len(brand_description) > 50:
+                        logger.warning("銘柄説明が不正", brand_description_length=len(brand_description) if brand_description else 0)
+                        # 50文字を超える場合は切り詰める
+                        if brand_description and len(brand_description) > 50:
+                            brand_description = brand_description[:47] + "..."
+                        elif not brand_description:
                             continue
+                    
+                    # バリデーション: 期待される体験（1-50文字）
+                    if not expected_experience or len(expected_experience) > 50:
+                        logger.warning("期待される体験が不正", expected_experience_length=len(expected_experience) if expected_experience else 0)
+                        # 50文字を超える場合は切り詰める
+                        if expected_experience and len(expected_experience) > 50:
+                            expected_experience = expected_experience[:47] + "..."
+                        elif not expected_experience:
+                            continue
+                    
+                    # バリデーション: カテゴリー（1-10文字）
+                    if not category or len(category) < 1 or len(category) > 10:
+                        logger.warning(
+                            "カテゴリーが範囲外です。デフォルト値を設定します",
+                            category=category,
+                            category_length=len(category) if category else 0
+                        )
+                        # デフォルトカテゴリーを設定
+                        category = "おすすめ"
+                    
+                    # バリデーション: マッチ度（1-100の範囲）
+                    if not isinstance(match_score, int) or match_score < 1 or match_score > 100:
+                        logger.warning("マッチ度が不正", match_score=match_score)
+                        continue
                     
                     # Recommendationモデルに変換
                     recommendation = Recommendation(
                         brand=brand,
-                        score=score,
-                        reason=reason,
+                        brand_description=brand_description,
+                        expected_experience=expected_experience,
+                        category=category,
+                        match_score=match_score,
                     )
                     recommendations.append(recommendation)
                     
@@ -294,15 +385,29 @@ class RecommendationService:
                     logger.warning("推薦アイテムのパースに失敗", error=str(e), item=item)
                     continue
             
-            # スコアの高い順にソート
-            recommendations.sort(key=lambda x: x.score, reverse=True)
+            # マッチ度の高い順にソート
+            recommendations.sort(key=lambda x: x.match_score, reverse=True)
             
-            logger.info("推薦結果のパースに成功", count=len(recommendations))
-            return recommendations
+            # 最大9件に制限（best_recommend 1件 + recommendations 9件 = 合計10件）
+            recommendations = recommendations[:9]
+            
+            logger.info(
+                "推薦結果のパースに成功", 
+                has_best_recommend=best_recommend is not None,
+                recommendation_count=len(recommendations)
+            )
+            
+            return RecommendationResponse(
+                best_recommend=best_recommend,
+                recommendations=recommendations
+            )
             
         except (json.JSONDecodeError, KeyError) as e:
             logger.error("推薦レスポンスのパースに失敗", error=str(e), response=response[:200])
-            return []
+            return RecommendationResponse(
+                best_recommend=None,
+                recommendations=[]
+            )
 
     def _parse_taste_analysis(
         self, response: str, drinking_records: list[DrinkingRecord]

@@ -4,7 +4,6 @@
 
 import { useState, useEffect } from "react";
 import { DrinkingRecord, Rating } from "@/types/api";
-import { generateMockRecords } from "@/lib/mockData";
 
 export function useRecords() {
   const [records, setRecords] = useState<DrinkingRecord[]>([]);
@@ -20,19 +19,24 @@ export function useRecords() {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // const response = await fetch('/api/records', {
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // });
-      // const data = await response.json();
-      // setRecords(data);
-
-      // モックデータを使用
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const mockRecords = generateMockRecords();
-      setRecords(mockRecords);
+      const response = await fetch('/api/records');
+      
+      if (!response.ok) {
+        throw new Error(`記録の取得に失敗しました: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // successResponse関数が{data: T}形式でラップするため、dataプロパティを取得
+      const data = result.data || result;
+      
+      // レスポンスが配列であることを確認
+      if (Array.isArray(data)) {
+        setRecords(data);
+      } else {
+        console.warn("予期しないレスポンス形式:", result);
+        setRecords([]);
+      }
     } catch (err) {
       console.error("Failed to fetch records:", err);
       setError(err instanceof Error ? err : new Error("Unknown error"));
@@ -48,28 +52,21 @@ export function useRecords() {
     rating: Rating;
   }) => {
     try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // const response = await fetch('/api/records', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify(data)
-      // });
-      // const newRecord = await response.json();
+      const response = await fetch('/api/records', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
 
-      // モックデータとして新しいレコードを追加
-      const newRecord: DrinkingRecord = {
-        id: `rec-${Date.now()}`,
-        userId: "user-mock-001",
-        brand: data.brand,
-        impression: data.impression,
-        rating: data.rating,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (!response.ok) {
+        throw new Error(`記録の保存に失敗しました: ${response.status}`);
+      }
 
+      const result = await response.json();
+      const newRecord = result.data || result; // successResponse形式に対応
+      
       setRecords([newRecord, ...records]);
       return newRecord;
     } catch (err) {
@@ -80,13 +77,13 @@ export function useRecords() {
 
   const deleteRecord = async (id: string) => {
     try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // await fetch(`/api/records/${id}`, {
-      //   method: 'DELETE',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`
-      //   }
-      // });
+      const response = await fetch(`/api/records/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`記録の削除に失敗しました: ${response.status}`);
+      }
 
       setRecords(records.filter((record) => record.id !== id));
     } catch (err) {
@@ -100,23 +97,21 @@ export function useRecords() {
     data: Partial<Omit<DrinkingRecord, "id" | "userId" | "createdAt">>
   ) => {
     try {
-      // TODO: 実際のAPI呼び出しに置き換え
-      // const response = await fetch(`/api/records/${id}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${token}`
-      //   },
-      //   body: JSON.stringify(data)
-      // });
-      // const updatedRecord = await response.json();
+      const response = await fetch(`/api/records/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
 
-      const updatedRecord: DrinkingRecord = {
-        ...records.find((r) => r.id === id)!,
-        ...data,
-        updatedAt: new Date().toISOString(),
-      };
+      if (!response.ok) {
+        throw new Error(`記録の更新に失敗しました: ${response.status}`);
+      }
 
+      const result = await response.json();
+      const updatedRecord = result.data || result; // successResponse形式に対応
+      
       setRecords(
         records.map((record) => (record.id === id ? updatedRecord : record))
       );
