@@ -150,7 +150,7 @@ export default function RecommendationsPage() {
                 onTouchEnd={handleTouchEnd}
               >
                 <div 
-                  className="flex ease-out"
+                  className="flex ease-out items-center"
                   style={{
                     transform: `translateX(calc(50vw - 40vw - ${currentIndex * 80}vw + ${touchOffset}px))`,
                     transition: isSwiping ? "none" : "transform 0.3s",

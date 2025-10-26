@@ -74,67 +74,77 @@ export function generateMockRecommendations(
     return [];
   }
 
-  // スコア順にする。また、スコアは5から1までの少数第二位までの値である。
+  // マッチスコア順にする。スコアは0-100の値。
   const allRecommendations: RecommendationResult[] = [
     {
       brand: "獺祭 純米大吟醸",
-      score: 4.9,
-      reason:
-        "あなたの「フルーティで香りが高い」という好みに最も一致します。華やかで飲みやすい味わいが特徴です。",
+      brand_description: "外れなしの安全圏。現在の味覚パーソナリティに完全に合致する銘柄です。",
+      expected_experience: "あなたの『穏やかな吟醸香へのこだわり』と『キレの良さの重視』というマップ傾向に最も忠実な選択です。",
+      category: "鉄板マッチ",
+      match_score: 95,
     },
     {
       brand: "黒龍 しずく",
-      score: 4.8,
-      reason:
-        "「飲みやすい」という感想に近く、クリアな味わいがおすすめです。すっきりとした後味が魅力的。",
+      brand_description: "現在の好みを保ちつつ、新しい発見ができる銘柄。感性マップを広げるための賢い一歩です。",
+      expected_experience: "『口当たりの優しさ重視度』を維持しながら、『酸味の許容度』を拡張することで、新しい満足感が得られます。",
+      category: "次の一手",
+      match_score: 88,
     },
     {
       brand: "十四代 本丸",
-      score: 4.3,
-      reason:
-        "バランスの良い甘みと旨味が特徴。あなたの好みに合った上品な味わいが楽しめます。",
+      brand_description: "バランスの取れた甘みと旨味の極致。幻の銘酒として名高い逸品です。",
+      expected_experience: "あなたの『上品な甘み志向』と『芳醇さへの憧れ』が満たされる、至福の一献です。",
+      category: "鉄板マッチ",
+      match_score: 93,
     },
     {
       brand: "出羽桜 桜花吟醸",
-      score: 4.2,
-      reason:
-        "芳醇な香りと深い味わい。米の旨味を重視するあなたの嗜好にぴったりです。",
+      brand_description: "華やかな香りと深いコク。伝統的な醸造技術が生み出す至高の味わい。",
+      expected_experience: "『米の旨味重視度』という軸を深めながら、『芳醇な香り』への探求心を満たします。",
+      category: "鉄板マッチ",
+      match_score: 91,
     },
     {
       brand: "東洋美人 純米吟醸",
-      score: 4.1,
-      reason:
-        "すっきりとキレのある味わい。食事と合わせやすく、飽きのこない美味しさです。",
+      brand_description: "すっきりとしたキレ味の中に潜む、繊細な旨味。食中酒としての完成度が高い一本。",
+      expected_experience: "あなたの『飲みやすさ重視』という感性に寄り添いながら、新たな『キレ味の発見』をもたらします。",
+      category: "次の一手",
+      match_score: 85,
     },
     {
       brand: "鍋島 特別純米",
-      score: 3.9,
-      reason:
-        "フルーティな香りと柔らかな口当たり。優しい甘みが特徴的な日本酒です。",
+      brand_description: "フルーティな香りと柔らかな口当たり。若き杜氏が生み出す革新の味。",
+      expected_experience: "『優しい甘み志向』を保ちつつ、『フルーティな香り』への新しい扉を開きます。",
+      category: "次の一手",
+      match_score: 82,
     },
     {
       brand: "久保田 千寿",
-      score: 3.8,
-      reason:
-        "バランスの取れた味わいで、どんな料理にも合わせやすい定番の一本です。",
+      brand_description: "誰からも愛される定番の味。安定した美味しさで、どんなシーンにも寄り添います。",
+      expected_experience: "『バランス重視度』というあなたの軸を再確認しながら、安心感のある時間を提供します。",
+      category: "次の一手",
+      match_score: 78,
     },
     {
       brand: "八海山 普通酒",
-      score: 3.7,
-      reason:
-        "すっきりとした辛口。クセがなく飲みやすいので、日本酒初心者にもおすすめです。",
+      brand_description: "あなたの現在のマップから最も離れていますが、飲酒記録にある『知的好奇心の高さ』から、意外な感動をもたらす可能性を秘めています。",
+      expected_experience: "あなたのメインの感性とは対極にある『軽快さ』が、シチュエーションによって新しい扉を開くかもしれません。",
+      category: "運命の出会い",
+      match_score: 62,
     },
     {
       brand: "田酒 特別純米",
-      score: 3.0,
-      reason:
-        "米本来の旨味を存分に感じられる濃醇な味わい。飲み応えのある一本です。",
+      brand_description: "米本来の力強い旨味を追求した、硬派な一本。通好みの濃醇な味わい。",
+      expected_experience: "『濃醇さ』という未開拓の領域へ、あなたの感性マップを大胆に拡張する冒険です。",
+      category: "運命の出会い",
+      match_score: 58,
     },
     {
       brand: "醸し人九平次 純米大吟醸",
-      score: 2.5,
-      reason:
-        "洗練されたフルーティな香りと上品な甘み。ワインのような味わいが特徴的です。",
+      brand_description: "ワインのような洗練された香り。日本酒の新しい可能性を切り開く革新的な味わい。",
+      expected_experience: "『フルーティ』という軸を極限まで突き詰めた、未知の体験があなたを待っています。",
+      category: "運命の出会い",
+      match_score: 55,
     },
   ];
 
@@ -148,9 +158,9 @@ export function generateMockRecommendations(
       !menu.some((item) => rec.brand.includes(item) || item.includes(rec.brand))
   );
 
-  // メニューに含まれるものを優先し、スコア降順でソート、最大10件まで返す
+  // メニューに含まれるものを優先し、マッチスコア降順でソート、最大10件まで返す
   const combined = [...inMenu, ...notInMenu];
-  return combined.sort((a, b) => b.score - a.score).slice(0, 10);
+  return combined.sort((a, b) => b.match_score - a.match_score).slice(0, 10);
 }
 
 /**

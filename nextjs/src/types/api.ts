@@ -42,8 +42,10 @@ export interface DrinkingRecord {
  */
 export interface RecommendationResult {
   brand: string; // 銘柄 (1-64文字)
-  score: number; // おすすめ度合い (1-5)
-  reason: string; // おすすめする理由 (1-500文字)
+  brand_description: string; // 銘柄の説明
+  expected_experience: string; // 期待される体験
+  category?: string; // カテゴリ（"鉄板マッチ"、"次の一手"、"運命の出会い"など）
+  match_score: number; // マッチ度 (0-100)
 }
 
 /**
