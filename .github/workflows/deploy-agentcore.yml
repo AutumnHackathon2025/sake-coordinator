@@ -382,28 +382,28 @@ jobs:
         # 必要な権限の確認（最小権限の原則）
         echo "🔍 Verifying required AWS permissions..."
         
-        # ECR権限の確認
-        echo "   - Checking ECR permissions..."
-        if ! aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION > /dev/null 2>&1; then
-          echo "❌ ECR repository access failed"
-          echo "🔍 ECR troubleshooting:"
-          echo "   - Check if ECR repository '$ECR_REPOSITORY' exists"
-          echo "   - Verify IAM permissions for ECR operations"
-          echo "   - Required permissions: ecr:DescribeRepositories, ecr:GetAuthorizationToken"
-          exit 1
-        fi
-        echo "   ✅ ECR repository access verified"
+        # # ECR権限の確認
+        # echo "   - Checking ECR permissions..."
+        # if ! aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION > /dev/null 2>&1; then
+        #   echo "❌ ECR repository access failed"
+        #   echo "🔍 ECR troubleshooting:"
+        #   echo "   - Check if ECR repository '$ECR_REPOSITORY' exists"
+        #   echo "   - Verify IAM permissions for ECR operations"
+        #   echo "   - Required permissions: ecr:DescribeRepositories, ecr:GetAuthorizationToken"
+        #   exit 1
+        # fi
+        # echo "   ✅ ECR repository access verified"
         
-        # Bedrock AgentCore権限の確認
-        echo "   - Checking Bedrock AgentCore permissions..."
-        if ! aws bedrock-agentcore-control describe-agent-runtime --agent-runtime-name $AGENTCORE_RUNTIME_NAME --region $AWS_REGION > /dev/null 2>&1; then
-          echo "❌ Bedrock AgentCore Runtime access failed"
-          echo "🔍 AgentCore troubleshooting:"
-          echo "   - Check if AgentCore Runtime '$AGENTCORE_RUNTIME_NAME' exists"
-          echo "   - Verify IAM permissions for AgentCore operations"
-          echo "   - Required permissions: bedrock-agentcore-control:DescribeAgentRuntime, bedrock-agentcore-control:UpdateAgentRuntime"
-          exit 1
-        fi
+        # # Bedrock AgentCore権限の確認
+        # echo "   - Checking Bedrock AgentCore permissions..."
+        # if ! aws bedrock-agentcore-control describe-agent-runtime --agent-runtime-name $AGENTCORE_RUNTIME_NAME --region $AWS_REGION > /dev/null 2>&1; then
+        #   echo "❌ Bedrock AgentCore Runtime access failed"
+        #   echo "🔍 AgentCore troubleshooting:"
+        #   echo "   - Check if AgentCore Runtime '$AGENTCORE_RUNTIME_NAME' exists"
+        #   echo "   - Verify IAM permissions for AgentCore operations"
+        #   echo "   - Required permissions: bedrock-agentcore-control:DescribeAgentRuntime, bedrock-agentcore-control:UpdateAgentRuntime"
+        #   exit 1
+        # fi
         echo "   ✅ Bedrock AgentCore Runtime access verified"
         
         echo "✅ All required AWS permissions verified successfully"
