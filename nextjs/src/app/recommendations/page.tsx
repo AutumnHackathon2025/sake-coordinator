@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/Modal";
 import { MenuEditor } from "@/components/MenuEditor";
+import { RecordForm } from "@/components/RecordForm";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { HintCaption } from "@/components/HintCaption";
@@ -11,14 +12,16 @@ import { RecommendationCard } from "@/components/RecommendationCard";
 import { useRecommendations } from "./useRecommendations";
 import { getDefaultMenu } from "@/lib/mockData";
 import { FOOTER_ITEMS } from "@/constants/navigation";
+import { CreateRecordRequest } from "@/types/api";
 import EditIcon from "@mui/icons-material/Edit";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 export default function RecommendationsPage() {
   const router = useRouter();
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
+  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -105,7 +108,21 @@ export default function RecommendationsPage() {
 
   const handleSelect = () => {
     const currentSake = recommendations[currentIndex];
-    router.push(`/history?openRecordModal=true&brand=${currentSake.brand}`);
+    setSelectedBrand(currentSake.brand);
+    setIsRecordModalOpen(true);
+  };
+
+  const handleCardClick = (brand: string) => {
+    setSelectedBrand(brand);
+    setIsRecordModalOpen(true);
+  };
+
+  const handleSubmitRecord = async (record: CreateRecordRequest) => {
+    // TODO: APIに記録を送信
+    console.log("記録を追加:", record);
+    setIsRecordModalOpen(false);
+    // 記録後、履歴ページに遷移
+    router.push("/history");
   };
 
   return (
@@ -164,7 +181,11 @@ export default function RecommendationsPage() {
                       key={index}
                       className="flex-shrink-0 w-[80vw] px-2"
                     >
-                      <RecommendationCard sake={sake} rank={index} />
+                      <RecommendationCard 
+                        sake={sake} 
+                        rank={index}
+                        onClick={() => handleCardClick(sake.brand)}
+                      />
                     </div>
                   ))}
                 </div>
@@ -216,6 +237,14 @@ export default function RecommendationsPage() {
       {/* メニュー編集モーダル */}
       <Modal isOpen={isMenuModalOpen} onClose={() => setIsMenuModalOpen(false)}>
         <MenuEditor initialItems={menuItems} onSubmit={handleSubmitMenu} />
+      </Modal>
+
+      {/* 記録追加モーダル */}
+      <Modal isOpen={isRecordModalOpen} onClose={() => setIsRecordModalOpen(false)}>
+        <RecordForm 
+          initialBrand={selectedBrand}
+          onSubmit={handleSubmitRecord}
+        />
       </Modal>
     </div>
   );

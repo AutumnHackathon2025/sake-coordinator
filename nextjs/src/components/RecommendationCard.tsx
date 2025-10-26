@@ -1,13 +1,13 @@
 import { RecommendationResult } from "@/types/api";
-import Link from "next/link";
 import { RankBadge } from "./RankBadge";
 
 interface RecommendationCardProps {
   sake: RecommendationResult;
   rank: number;
+  onClick?: () => void;
 }
 
-export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
+export function RecommendationCard({ sake, rank, onClick }: RecommendationCardProps) {
   // 日本酒ラベルっぽい色のパレット
   const labelColors = [
     { bg: "#9C2A1D", text: "#FFFFFF" }, // 赤茶色（獺祭など）
@@ -35,7 +35,10 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
   const categoryColor = getColorFromBrand(sake.brand);
 
   return (
-    <Link href={`/history?openRecordModal=true&brand=${sake.brand}`}>
+    <div 
+      onClick={onClick}
+      className="cursor-pointer"
+    >
       {/* ラッパー: バッジ用のoverflow対策 */}
       <div className="relative">
         {/* 順位バッジ（左上） */}
@@ -107,7 +110,7 @@ export function RecommendationCard({ sake, rank }: RecommendationCardProps) {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
