@@ -6,17 +6,25 @@ import { DynamoDBClient, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 /**
- * DynamoDBから取得した生データの型
+ * DynamoDBから取得した生データの型（両形式をサポート）
  */
 interface DynamoDBRecordRaw {
+  // 新形式（キャメルケース）
   userId: string;
-  id: string;
-  brand: string;
+  id?: string;
+  brand?: string;
   impression: string;
   rating: 'VERY_GOOD' | 'GOOD' | 'BAD' | 'VERY_BAD' | string; // 既に日本語の可能性もある
   labelImageKey?: string;
-  createdAt: string;
+  createdAt?: string;
   updatedAt?: string;
+  
+  // 旧形式（スネークケース）- フォールバック用
+  recordId?: string;
+  sake_name?: string;
+  label_image_key?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -172,6 +180,7 @@ export class AgentCoreService {
 
   /**
    * DynamoDBレコードをPython側が期待する形式に変換
+   * 新形式（キャメルケース）と旧形式（スネークケース）の両方に対応
    * @param record DynamoDBから取得した生データ
    * @returns Python DrinkingRecordモデルが期待する形式
    */
@@ -187,15 +196,16 @@ export class AgentCoreService {
     // DynamoDBのratingが既に日本語の場合もあるのでチェック
     const rating = ratingMap[record.rating] || record.rating;
 
+    // 新形式（キャメルケース）を優先し、なければ旧形式（スネークケース）にフォールバック
     return {
-      id: record.id,                 // そのまま
-      userId: record.userId,         // そのまま
-      brand: record.brand,           // そのまま
-      impression: record.impression, // そのまま
-      rating: rating,                // 英語定数の場合のみ日本語に変換
-      labelImageUrl: record.labelImageKey, // labelImageKey → labelImageUrl
-      createdAt: record.createdAt,   // そのまま
-      updatedAt: record.updatedAt,   // そのまま（オプション）
+      id: record.id || record.recordId || '',
+      userId: record.userId,
+      brand: record.brand || record.sake_name || '',
+      impression: record.impression,
+      rating: rating,
+      labelImageUrl: record.labelImageKey || record.label_image_key,
+      createdAt: record.createdAt || record.created_at || new Date().toISOString(),
+      updatedAt: record.updatedAt || record.updated_at,
     };
   }
 
